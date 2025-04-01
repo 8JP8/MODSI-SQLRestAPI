@@ -50,10 +50,9 @@ namespace MODSI_SQLRestAPI
                 await conn.OpenAsync();
                 foreach (var point in points)
                 {
-                    var query = "INSERT INTO Pontos3D (Id, x, y, z) VALUES (@Id, @x, @y, @z)";
+                    var query = "INSERT INTO Pontos3D (x, y, z) VALUES (@x, @y, @z)";
                     using (SqlCommand cmd = new SqlCommand(query, conn))
                     {
-                        cmd.Parameters.AddWithValue("@Id", point.ID);
                         cmd.Parameters.AddWithValue("@x", point.X);
                         cmd.Parameters.AddWithValue("@y", point.Y);
                         cmd.Parameters.AddWithValue("@z", point.Z);

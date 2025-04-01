@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
@@ -48,6 +49,33 @@ namespace MODSI_SQLRestAPI
             var response = req.CreateResponse(HttpStatusCode.OK);
             response.Headers.Add("Content-Type", "text/plain; charset=utf-8");
             await response.WriteStringAsync("Points added successfully.");
+
+            return response;
+        }
+
+        [Function("SendRandomPoints")]
+        public async Task<HttpResponseData> SendRandomPoints([HttpTrigger(AuthorizationLevel.Function, "post")] HttpRequestData req)
+        {
+            _logger.LogInformation("Sending random 3D points.");
+
+            var random = new Random();
+            var points = new List<Point3D>();
+
+            for (int i = 0; i < 10; i++)
+            {
+                points.Add(new Point3D
+                {
+                    X = random.Next(-100, 100),
+                    Y = random.Next(-100, 100),
+                    Z = random.Next(-100, 100)
+                });
+            }
+
+            await _databaseHandler.AddPointsAsync(points);
+
+            var response = req.CreateResponse(HttpStatusCode.OK);
+            response.Headers.Add("Content-Type", "application/json; charset=utf-8");
+            await response.WriteStringAsync(JsonSerializer.Serialize(points));
 
             return response;
         }
