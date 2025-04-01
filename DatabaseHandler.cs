@@ -31,9 +31,9 @@ namespace MODSI_SQLRestAPI
                             points.Add(new Point3D
                             {
                                 ID = reader.GetInt32(0),
-                                X = reader.GetInt32(1),
-                                Y = reader.GetInt32(2),
-                                Z = reader.GetInt32(3)
+                                X = reader.GetFloat(1),
+                                Y = reader.GetFloat(2),
+                                Z = reader.GetFloat(3)
                             });
                         }
                     }
