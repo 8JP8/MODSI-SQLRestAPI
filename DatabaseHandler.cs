@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data.SqlClient;
@@ -8,10 +9,12 @@ namespace MODSI_SQLRestAPI
     public class DatabaseHandler
     {
         private readonly string _connectionString;
+        private readonly string _3DPoints_DB;
 
         public DatabaseHandler()
         {
             _connectionString = ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString;
+            _3DPoints_DB = ConfigurationManager.AppSettings["3DPoints_DBName"];
         }
 
         #region 3D Points Visualization
@@ -22,7 +25,7 @@ namespace MODSI_SQLRestAPI
             using (SqlConnection conn = new SqlConnection(_connectionString))
             {
                 await conn.OpenAsync();
-                var query = "SELECT Id, x, y, z FROM Pontos3D";
+                var query = $"SELECT Id, x, y, z FROM {_3DPoints_DB}";
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
                     using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
@@ -51,7 +54,7 @@ namespace MODSI_SQLRestAPI
             using (SqlConnection conn = new SqlConnection(_connectionString))
             {
                 await conn.OpenAsync();
-                var query = "SELECT Id, x, y, z FROM Pontos3D WHERE Id = @id";
+                var query = $"SELECT Id, x, y, z FROM {_3DPoints_DB} WHERE Id = @id";
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
                     cmd.Parameters.AddWithValue("@id", id);
@@ -81,7 +84,7 @@ namespace MODSI_SQLRestAPI
                 await conn.OpenAsync();
                 foreach (var point in points)
                 {
-                    var query = "INSERT INTO Pontos3D (x, y, z) VALUES (@x, @y, @z)";
+                    var query = $"INSERT INTO {_3DPoints_DB} (x, y, z) VALUES (@x, @y, @z)";
                     using (SqlCommand cmd = new SqlCommand(query, conn))
                     {
                         cmd.Parameters.AddWithValue("@x", point.X);
@@ -98,7 +101,7 @@ namespace MODSI_SQLRestAPI
             using (SqlConnection conn = new SqlConnection(_connectionString))
             {
                 await conn.OpenAsync();
-                var query = "DELETE FROM Pontos3D WHERE Id = @id";
+                var query = $"DELETE FROM {_3DPoints_DB} WHERE Id = @id";
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
                     cmd.Parameters.AddWithValue("@id", id);
@@ -112,7 +115,7 @@ namespace MODSI_SQLRestAPI
             using (SqlConnection conn = new SqlConnection(_connectionString))
             {
                 await conn.OpenAsync();
-                var query = "UPDATE Pontos3D SET x = @x, y = @y, z = @z WHERE Id = @id";
+                var query = $"UPDATE {_3DPoints_DB} SET x = @x, y = @y, z = @z WHERE Id = @id";
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
                     cmd.Parameters.AddWithValue("@id", point.ID);
