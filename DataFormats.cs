@@ -7,4 +7,12 @@
         public double Y { get; set; }
         public double Z { get; set; }
     }
+
+    public class PieChart
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public float Value { get; set; }
+    }
+
 }

@@ -179,5 +179,152 @@ namespace MODSI_SQLRestAPI
             }
         }
         #endregion
+
+        #region PieChart Visualization
+        [Function("GetAllPieCharts")]
+        public async Task<HttpResponseData> GetAllPieCharts([HttpTrigger(AuthorizationLevel.Function, "get", Route = "PieChart/GetAll")] HttpRequestData req)
+        {
+            try
+            {
+                _logger.LogInformation("Retrieving all pie charts.");
+
+                var pieCharts = await _databaseHandler.GetAllPieChartsAsync();
+                _logger.LogInformation($"Retrieved pie charts: {JsonSerializer.Serialize(pieCharts)}");
+
+                var response = req.CreateResponse(HttpStatusCode.OK);
+                response.Headers.Add("Content-Type", "application/json; charset=utf-8");
+                await response.WriteStringAsync(JsonSerializer.Serialize(pieCharts));
+
+                return response;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while retrieving pie charts.");
+                return req.CreateResponse(HttpStatusCode.InternalServerError);
+            }
+        }
+
+        [Function("GetPieChartById")]
+        public async Task<HttpResponseData> GetPieChartById([HttpTrigger(AuthorizationLevel.Function, "get", Route = "PieChart/Get/{id:int}")] HttpRequestData req, int id)
+        {
+            try
+            {
+                _logger.LogInformation($"Retrieving pie chart with ID: {id}");
+
+                var pieChart = await _databaseHandler.GetPieChartByIdAsync(id);
+                if (pieChart == null)
+                {
+                    return req.CreateResponse(HttpStatusCode.NotFound);
+                }
+
+                var response = req.CreateResponse(HttpStatusCode.OK);
+                response.Headers.Add("Content-Type", "application/json; charset=utf-8");
+                await response.WriteStringAsync(JsonSerializer.Serialize(pieChart));
+
+                return response;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"An error occurred while retrieving pie chart with ID {id}.");
+                return req.CreateResponse(HttpStatusCode.InternalServerError);
+            }
+        }
+
+        [Function("AddPieCharts")]
+        public async Task<HttpResponseData> AddPieCharts([HttpTrigger(AuthorizationLevel.Function, "post", Route = "PieChart/Add")] HttpRequestData req)
+        {
+            try
+            {
+                _logger.LogInformation("Adding new pie charts.");
+
+                var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+                var pieCharts = JsonSerializer.Deserialize<List<PieChart>>(requestBody);
+
+                await _databaseHandler.AddPieChartsAsync(pieCharts);
+
+                var response = req.CreateResponse(HttpStatusCode.OK);
+                response.Headers.Add("Content-Type", "text/plain; charset=utf-8");
+                await response.WriteStringAsync("Pie charts added successfully.");
+
+                return response;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while adding pie charts.");
+                return req.CreateResponse(HttpStatusCode.InternalServerError);
+            }
+        }
+
+        [Function("SendRandomPieCharts")]
+        public async Task<HttpResponseData> SendRandomPieCharts([HttpTrigger(AuthorizationLevel.Function, "post", Route = "PieChart/SendRandom")] HttpRequestData req)
+        {
+            try
+            {
+                _logger.LogInformation("Sending random pie charts.");
+
+                await _databaseHandler.SetRandomPieChartsAsync();
+
+                var response = req.CreateResponse(HttpStatusCode.OK);
+                response.Headers.Add("Content-Type", "text/plain; charset=utf-8");
+                await response.WriteStringAsync("Random pie charts sent successfully.");
+
+                return response;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while sending random pie charts.");
+                return req.CreateResponse(HttpStatusCode.InternalServerError);
+            }
+        }
+
+        [Function("DeletePieChartById")]
+        public async Task<HttpResponseData> DeletePieChartById([HttpTrigger(AuthorizationLevel.Function, "delete", Route = "PieChart/Delete/{id:int}")] HttpRequestData req, int id)
+        {
+            try
+            {
+                _logger.LogInformation($"Deleting pie chart with ID: {id}");
+
+                await _databaseHandler.DeletePieChartByIdAsync(id);
+
+                var response = req.CreateResponse(HttpStatusCode.OK);
+                response.Headers.Add("Content-Type", "text/plain; charset=utf-8");
+                await response.WriteStringAsync($"Pie chart with ID {id} deleted successfully.");
+
+                return response;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"An error occurred while deleting pie chart with ID {id}.");
+                return req.CreateResponse(HttpStatusCode.InternalServerError);
+            }
+        }
+
+        [Function("ReplacePieChartById")]
+        public async Task<HttpResponseData> ReplacePieChartById([HttpTrigger(AuthorizationLevel.Function, "put", Route = "PieChart/Replace/{id:int}")] HttpRequestData req, int id)
+        {
+            try
+            {
+                _logger.LogInformation($"Replacing pie chart with ID: {id}");
+
+                var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+                var pieChart = JsonSerializer.Deserialize<PieChart>(requestBody);
+                pieChart.Id = id;
+
+                await _databaseHandler.ReplacePieChartByIdAsync(pieChart);
+
+                var response = req.CreateResponse(HttpStatusCode.OK);
+                response.Headers.Add("Content-Type", "text/plain; charset=utf-8");
+                await response.WriteStringAsync($"Pie chart with ID {id} replaced successfully.");
+
+                return response;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"An error occurred while replacing pie chart with ID {id}.");
+                return req.CreateResponse(HttpStatusCode.InternalServerError);
+            }
+        }
+        #endregion
+
     }
 }
