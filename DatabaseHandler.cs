@@ -249,5 +249,128 @@ namespace MODSI_SQLRestAPI
             await AddPieChartsAsync(pieCharts);
         }
         #endregion
+
+        #region User Management
+
+        public async Task<List<User>> GetAllUsersAsync()
+        {
+            var users = new List<User>();
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            {
+                await conn.OpenAsync();
+                var query = $"SELECT ID, Name, Email, Password, Username, Role, CreatedAt, IsActive FROM [user]";
+                using (SqlCommand cmd = new SqlCommand(query, conn))
+                {
+                    using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
+                    {
+                        while (await reader.ReadAsync())
+                        {
+                            users.Add(new User
+                            {
+                                ID = reader.GetInt32(0),
+                                Name = reader.GetString(1),
+                                Email = reader.GetString(2),
+                                Password = reader.GetString(3),
+                                Username = reader.GetString(4),
+                                Role = reader.GetString(5),
+                                CreatedAt = reader.GetDateTime(6),
+                                IsActive = reader.GetString(7)
+                            });
+                        }
+                    }
+                }
+            }
+            return users;
+        }
+
+        public async Task<User> GetUserByIdAsync(int id)
+        {
+            User user = null;
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            {
+                await conn.OpenAsync();
+                var query = $"SELECT ID, Name, Email, Password, Username, Role, CreatedAt, IsActive FROM [user] WHERE ID = @id";
+                using (SqlCommand cmd = new SqlCommand(query, conn))
+                {
+                    cmd.Parameters.AddWithValue("@id", id);
+                    using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
+                    {
+                        if (await reader.ReadAsync())
+                        {
+                            user = new User
+                            {
+                                ID = reader.GetInt32(0),
+                                Name = reader.GetString(1),
+                                Email = reader.GetString(2),
+                                Password = reader.GetString(3),
+                                Username = reader.GetString(4),
+                                Role = reader.GetString(5),
+                                CreatedAt = reader.GetDateTime(6),
+                                IsActive = reader.GetString(7)
+                            };
+                        }
+                    }
+                }
+            }
+            return user;
+        }
+
+        public async Task AddUserAsync(User user)
+        {
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                var query = @"INSERT INTO [user] (name, email, password, username, role, createdAt, isActive) 
+                      VALUES (@Name, @Email, @Password, @Username, @Role, @CreatedAt, @IsActive)";
+                var command = new SqlCommand(query, connection);
+                command.Parameters.AddWithValue("@Name", user.Name);
+                command.Parameters.AddWithValue("@Email", user.Email);
+                command.Parameters.AddWithValue("@Password", user.Password);
+                command.Parameters.AddWithValue("@Username", user.Username);
+                command.Parameters.AddWithValue("@Role", user.Role);
+                command.Parameters.AddWithValue("@CreatedAt", user.CreatedAt);
+                command.Parameters.AddWithValue("@IsActive", user.IsActive);
+
+                await connection.OpenAsync();
+                await command.ExecuteNonQueryAsync();
+            }
+        }
+
+        public async Task DeleteUserByIdAsync(int id)
+        {
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            {
+                await conn.OpenAsync();
+                var query = $"DELETE FROM [user] WHERE ID = @id";
+                using (SqlCommand cmd = new SqlCommand(query, conn))
+                {
+                    cmd.Parameters.AddWithValue("@id", id);
+                    await cmd.ExecuteNonQueryAsync();
+                }
+            }
+        }
+
+        public async Task UpdateUserByIdAsync(User user)
+        {
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            {
+                await conn.OpenAsync();
+                var query = $"UPDATE [user] SET Name = @name, Email = @email, Password = @password, Username = @username, Role = @role, CreatedAt = @createdAt, IsActive = @isActive WHERE ID = @id";
+                using (SqlCommand cmd = new SqlCommand(query, conn))
+                {
+                    cmd.Parameters.AddWithValue("@id", user.ID);
+                    cmd.Parameters.AddWithValue("@name", user.Name);
+                    cmd.Parameters.AddWithValue("@email", user.Email);
+                    cmd.Parameters.AddWithValue("@password", user.Password);
+                    cmd.Parameters.AddWithValue("@username", user.Username);
+                    cmd.Parameters.AddWithValue("@role", user.Role);
+                    cmd.Parameters.AddWithValue("@createdAt", user.CreatedAt);
+                    cmd.Parameters.AddWithValue("@isActive", user.IsActive);
+                    await cmd.ExecuteNonQueryAsync();
+                }
+            }
+        }
+
+        #endregion
+
     }
 }

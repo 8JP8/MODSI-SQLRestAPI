@@ -326,5 +326,113 @@ namespace MODSI_SQLRestAPI
         }
         #endregion
 
+        #region User Management
+
+        [Function("GetAllUsers")]
+        public async Task<HttpResponseData> GetAllUsers([HttpTrigger(AuthorizationLevel.Function, "get", Route = "User/GetAll")] HttpRequestData req)
+        {
+            try
+            {
+                _logger.LogInformation("Retrieving all users.");
+                var users = await _databaseHandler.GetAllUsersAsync();
+                _logger.LogInformation($"Retrieved users: {JsonSerializer.Serialize(users)}");
+                var response = req.CreateResponse(HttpStatusCode.OK);
+                response.Headers.Add("Content-Type", "application/json; charset=utf-8");
+                await response.WriteStringAsync(JsonSerializer.Serialize(users));
+                return response;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while retrieving users.");
+                return req.CreateResponse(HttpStatusCode.InternalServerError);
+            }
+        }
+
+        [Function("GetUserById")]
+        public async Task<HttpResponseData> GetUserById([HttpTrigger(AuthorizationLevel.Function, "get", Route = "User/Get/{id:int}")] HttpRequestData req, int id)
+        {
+            try
+            {
+                _logger.LogInformation($"Retrieving user with ID: {id}");
+                var user = await _databaseHandler.GetUserByIdAsync(id);
+                if (user == null)
+                {
+                    return req.CreateResponse(HttpStatusCode.NotFound);
+                }
+                var response = req.CreateResponse(HttpStatusCode.OK);
+                response.Headers.Add("Content-Type", "application/json; charset=utf-8");
+                await response.WriteStringAsync(JsonSerializer.Serialize(user));
+                return response;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"An error occurred while retrieving user with ID {id}.");
+                return req.CreateResponse(HttpStatusCode.InternalServerError);
+            }
+        }
+        [Function("AddUser")]
+        public async Task<HttpResponseData> AddUser([HttpTrigger(AuthorizationLevel.Function, "post", Route = "User/Add")] HttpRequestData req)
+        {
+            try
+            {
+                _logger.LogInformation("Adding new user.");
+                var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+                var user = JsonSerializer.Deserialize<User>(requestBody);
+                await _databaseHandler.AddUserAsync(user);
+                var response = req.CreateResponse(HttpStatusCode.OK);
+                response.Headers.Add("Content-Type", "text/plain; charset=utf-8");
+                await response.WriteStringAsync("User added successfully.");
+                return response;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while adding user.");
+                return req.CreateResponse(HttpStatusCode.InternalServerError);
+            }
+        }
+        [Function("DeleteUserById")]
+        public async Task<HttpResponseData> DeleteUserById([HttpTrigger(AuthorizationLevel.Function, "delete", Route = "User/Delete/{id:int}")] HttpRequestData req, int id)
+        {
+            try
+            {
+                _logger.LogInformation($"Deleting user with ID: {id}");
+                await _databaseHandler.DeleteUserByIdAsync(id);
+                var response = req.CreateResponse(HttpStatusCode.OK);
+                response.Headers.Add("Content-Type", "text/plain; charset=utf-8");
+                await response.WriteStringAsync($"User with ID {id} deleted successfully.");
+                return response;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"An error occurred while deleting user with ID {id}.");
+                return req.CreateResponse(HttpStatusCode.InternalServerError);
+            }
+        }
+
+        [Function("UpdateUserById")]
+        public async Task<HttpResponseData> UpdateUserById([HttpTrigger(AuthorizationLevel.Function, "put", Route = "User/Update/{id:int}")] HttpRequestData req, int id)
+        {
+            try
+            {
+                _logger.LogInformation($"Updating user with ID: {id}");
+                var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+                var user = JsonSerializer.Deserialize<User>(requestBody);
+                user.ID = id;
+                await _databaseHandler.UpdateUserByIdAsync(user);
+                var response = req.CreateResponse(HttpStatusCode.OK);
+                response.Headers.Add("Content-Type", "text/plain; charset=utf-8");
+                await response.WriteStringAsync($"User with ID {id} updated successfully.");
+                return response;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"An error occurred while updating user with ID {id}.");
+                return req.CreateResponse(HttpStatusCode.InternalServerError);
+            }
+        }
+
+        #endregion
+
+
     }
 }
