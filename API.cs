@@ -7,7 +7,8 @@ using System.Threading.Tasks;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
-using System.Web;
+
+
 
 namespace MODSI_SQLRestAPI
 {
@@ -434,10 +435,19 @@ namespace MODSI_SQLRestAPI
 
         [Function("EmailUserExists")]
 
-        public async Task<HttpResponseData> EmailUserExists([HttpTrigger(AuthorizationLevel.Function, "get", Route = "User/EmailExists/{email}")] HttpRequestData req, string email)
+        public async Task<HttpResponseData> EmailUserExists(
+        [HttpTrigger(AuthorizationLevel.Function, "get", Route = "User/EmailExists")] HttpRequestData req)
         {
             try
             {
+                // Obter o email do parâmetro de consulta
+                string email = req.Query["email"];
+
+                if (string.IsNullOrEmpty(email))
+                {
+                    return req.CreateResponse(HttpStatusCode.BadRequest);
+                }
+
                 _logger.LogInformation($"Checking if email exists: {email}");
                 var exists = await _databaseHandler.EmailUserExistsAsync(email);
                 var response = req.CreateResponse(HttpStatusCode.OK);
@@ -447,10 +457,11 @@ namespace MODSI_SQLRestAPI
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"An error occurred while checking if email exists: {email}");
+                _logger.LogError(ex, $"An error occurred while checking if email exists");
                 return req.CreateResponse(HttpStatusCode.InternalServerError);
             }
         }
+
 
         [Function("GetUserByEmail")]
         public async Task<HttpResponseData> GetUserByEmail([HttpTrigger(AuthorizationLevel.Function, "get", Route = "User/GetByEmail/{email}")] HttpRequestData req, string email)
