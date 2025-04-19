@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data.SqlClient;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace MODSI_SQLRestAPI
@@ -253,18 +255,6 @@ namespace MODSI_SQLRestAPI
         #endregion
 
         #region User Management
-        public class User
-        {
-            public int ID { get; set; }
-            public string Name { get; set; }
-            public string Email { get; set; }
-            public string Password { get; set; }
-            public string Username { get; set; }
-            public string Role { get; set; }
-            public DateTime CreatedAt { get; set; }
-            public bool IsActive { get; set; }
-            public string Group { get; set; }  // Nova propriedade
-        }
 
         public async Task<List<User>> GetAllUsersAsync()
         {
@@ -289,7 +279,7 @@ namespace MODSI_SQLRestAPI
                                 Role = reader.GetString(5),
                                 CreatedAt = reader.GetDateTime(6),
                                 IsActive = reader.GetBoolean(7),
-                                Group = reader.GetString(8)  // Nova coluna
+                                Group = reader.GetString(8)
                             });
                         }
                     }
@@ -298,31 +288,68 @@ namespace MODSI_SQLRestAPI
             return users;
         }
 
-        // Métodos atualizados para incluir o Group:
-
         public async Task AddUserAsync(User user)
         {
+            var salt = PasswordUtils.GenerateSalt();
+            var passwordHash = PasswordUtils.HashPassword(user.Password, salt);
+
             using (SqlConnection conn = new SqlConnection(_connectionString))
             {
                 await conn.OpenAsync();
-                var query = $"INSERT INTO {_user_DB} (Name, Email, Password, Username, Role, CreatedAt, IsActive, [Group]) " +
-                            "VALUES (@Name, @Email, @Password, @Username, @Role, @CreatedAt, @IsActive, @Group)";
+                var query = $"INSERT INTO {_user_DB} (Name, Email, Password, Username, Role, CreatedAt, IsActive, [Group], Salt) " +
+                            "VALUES (@Name, @Email, @Password, @Username, @Role, @CreatedAt, @IsActive, @Group, @Salt)";
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
                     cmd.Parameters.AddWithValue("@Name", user.Name);
                     cmd.Parameters.AddWithValue("@Email", user.Email);
-                    cmd.Parameters.AddWithValue("@Password", user.Password);
+                    cmd.Parameters.AddWithValue("@Password", passwordHash);
                     cmd.Parameters.AddWithValue("@Username", user.Username);
                     cmd.Parameters.AddWithValue("@Role", user.Role);
                     cmd.Parameters.AddWithValue("@CreatedAt", user.CreatedAt);
                     cmd.Parameters.AddWithValue("@IsActive", user.IsActive);
-                    cmd.Parameters.AddWithValue("@Group", user.Group);  // Novo parâmetro
+                    cmd.Parameters.AddWithValue("@Group", user.Group);
+                    cmd.Parameters.AddWithValue("@Salt", salt);
                     await cmd.ExecuteNonQueryAsync();
                 }
             }
         }
 
+        public async Task<User> AuthenticateUserAsync(string username, string password)
+        {
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            {
+                await conn.OpenAsync();
+                var query = $"SELECT ID, Name, Email, Password, Username, Role, CreatedAt, IsActive, [Group], Salt FROM {_user_DB} WHERE Username = @Username";
+                using (SqlCommand cmd = new SqlCommand(query, conn))
+                {
+                    cmd.Parameters.AddWithValue("@Username", username);
+                    using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
+                    {
+                        if (await reader.ReadAsync())
+                        {
+                            var storedHash = reader.GetString(2);
+                            var salt = reader.GetString(9);
 
+                            if (storedHash == PasswordUtils.HashPassword(password, salt))
+                            {
+                                return new User
+                                {
+                                    ID = reader.GetInt32(0),
+                                    Name = reader.GetString(1),
+                                    Email = reader.GetString(2),
+                                    Username = reader.GetString(3),
+                                    Role = reader.GetString(4),
+                                    CreatedAt = reader.GetDateTime(5),
+                                    IsActive = reader.GetBoolean(6),
+                                    Group = reader.GetString(7)
+                                };
+                            }
+                        }
+                    }
+                }
+            }
+            return null;
+        }
 
         public async Task UpdateUserByIdAsync(User user)
         {
@@ -340,12 +367,11 @@ namespace MODSI_SQLRestAPI
                     cmd.Parameters.AddWithValue("@Role", user.Role);
                     cmd.Parameters.AddWithValue("@CreatedAt", user.CreatedAt);
                     cmd.Parameters.AddWithValue("@IsActive", user.IsActive);
-                    cmd.Parameters.AddWithValue("@Group", user.Group);  // Novo parâmetro
+                    cmd.Parameters.AddWithValue("@Group", user.Group);
                     await cmd.ExecuteNonQueryAsync();
                 }
             }
         }
-
 
         public async Task<bool> EmailUserExistsAsync(string email)
         {
@@ -361,10 +387,6 @@ namespace MODSI_SQLRestAPI
                 }
             }
         }
-
-        // Get use by email
-
-        //GetUserByEmailAsync
 
         public async Task<User> GetUserByEmailAsync(string email)
         {
@@ -390,7 +412,7 @@ namespace MODSI_SQLRestAPI
                                 Role = reader.GetString(5),
                                 CreatedAt = reader.GetDateTime(6),
                                 IsActive = reader.GetBoolean(7),
-                                Group = reader.GetString(8)  // Nova coluna
+                                Group = reader.GetString(8)
                             };
                         }
                     }
@@ -398,9 +420,6 @@ namespace MODSI_SQLRestAPI
             }
             return user;
         }
-
-        //DeleteUserByIdAsync
-
 
         public async Task DeleteUserByIdAsync(int id)
         {
@@ -415,8 +434,6 @@ namespace MODSI_SQLRestAPI
                 }
             }
         }
-
-        //GetUserByIdAsync
 
         public async Task<User> GetUserByIdAsync(int id)
         {
@@ -442,7 +459,7 @@ namespace MODSI_SQLRestAPI
                                 Role = reader.GetString(5),
                                 CreatedAt = reader.GetDateTime(6),
                                 IsActive = reader.GetBoolean(7),
-                                Group = reader.GetString(8)  // Nova coluna
+                                Group = reader.GetString(8)
                             };
                         }
                     }
@@ -451,7 +468,28 @@ namespace MODSI_SQLRestAPI
             return user;
         }
 
+        public static class PasswordUtils
+        {
+            public static string HashPassword(string password, string salt)
+            {
+                using (var sha256 = SHA256.Create())
+                {
+                    var combined = Encoding.UTF8.GetBytes(password + salt);
+                    var hash = sha256.ComputeHash(combined);
+                    return Convert.ToBase64String(hash);
+                }
+            }
 
+            public static string GenerateSalt()
+            {
+                var saltBytes = new byte[16];
+                using (var rng = RandomNumberGenerator.Create())
+                {
+                    rng.GetBytes(saltBytes);
+                }
+                return Convert.ToBase64String(saltBytes);
+            }
+        }
         #endregion
 
     }

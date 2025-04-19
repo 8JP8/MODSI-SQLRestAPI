@@ -12,14 +12,14 @@ using Microsoft.Extensions.Logging;
 
 namespace MODSI_SQLRestAPI
 {
-    public class Points
+    public class API
     {
         private readonly ILogger _logger;
         private readonly DatabaseHandler _databaseHandler;
 
-        public Points(ILoggerFactory loggerFactory)
+        public API(ILoggerFactory loggerFactory)
         {
-            _logger = loggerFactory.CreateLogger<Points>();
+            _logger = loggerFactory.CreateLogger<API>();
             _databaseHandler = new DatabaseHandler();
         }
 
@@ -382,18 +382,22 @@ namespace MODSI_SQLRestAPI
                 var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
                 var user = JsonSerializer.Deserialize<User>(requestBody);
 
+                // Generate salt and hash password
+                var salt = PasswordUtils.GenerateSalt();
+                var passwordHash = PasswordUtils.HashPassword(user.Password, salt);
+
                 // Map MODSI_SQLRestAPI.User to MODSI_SQLRestAPI.DatabaseHandler.User
-                var dbUser = new DatabaseHandler.User
+                var dbUser = new User
                 {
-                    ID = user.ID,
                     Name = user.Name,
                     Email = user.Email,
-                    Password = user.Password,
+                    Password = passwordHash,
                     Username = user.Username,
-                    Role = user.Role,
-                    CreatedAt = user.CreatedAt,
-                    IsActive = user.IsActive,
-                    Group = user.Group
+                    Role = "User",
+                    CreatedAt = DateTime.UtcNow,
+                    IsActive = true,
+                    Group = "USER",
+                    Salt = salt
                 };
 
                 await _databaseHandler.AddUserAsync(dbUser);
@@ -409,7 +413,6 @@ namespace MODSI_SQLRestAPI
                 return req.CreateResponse(HttpStatusCode.InternalServerError);
             }
         }
-
 
         [Function("DeleteUserById")]
         public async Task<HttpResponseData> DeleteUserById([HttpTrigger(AuthorizationLevel.Function, "delete", Route = "User/Delete/{id:int}")] HttpRequestData req, int id)
@@ -441,7 +444,7 @@ namespace MODSI_SQLRestAPI
                 user.ID = id;
 
                 // Map MODSI_SQLRestAPI.User to MODSI_SQLRestAPI.DatabaseHandler.User
-                var dbUser = new DatabaseHandler.User
+                var dbUser = new User
                 {
                     ID = user.ID,
                     Name = user.Name,
@@ -468,15 +471,13 @@ namespace MODSI_SQLRestAPI
             }
         }
 
-
         [Function("EmailUserExists")]
-
         public async Task<HttpResponseData> EmailUserExists(
         [HttpTrigger(AuthorizationLevel.Function, "get", Route = "User/EmailExists")] HttpRequestData req)
         {
             try
             {
-                // Obter o email do parâmetro de consulta
+                // Extract email from query string
                 string email = req.Query["email"];
 
                 if (string.IsNullOrEmpty(email))
@@ -498,14 +499,13 @@ namespace MODSI_SQLRestAPI
             }
         }
 
-
         [Function("GetUserByEmail")]
         public async Task<HttpResponseData> GetUserByEmail(
-            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "User/GetByEmail")] HttpRequestData req)
+        [HttpTrigger(AuthorizationLevel.Function, "get", Route = "User/GetByEmail")] HttpRequestData req)
         {
             try
             {
-                // Extrai o email da query string
+                // Extract email from query string
                 string email = req.Query["email"];
 
                 if (string.IsNullOrEmpty(email))
@@ -535,6 +535,24 @@ namespace MODSI_SQLRestAPI
 
         #endregion
 
+    }
+    internal static class PasswordUtils
+    {
+        public static string GenerateSalt()
+        {
+            // Generate a cryptographic random salt
+            return Convert.ToBase64String(Guid.NewGuid().ToByteArray());
+        }
 
+        public static string HashPassword(string password, string salt)
+        {
+            // Combine password and salt, then hash using SHA256
+            using (var sha256 = System.Security.Cryptography.SHA256.Create())
+            {
+                var combined = System.Text.Encoding.UTF8.GetBytes(password + salt);
+                var hash = sha256.ComputeHash(combined);
+                return Convert.ToBase64String(hash);
+            }
+        }
     }
 }
