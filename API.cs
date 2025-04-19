@@ -372,6 +372,7 @@ namespace MODSI_SQLRestAPI
                 return req.CreateResponse(HttpStatusCode.InternalServerError);
             }
         }
+
         [Function("AddUser")]
         public async Task<HttpResponseData> AddUser([HttpTrigger(AuthorizationLevel.Function, "post", Route = "User/Add")] HttpRequestData req)
         {
@@ -380,7 +381,23 @@ namespace MODSI_SQLRestAPI
                 _logger.LogInformation("Adding new user.");
                 var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
                 var user = JsonSerializer.Deserialize<User>(requestBody);
-                await _databaseHandler.AddUserAsync(user);
+
+                // Map MODSI_SQLRestAPI.User to MODSI_SQLRestAPI.DatabaseHandler.User
+                var dbUser = new DatabaseHandler.User
+                {
+                    ID = user.ID,
+                    Name = user.Name,
+                    Email = user.Email,
+                    Password = user.Password,
+                    Username = user.Username,
+                    Role = user.Role,
+                    CreatedAt = user.CreatedAt,
+                    IsActive = user.IsActive,
+                    Group = user.Group
+                };
+
+                await _databaseHandler.AddUserAsync(dbUser);
+
                 var response = req.CreateResponse(HttpStatusCode.OK);
                 response.Headers.Add("Content-Type", "text/plain; charset=utf-8");
                 await response.WriteStringAsync("User added successfully.");
@@ -392,6 +409,8 @@ namespace MODSI_SQLRestAPI
                 return req.CreateResponse(HttpStatusCode.InternalServerError);
             }
         }
+
+
         [Function("DeleteUserById")]
         public async Task<HttpResponseData> DeleteUserById([HttpTrigger(AuthorizationLevel.Function, "delete", Route = "User/Delete/{id:int}")] HttpRequestData req, int id)
         {
@@ -420,7 +439,23 @@ namespace MODSI_SQLRestAPI
                 var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
                 var user = JsonSerializer.Deserialize<User>(requestBody);
                 user.ID = id;
-                await _databaseHandler.UpdateUserByIdAsync(user);
+
+                // Map MODSI_SQLRestAPI.User to MODSI_SQLRestAPI.DatabaseHandler.User
+                var dbUser = new DatabaseHandler.User
+                {
+                    ID = user.ID,
+                    Name = user.Name,
+                    Email = user.Email,
+                    Password = user.Password,
+                    Username = user.Username,
+                    Role = user.Role,
+                    CreatedAt = user.CreatedAt,
+                    IsActive = user.IsActive,
+                    Group = user.Group
+                };
+
+                await _databaseHandler.UpdateUserByIdAsync(dbUser);
+
                 var response = req.CreateResponse(HttpStatusCode.OK);
                 response.Headers.Add("Content-Type", "text/plain; charset=utf-8");
                 await response.WriteStringAsync($"User with ID {id} updated successfully.");
@@ -432,6 +467,7 @@ namespace MODSI_SQLRestAPI
                 return req.CreateResponse(HttpStatusCode.InternalServerError);
             }
         }
+
 
         [Function("EmailUserExists")]
 
@@ -464,16 +500,27 @@ namespace MODSI_SQLRestAPI
 
 
         [Function("GetUserByEmail")]
-        public async Task<HttpResponseData> GetUserByEmail([HttpTrigger(AuthorizationLevel.Function, "get", Route = "User/GetByEmail/{email}")] HttpRequestData req, string email)
+        public async Task<HttpResponseData> GetUserByEmail(
+            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "User/GetByEmail")] HttpRequestData req)
         {
             try
             {
+                // Extrai o email da query string
+                string email = req.Query["email"];
+
+                if (string.IsNullOrEmpty(email))
+                {
+                    return req.CreateResponse(HttpStatusCode.BadRequest);
+                }
+
                 _logger.LogInformation($"Retrieving user with email: {email}");
                 var user = await _databaseHandler.GetUserByEmailAsync(email);
+
                 if (user == null)
                 {
                     return req.CreateResponse(HttpStatusCode.NotFound);
                 }
+
                 var response = req.CreateResponse(HttpStatusCode.OK);
                 response.Headers.Add("Content-Type", "application/json; charset=utf-8");
                 await response.WriteStringAsync(JsonSerializer.Serialize(user));
@@ -481,7 +528,7 @@ namespace MODSI_SQLRestAPI
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"An error occurred while retrieving user with email {email}.");
+                _logger.LogError(ex, "An error occurred while retrieving user by email.");
                 return req.CreateResponse(HttpStatusCode.InternalServerError);
             }
         }

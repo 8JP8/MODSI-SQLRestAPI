@@ -26,7 +26,10 @@ namespace MODSI_SQLRestAPI
         public string Username { get; set; }
         public string Role { get; set; }
         public DateTime CreatedAt { get; set; }
-        public string IsActive { get; set; }
+        public bool IsActive { get; set; }
+
+        public string Group { get; set; }
+
     }
 
 }

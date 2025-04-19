@@ -12,11 +12,13 @@ namespace MODSI_SQLRestAPI
 
         private readonly string _3DPoints_DB;
         private readonly string _pieChart_DB;
+        private readonly string _user_DB;
         public DatabaseHandler()
         {
             _connectionString = ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString;
             _3DPoints_DB = ConfigurationManager.AppSettings["3DPoints_DBName"];
             _pieChart_DB = ConfigurationManager.AppSettings["PieChart_DBName"];
+            _user_DB = ConfigurationManager.AppSettings["User_DBName"];
         }
 
         #region 3D Points Visualization
@@ -251,6 +253,18 @@ namespace MODSI_SQLRestAPI
         #endregion
 
         #region User Management
+        public class User
+        {
+            public int ID { get; set; }
+            public string Name { get; set; }
+            public string Email { get; set; }
+            public string Password { get; set; }
+            public string Username { get; set; }
+            public string Role { get; set; }
+            public DateTime CreatedAt { get; set; }
+            public bool IsActive { get; set; }
+            public string Group { get; set; }  // Nova propriedade
+        }
 
         public async Task<List<User>> GetAllUsersAsync()
         {
@@ -258,7 +272,7 @@ namespace MODSI_SQLRestAPI
             using (SqlConnection conn = new SqlConnection(_connectionString))
             {
                 await conn.OpenAsync();
-                var query = $"SELECT ID, Name, Email, Password, Username, Role, CreatedAt, IsActive FROM [user]";
+                var query = $"SELECT ID, Name, Email, Password, Username, Role, CreatedAt, IsActive, [Group] FROM {_user_DB}";
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
                     using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
@@ -274,7 +288,8 @@ namespace MODSI_SQLRestAPI
                                 Username = reader.GetString(4),
                                 Role = reader.GetString(5),
                                 CreatedAt = reader.GetDateTime(6),
-                                IsActive = reader.GetString(7)
+                                IsActive = reader.GetBoolean(7),
+                                Group = reader.GetString(8)  // Nova coluna
                             });
                         }
                     }
@@ -283,115 +298,81 @@ namespace MODSI_SQLRestAPI
             return users;
         }
 
-        public async Task<User> GetUserByIdAsync(int id)
-        {
-            User user = null;
-            using (SqlConnection conn = new SqlConnection(_connectionString))
-            {
-                await conn.OpenAsync();
-                var query = $"SELECT ID, Name, Email, Password, Username, Role, CreatedAt, IsActive FROM [user] WHERE ID = @id";
-                using (SqlCommand cmd = new SqlCommand(query, conn))
-                {
-                    cmd.Parameters.AddWithValue("@id", id);
-                    using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
-                    {
-                        if (await reader.ReadAsync())
-                        {
-                            user = new User
-                            {
-                                ID = reader.GetInt32(0),
-                                Name = reader.GetString(1),
-                                Email = reader.GetString(2),
-                                Password = reader.GetString(3),
-                                Username = reader.GetString(4),
-                                Role = reader.GetString(5),
-                                CreatedAt = reader.GetDateTime(6),
-                                IsActive = reader.GetString(7)
-                            };
-                        }
-                    }
-                }
-            }
-            return user;
-        }
+        // Métodos atualizados para incluir o Group:
 
         public async Task AddUserAsync(User user)
         {
-            using (var connection = new SqlConnection(_connectionString))
-            {
-                var query = @"INSERT INTO [user] (name, email, password, username, role, createdAt, isActive) 
-                      VALUES (@Name, @Email, @Password, @Username, @Role, @CreatedAt, @IsActive)";
-                var command = new SqlCommand(query, connection);
-                command.Parameters.AddWithValue("@Name", user.Name);
-                command.Parameters.AddWithValue("@Email", user.Email);
-                command.Parameters.AddWithValue("@Password", user.Password);
-                command.Parameters.AddWithValue("@Username", user.Username);
-                command.Parameters.AddWithValue("@Role", user.Role);
-                command.Parameters.AddWithValue("@CreatedAt", user.CreatedAt);
-                command.Parameters.AddWithValue("@IsActive", user.IsActive);
-
-                await connection.OpenAsync();
-                await command.ExecuteNonQueryAsync();
-            }
-        }
-
-        public async Task DeleteUserByIdAsync(int id)
-        {
             using (SqlConnection conn = new SqlConnection(_connectionString))
             {
                 await conn.OpenAsync();
-                var query = $"DELETE FROM [user] WHERE ID = @id";
+                var query = $"INSERT INTO {_user_DB} (Name, Email, Password, Username, Role, CreatedAt, IsActive, [Group]) " +
+                            "VALUES (@Name, @Email, @Password, @Username, @Role, @CreatedAt, @IsActive, @Group)";
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
-                    cmd.Parameters.AddWithValue("@id", id);
+                    cmd.Parameters.AddWithValue("@Name", user.Name);
+                    cmd.Parameters.AddWithValue("@Email", user.Email);
+                    cmd.Parameters.AddWithValue("@Password", user.Password);
+                    cmd.Parameters.AddWithValue("@Username", user.Username);
+                    cmd.Parameters.AddWithValue("@Role", user.Role);
+                    cmd.Parameters.AddWithValue("@CreatedAt", user.CreatedAt);
+                    cmd.Parameters.AddWithValue("@IsActive", user.IsActive);
+                    cmd.Parameters.AddWithValue("@Group", user.Group);  // Novo parâmetro
                     await cmd.ExecuteNonQueryAsync();
                 }
             }
         }
+
+
 
         public async Task UpdateUserByIdAsync(User user)
         {
             using (SqlConnection conn = new SqlConnection(_connectionString))
             {
                 await conn.OpenAsync();
-                var query = $"UPDATE [user] SET Name = @name, Email = @email, Password = @password, Username = @username, Role = @role, CreatedAt = @createdAt, IsActive = @isActive WHERE ID = @id";
+                var query = $"UPDATE {_user_DB} SET Name = @Name, Email = @Email, Password = @Password, Username = @Username, Role = @Role, CreatedAt = @CreatedAt, IsActive = @IsActive, [Group] = @Group WHERE ID = @ID";
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
-                    cmd.Parameters.AddWithValue("@id", user.ID);
-                    cmd.Parameters.AddWithValue("@name", user.Name);
-                    cmd.Parameters.AddWithValue("@email", user.Email);
-                    cmd.Parameters.AddWithValue("@password", user.Password);
-                    cmd.Parameters.AddWithValue("@username", user.Username);
-                    cmd.Parameters.AddWithValue("@role", user.Role);
-                    cmd.Parameters.AddWithValue("@createdAt", user.CreatedAt);
-                    cmd.Parameters.AddWithValue("@isActive", user.IsActive);
+                    cmd.Parameters.AddWithValue("@ID", user.ID);
+                    cmd.Parameters.AddWithValue("@Name", user.Name);
+                    cmd.Parameters.AddWithValue("@Email", user.Email);
+                    cmd.Parameters.AddWithValue("@Password", user.Password);
+                    cmd.Parameters.AddWithValue("@Username", user.Username);
+                    cmd.Parameters.AddWithValue("@Role", user.Role);
+                    cmd.Parameters.AddWithValue("@CreatedAt", user.CreatedAt);
+                    cmd.Parameters.AddWithValue("@IsActive", user.IsActive);
+                    cmd.Parameters.AddWithValue("@Group", user.Group);  // Novo parâmetro
                     await cmd.ExecuteNonQueryAsync();
                 }
             }
         }
+
 
         public async Task<bool> EmailUserExistsAsync(string email)
         {
             using (SqlConnection conn = new SqlConnection(_connectionString))
             {
                 await conn.OpenAsync();
-                var query = "SELECT COUNT(*) FROM [user] WHERE Email = @Email";
+                var query = $"SELECT COUNT(*) FROM {_user_DB} WHERE Email = @Email";
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
                     cmd.Parameters.AddWithValue("@Email", email);
-                    int count = (int)await cmd.ExecuteScalarAsync();
+                    var count = (int)await cmd.ExecuteScalarAsync();
                     return count > 0;
                 }
             }
         }
-        // Get user by email
+
+        // Get use by email
+
+        //GetUserByEmailAsync
+
         public async Task<User> GetUserByEmailAsync(string email)
         {
             User user = null;
             using (SqlConnection conn = new SqlConnection(_connectionString))
             {
                 await conn.OpenAsync();
-                var query = $"SELECT ID, Name, Email, Password, Username, Role, CreatedAt, IsActive FROM [user] WHERE Email = @Email";
+                var query = $"SELECT ID, Name, Email, Password, Username, Role, CreatedAt, IsActive, [Group] FROM {_user_DB} WHERE Email = @Email";
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
                     cmd.Parameters.AddWithValue("@Email", email);
@@ -408,7 +389,8 @@ namespace MODSI_SQLRestAPI
                                 Username = reader.GetString(4),
                                 Role = reader.GetString(5),
                                 CreatedAt = reader.GetDateTime(6),
-                                IsActive = reader.GetString(7)
+                                IsActive = reader.GetBoolean(7),
+                                Group = reader.GetString(8)  // Nova coluna
                             };
                         }
                     }
@@ -417,6 +399,57 @@ namespace MODSI_SQLRestAPI
             return user;
         }
 
+        //DeleteUserByIdAsync
+
+
+        public async Task DeleteUserByIdAsync(int id)
+        {
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            {
+                await conn.OpenAsync();
+                var query = $"DELETE FROM {_user_DB} WHERE ID = @ID";
+                using (SqlCommand cmd = new SqlCommand(query, conn))
+                {
+                    cmd.Parameters.AddWithValue("@ID", id);
+                    await cmd.ExecuteNonQueryAsync();
+                }
+            }
+        }
+
+        //GetUserByIdAsync
+
+        public async Task<User> GetUserByIdAsync(int id)
+        {
+            User user = null;
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            {
+                await conn.OpenAsync();
+                var query = $"SELECT ID, Name, Email, Password, Username, Role, CreatedAt, IsActive, [Group] FROM {_user_DB} WHERE ID = @ID";
+                using (SqlCommand cmd = new SqlCommand(query, conn))
+                {
+                    cmd.Parameters.AddWithValue("@ID", id);
+                    using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
+                    {
+                        if (await reader.ReadAsync())
+                        {
+                            user = new User
+                            {
+                                ID = reader.GetInt32(0),
+                                Name = reader.GetString(1),
+                                Email = reader.GetString(2),
+                                Password = reader.GetString(3),
+                                Username = reader.GetString(4),
+                                Role = reader.GetString(5),
+                                CreatedAt = reader.GetDateTime(6),
+                                IsActive = reader.GetBoolean(7),
+                                Group = reader.GetString(8)  // Nova coluna
+                            };
+                        }
+                    }
+                }
+            }
+            return user;
+        }
 
 
         #endregion
