@@ -14,17 +14,18 @@ namespace MODSI_SQLRestAPI
 
         private readonly string _3DPoints_DB;
         private readonly string _pieChart_DB;
+
         private readonly string _user_DB;
         public DatabaseHandler()
         {
             _connectionString = ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString;
             _3DPoints_DB = ConfigurationManager.AppSettings["3DPoints_DBName"];
             _pieChart_DB = ConfigurationManager.AppSettings["PieChart_DBName"];
-            _user_DB = ConfigurationManager.AppSettings["User_DBName"];
+            _user_DB = ConfigurationManager.AppSettings["Users_DBName"];
         }
 
         #region 3D Points Visualization
-        public async Task<List<Point3D>> GetAllPointsAsync()
+        internal async Task<List<Point3D>> GetAllPointsAsync()
         {
             var points = new List<Point3D>();
 
@@ -40,7 +41,7 @@ namespace MODSI_SQLRestAPI
                         {
                             points.Add(new Point3D
                             {
-                                ID = reader.GetInt32(0),
+                                Id = reader.GetInt32(0),
                                 X = (double)reader.GetDouble(1),
                                 Y = (double)reader.GetDouble(2),
                                 Z = (double)reader.GetDouble(3)
@@ -53,7 +54,7 @@ namespace MODSI_SQLRestAPI
             return points;
         }
 
-        public async Task<Point3D> GetPointByIdAsync(int id)
+        internal async Task<Point3D> GetPointByIdAsync(int id)
         {
             Point3D point = null;
 
@@ -70,7 +71,7 @@ namespace MODSI_SQLRestAPI
                         {
                             point = new Point3D
                             {
-                                ID = reader.GetInt32(0),
+                                Id = reader.GetInt32(0),
                                 X = (double)reader.GetDouble(1),
                                 Y = (double)reader.GetDouble(2),
                                 Z = (double)reader.GetDouble(3)
@@ -83,7 +84,7 @@ namespace MODSI_SQLRestAPI
             return point;
         }
 
-        public async Task AddPointsAsync(List<Point3D> points)
+        internal async Task AddPointsAsync(List<Point3D> points)
         {
             using (SqlConnection conn = new SqlConnection(_connectionString))
             {
@@ -102,7 +103,7 @@ namespace MODSI_SQLRestAPI
             }
         }
 
-        public async Task DeletePointByIdAsync(int id)
+        internal async Task DeletePointByIdAsync(int id)
         {
             using (SqlConnection conn = new SqlConnection(_connectionString))
             {
@@ -116,7 +117,7 @@ namespace MODSI_SQLRestAPI
             }
         }
 
-        public async Task ReplacePointByIdAsync(Point3D point)
+        internal async Task ReplacePointByIdAsync(Point3D point)
         {
             using (SqlConnection conn = new SqlConnection(_connectionString))
             {
@@ -124,7 +125,7 @@ namespace MODSI_SQLRestAPI
                 var query = $"UPDATE {_3DPoints_DB} SET x = @x, y = @y, z = @z WHERE Id = @id";
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
-                    cmd.Parameters.AddWithValue("@id", point.ID);
+                    cmd.Parameters.AddWithValue("@id", point.Id);
                     cmd.Parameters.AddWithValue("@x", point.X);
                     cmd.Parameters.AddWithValue("@y", point.Y);
                     cmd.Parameters.AddWithValue("@z", point.Z);
@@ -135,7 +136,7 @@ namespace MODSI_SQLRestAPI
         #endregion
 
         #region PieChart Visualization
-        public async Task<List<PieChart>> GetAllPieChartsAsync()
+        internal async Task<List<PieChart>> GetAllPieChartsAsync()
         {
             var pieCharts = new List<PieChart>();
 
@@ -163,7 +164,7 @@ namespace MODSI_SQLRestAPI
             return pieCharts;
         }
 
-        public async Task<PieChart> GetPieChartByIdAsync(int id)
+        internal async Task<PieChart> GetPieChartByIdAsync(int id)
         {
             PieChart pieChart = null;
 
@@ -192,7 +193,7 @@ namespace MODSI_SQLRestAPI
             return pieChart;
         }
 
-        public async Task AddPieChartsAsync(List<PieChart> pieCharts)
+        internal async Task AddPieChartsAsync(List<PieChart> pieCharts)
         {
             using (SqlConnection conn = new SqlConnection(_connectionString))
             {
@@ -210,7 +211,7 @@ namespace MODSI_SQLRestAPI
             }
         }
 
-        public async Task DeletePieChartByIdAsync(int id)
+        internal async Task DeletePieChartByIdAsync(int id)
         {
             using (SqlConnection conn = new SqlConnection(_connectionString))
             {
@@ -224,7 +225,7 @@ namespace MODSI_SQLRestAPI
             }
         }
 
-        public async Task ReplacePieChartByIdAsync(PieChart pieChart)
+        internal async Task ReplacePieChartByIdAsync(PieChart pieChart)
         {
             using (SqlConnection conn = new SqlConnection(_connectionString))
             {
@@ -240,7 +241,7 @@ namespace MODSI_SQLRestAPI
             }
         }
 
-        public async Task SetRandomPieChartsAsync()
+        internal async Task SetRandomPieChartsAsync()
         {
             var random = new Random();
             var pieCharts = new List<PieChart>
@@ -256,13 +257,13 @@ namespace MODSI_SQLRestAPI
 
         #region User Management
 
-        public async Task<List<User>> GetAllUsersAsync()
+        internal async Task<List<User>> GetAllUsersAsync()
         {
             var users = new List<User>();
             using (SqlConnection conn = new SqlConnection(_connectionString))
             {
                 await conn.OpenAsync();
-                var query = $"SELECT ID, Name, Email, Password, Username, Role, CreatedAt, IsActive, [Group] FROM {_user_DB}";
+                var query = $"SELECT Id, Name, Email, Password, Username, Role, CreatedAt, IsActive, [Group] FROM {_user_DB}";
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
                     using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
@@ -271,7 +272,7 @@ namespace MODSI_SQLRestAPI
                         {
                             users.Add(new User
                             {
-                                ID = reader.GetInt32(0),
+                                Id = reader.GetInt32(0),
                                 Name = reader.GetString(1),
                                 Email = reader.GetString(2),
                                 Password = reader.GetString(3),
@@ -288,11 +289,8 @@ namespace MODSI_SQLRestAPI
             return users;
         }
 
-        public async Task AddUserAsync(User user)
+        internal async Task AddUserAsync(User user)
         {
-            var salt = PasswordUtils.GenerateSalt();
-            var passwordHash = PasswordUtils.HashPassword(user.Password, salt);
-
             using (SqlConnection conn = new SqlConnection(_connectionString))
             {
                 await conn.OpenAsync();
@@ -302,24 +300,24 @@ namespace MODSI_SQLRestAPI
                 {
                     cmd.Parameters.AddWithValue("@Name", user.Name);
                     cmd.Parameters.AddWithValue("@Email", user.Email);
-                    cmd.Parameters.AddWithValue("@Password", passwordHash);
+                    cmd.Parameters.AddWithValue("@Password", user.Password);
                     cmd.Parameters.AddWithValue("@Username", user.Username);
                     cmd.Parameters.AddWithValue("@Role", user.Role);
                     cmd.Parameters.AddWithValue("@CreatedAt", user.CreatedAt);
                     cmd.Parameters.AddWithValue("@IsActive", user.IsActive);
                     cmd.Parameters.AddWithValue("@Group", user.Group);
-                    cmd.Parameters.AddWithValue("@Salt", salt);
+                    cmd.Parameters.AddWithValue("@Salt", user.Salt);
                     await cmd.ExecuteNonQueryAsync();
                 }
             }
         }
 
-        public async Task<User> AuthenticateUserAsync(string username, string password)
+        internal async Task<User> AuthenticateUserAsync(string username, string password)
         {
             using (SqlConnection conn = new SqlConnection(_connectionString))
             {
                 await conn.OpenAsync();
-                var query = $"SELECT ID, Name, Email, Password, Username, Role, CreatedAt, IsActive, [Group], Salt FROM {_user_DB} WHERE Username = @Username";
+                var query = $"SELECT Id, Name, Email, Password, Username, Role, CreatedAt, IsActive, [Group], Salt FROM {_user_DB} WHERE Username = @Username";
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
                     cmd.Parameters.AddWithValue("@Username", username);
@@ -327,21 +325,34 @@ namespace MODSI_SQLRestAPI
                     {
                         if (await reader.ReadAsync())
                         {
-                            var storedHash = reader.GetString(2);
-                            var salt = reader.GetString(9);
+                            // Obter os índices das colunas pelo nome
+                            int idIndex = reader.GetOrdinal("Id");
+                            int nameIndex = reader.GetOrdinal("Name");
+                            int emailIndex = reader.GetOrdinal("Email");
+                            int passwordIndex = reader.GetOrdinal("Password");
+                            int usernameIndex = reader.GetOrdinal("Username");
+                            int roleIndex = reader.GetOrdinal("Role");
+                            int createdAtIndex = reader.GetOrdinal("CreatedAt");
+                            int isActiveIndex = reader.GetOrdinal("IsActive");
+                            int groupIndex = reader.GetOrdinal("Group");
+                            int saltIndex = reader.GetOrdinal("Salt");
+
+                            // Recuperar os valores das colunas
+                            var storedHash = reader.GetString(passwordIndex);
+                            var salt = reader.GetString(saltIndex);
 
                             if (storedHash == PasswordUtils.HashPassword(password, salt))
                             {
                                 return new User
                                 {
-                                    ID = reader.GetInt32(0),
-                                    Name = reader.GetString(1),
-                                    Email = reader.GetString(2),
-                                    Username = reader.GetString(3),
-                                    Role = reader.GetString(4),
-                                    CreatedAt = reader.GetDateTime(5),
-                                    IsActive = reader.GetBoolean(6),
-                                    Group = reader.GetString(7)
+                                    Id = reader.GetInt32(idIndex),
+                                    Name = reader.GetString(nameIndex),
+                                    Email = reader.GetString(emailIndex),
+                                    Username = reader.GetString(usernameIndex),
+                                    Role = reader.GetString(roleIndex),
+                                    CreatedAt = reader.GetDateTime(createdAtIndex),
+                                    IsActive = reader.GetBoolean(isActiveIndex),
+                                    Group = reader.GetString(groupIndex)
                                 };
                             }
                         }
@@ -351,15 +362,15 @@ namespace MODSI_SQLRestAPI
             return null;
         }
 
-        public async Task UpdateUserByIdAsync(User user)
+        internal async Task UpdateUserByIdAsync(User user)
         {
             using (SqlConnection conn = new SqlConnection(_connectionString))
             {
                 await conn.OpenAsync();
-                var query = $"UPDATE {_user_DB} SET Name = @Name, Email = @Email, Password = @Password, Username = @Username, Role = @Role, CreatedAt = @CreatedAt, IsActive = @IsActive, [Group] = @Group WHERE ID = @ID";
+                var query = $"UPDATE {_user_DB} SET Name = @Name, Email = @Email, Password = @Password, Username = @Username, Role = @Role, CreatedAt = @CreatedAt, IsActive = @IsActive, [Group] = @Group WHERE Id = @id";
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
-                    cmd.Parameters.AddWithValue("@ID", user.ID);
+                    cmd.Parameters.AddWithValue("@Id", user.Id);
                     cmd.Parameters.AddWithValue("@Name", user.Name);
                     cmd.Parameters.AddWithValue("@Email", user.Email);
                     cmd.Parameters.AddWithValue("@Password", user.Password);
@@ -373,7 +384,7 @@ namespace MODSI_SQLRestAPI
             }
         }
 
-        public async Task<bool> EmailUserExistsAsync(string email)
+        internal async Task<bool> EmailUserExistsAsync(string email)
         {
             using (SqlConnection conn = new SqlConnection(_connectionString))
             {
@@ -388,13 +399,13 @@ namespace MODSI_SQLRestAPI
             }
         }
 
-        public async Task<User> GetUserByEmailAsync(string email)
+        internal async Task<User> GetUserByEmailAsync(string email)
         {
             User user = null;
             using (SqlConnection conn = new SqlConnection(_connectionString))
             {
                 await conn.OpenAsync();
-                var query = $"SELECT ID, Name, Email, Password, Username, Role, CreatedAt, IsActive, [Group] FROM {_user_DB} WHERE Email = @Email";
+                var query = $"SELECT Id, Name, Email, Password, Username, Role, CreatedAt, IsActive, [Group] FROM {_user_DB} WHERE Email = @Email";
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
                     cmd.Parameters.AddWithValue("@Email", email);
@@ -404,7 +415,7 @@ namespace MODSI_SQLRestAPI
                         {
                             user = new User
                             {
-                                ID = reader.GetInt32(0),
+                                Id = reader.GetInt32(0),
                                 Name = reader.GetString(1),
                                 Email = reader.GetString(2),
                                 Password = reader.GetString(3),
@@ -421,37 +432,37 @@ namespace MODSI_SQLRestAPI
             return user;
         }
 
-        public async Task DeleteUserByIdAsync(int id)
+        internal async Task DeleteUserByIdAsync(int id)
         {
             using (SqlConnection conn = new SqlConnection(_connectionString))
             {
                 await conn.OpenAsync();
-                var query = $"DELETE FROM {_user_DB} WHERE ID = @ID";
+                var query = $"DELETE FROM {_user_DB} WHERE Id = @Id";
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
-                    cmd.Parameters.AddWithValue("@ID", id);
+                    cmd.Parameters.AddWithValue("@Id", id);
                     await cmd.ExecuteNonQueryAsync();
                 }
             }
         }
 
-        public async Task<User> GetUserByIdAsync(int id)
+        internal async Task<User> GetUserByIdAsync(int id)
         {
             User user = null;
             using (SqlConnection conn = new SqlConnection(_connectionString))
             {
                 await conn.OpenAsync();
-                var query = $"SELECT ID, Name, Email, Password, Username, Role, CreatedAt, IsActive, [Group] FROM {_user_DB} WHERE ID = @ID";
+                var query = $"SELECT Id, Name, Email, Password, Username, Role, CreatedAt, IsActive, [Group] FROM {_user_DB} WHERE Id = @Id";
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
-                    cmd.Parameters.AddWithValue("@ID", id);
+                    cmd.Parameters.AddWithValue("@Id", id);
                     using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
                     {
                         if (await reader.ReadAsync())
                         {
                             user = new User
                             {
-                                ID = reader.GetInt32(0),
+                                Id = reader.GetInt32(0),
                                 Name = reader.GetString(1),
                                 Email = reader.GetString(2),
                                 Password = reader.GetString(3),
@@ -468,9 +479,9 @@ namespace MODSI_SQLRestAPI
             return user;
         }
 
-        public static class PasswordUtils
+        internal static class PasswordUtils
         {
-            public static string HashPassword(string password, string salt)
+            internal static string HashPassword(string password, string salt)
             {
                 using (var sha256 = SHA256.Create())
                 {
@@ -480,7 +491,7 @@ namespace MODSI_SQLRestAPI
                 }
             }
 
-            public static string GenerateSalt()
+            internal static string GenerateSalt()
             {
                 var saltBytes = new byte[16];
                 using (var rng = RandomNumberGenerator.Create())

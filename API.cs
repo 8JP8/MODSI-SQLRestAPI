@@ -1,12 +1,16 @@
 using System;
 using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
 using System.IO;
 using System.Net;
+using System.Security.Claims;
+using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
 
 
 
@@ -52,7 +56,7 @@ namespace MODSI_SQLRestAPI
         {
             try
             {
-                _logger.LogInformation($"Retrieving point with ID: {id}");
+                _logger.LogInformation($"Retrieving point with Id: {id}");
 
                 var point = await _databaseHandler.GetPointByIdAsync(id);
                 if (point == null)
@@ -68,7 +72,7 @@ namespace MODSI_SQLRestAPI
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"An error occurred while retrieving point with ID {id}.");
+                _logger.LogError(ex, $"An error occurred while retrieving point with Id {id}.");
                 return req.CreateResponse(HttpStatusCode.InternalServerError);
             }
         }
@@ -138,19 +142,19 @@ namespace MODSI_SQLRestAPI
         {
             try
             {
-                _logger.LogInformation($"Deleting point with ID: {id}");
+                _logger.LogInformation($"Deleting point with Id: {id}");
 
                 await _databaseHandler.DeletePointByIdAsync(id);
 
                 var response = req.CreateResponse(HttpStatusCode.OK);
                 response.Headers.Add("Content-Type", "text/plain; charset=utf-8");
-                await response.WriteStringAsync($"Point with ID {id} deleted successfully.");
+                await response.WriteStringAsync($"Point with Id {id} deleted successfully.");
 
                 return response;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"An error occurred while deleting point with ID {id}.");
+                _logger.LogError(ex, $"An error occurred while deleting point with Id {id}.");
                 return req.CreateResponse(HttpStatusCode.InternalServerError);
             }
         }
@@ -160,23 +164,23 @@ namespace MODSI_SQLRestAPI
         {
             try
             {
-                _logger.LogInformation($"Replacing point with ID: {id}");
+                _logger.LogInformation($"Replacing point with Id: {id}");
 
                 var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
                 var point = JsonSerializer.Deserialize<Point3D>(requestBody);
-                point.ID = id;
+                point.Id = id;
 
                 await _databaseHandler.ReplacePointByIdAsync(point);
 
                 var response = req.CreateResponse(HttpStatusCode.OK);
                 response.Headers.Add("Content-Type", "text/plain; charset=utf-8");
-                await response.WriteStringAsync($"Point with ID {id} replaced successfully.");
+                await response.WriteStringAsync($"Point with Id {id} replaced successfully.");
 
                 return response;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"An error occurred while replacing point with ID {id}.");
+                _logger.LogError(ex, $"An error occurred while replacing point with Id {id}.");
                 return req.CreateResponse(HttpStatusCode.InternalServerError);
             }
         }
@@ -211,7 +215,7 @@ namespace MODSI_SQLRestAPI
         {
             try
             {
-                _logger.LogInformation($"Retrieving pie chart with ID: {id}");
+                _logger.LogInformation($"Retrieving pie chart with Id: {id}");
 
                 var pieChart = await _databaseHandler.GetPieChartByIdAsync(id);
                 if (pieChart == null)
@@ -227,7 +231,7 @@ namespace MODSI_SQLRestAPI
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"An error occurred while retrieving pie chart with ID {id}.");
+                _logger.LogError(ex, $"An error occurred while retrieving pie chart with Id {id}.");
                 return req.CreateResponse(HttpStatusCode.InternalServerError);
             }
         }
@@ -284,19 +288,19 @@ namespace MODSI_SQLRestAPI
         {
             try
             {
-                _logger.LogInformation($"Deleting pie chart with ID: {id}");
+                _logger.LogInformation($"Deleting pie chart with Id: {id}");
 
                 await _databaseHandler.DeletePieChartByIdAsync(id);
 
                 var response = req.CreateResponse(HttpStatusCode.OK);
                 response.Headers.Add("Content-Type", "text/plain; charset=utf-8");
-                await response.WriteStringAsync($"Pie chart with ID {id} deleted successfully.");
+                await response.WriteStringAsync($"Pie chart with Id {id} deleted successfully.");
 
                 return response;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"An error occurred while deleting pie chart with ID {id}.");
+                _logger.LogError(ex, $"An error occurred while deleting pie chart with Id {id}.");
                 return req.CreateResponse(HttpStatusCode.InternalServerError);
             }
         }
@@ -306,7 +310,7 @@ namespace MODSI_SQLRestAPI
         {
             try
             {
-                _logger.LogInformation($"Replacing pie chart with ID: {id}");
+                _logger.LogInformation($"Replacing pie chart with Id: {id}");
 
                 var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
                 var pieChart = JsonSerializer.Deserialize<PieChart>(requestBody);
@@ -316,19 +320,57 @@ namespace MODSI_SQLRestAPI
 
                 var response = req.CreateResponse(HttpStatusCode.OK);
                 response.Headers.Add("Content-Type", "text/plain; charset=utf-8");
-                await response.WriteStringAsync($"Pie chart with ID {id} replaced successfully.");
+                await response.WriteStringAsync($"Pie chart with Id {id} replaced successfully.");
 
                 return response;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"An error occurred while replacing pie chart with ID {id}.");
+                _logger.LogError(ex, $"An error occurred while replacing pie chart with Id {id}.");
                 return req.CreateResponse(HttpStatusCode.InternalServerError);
             }
         }
         #endregion
 
         #region User Management
+
+        [Function("Login")]
+        public async Task<HttpResponseData> Login([HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "User/Login")] HttpRequestData req)
+        {
+            try
+            {
+                _logger.LogInformation("User login attempt.");
+
+                // Ler o corpo da requisição
+                var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+                var loginRequest = JsonSerializer.Deserialize<LoginRequest>(requestBody);
+
+                // Validar credenciais do usuário
+                var user = await _databaseHandler.AuthenticateUserAsync(loginRequest.Username, loginRequest.Password);
+                if (user == null)
+                {
+                    _logger.LogWarning("Invalid login attempt.");
+                    var result = req.CreateResponse(HttpStatusCode.Unauthorized);
+                    await result.WriteStringAsync("Invalid username or password.");
+                    return result;
+                }
+
+                // Gerar o token JWT
+                var token = Utils.GenerateJwtToken(user);
+
+                // Retornar o token ao cliente
+                var response = req.CreateResponse(HttpStatusCode.OK);
+                response.Headers.Add("Content-Type", "application/json; charset=utf-8");
+                await response.WriteStringAsync(JsonSerializer.Serialize(new { Token = token }));
+                return response;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred during login.");
+                return req.CreateResponse(HttpStatusCode.InternalServerError);
+            }
+        }
+
 
         [Function("GetAllUsers")]
         public async Task<HttpResponseData> GetAllUsers([HttpTrigger(AuthorizationLevel.Function, "get", Route = "User/GetAll")] HttpRequestData req)
@@ -355,7 +397,7 @@ namespace MODSI_SQLRestAPI
         {
             try
             {
-                _logger.LogInformation($"Retrieving user with ID: {id}");
+                _logger.LogInformation($"Retrieving user with Id: {id}");
                 var user = await _databaseHandler.GetUserByIdAsync(id);
                 if (user == null)
                 {
@@ -368,7 +410,7 @@ namespace MODSI_SQLRestAPI
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"An error occurred while retrieving user with ID {id}.");
+                _logger.LogError(ex, $"An error occurred while retrieving user with Id {id}.");
                 return req.CreateResponse(HttpStatusCode.InternalServerError);
             }
         }
@@ -382,9 +424,22 @@ namespace MODSI_SQLRestAPI
                 var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
                 var user = JsonSerializer.Deserialize<User>(requestBody);
 
-                // Generate salt and hash password
-                var salt = PasswordUtils.GenerateSalt();
-                var passwordHash = PasswordUtils.HashPassword(user.Password, salt);
+                string salt;
+                string passwordHash;
+
+                // Verifica se o salt foi fornecido
+                if (string.IsNullOrEmpty(user.Salt) || !Convert.ToBoolean(user.Encrypted))
+                {
+                    // Caso o salt não tenha sido fornecido, gera um novo salt e realiza o hashing da senha
+                    salt = Utils.GenerateSalt();
+                    passwordHash = Utils.HashPassword(user.Password, salt);
+                }
+                else
+                {
+                    // Caso o salt tenha sido fornecido, utiliza o salt e a senha como estão
+                    salt = user.Salt;
+                    passwordHash = user.Password;
+                }
 
                 // Map MODSI_SQLRestAPI.User to MODSI_SQLRestAPI.DatabaseHandler.User
                 var dbUser = new User
@@ -393,10 +448,10 @@ namespace MODSI_SQLRestAPI
                     Email = user.Email,
                     Password = passwordHash,
                     Username = user.Username,
-                    Role = "User",
+                    Role = user.Role ?? "User",
                     CreatedAt = DateTime.UtcNow,
                     IsActive = true,
-                    Group = "USER",
+                    Group = user.Group ?? "USER",
                     Salt = salt
                 };
 
@@ -414,21 +469,22 @@ namespace MODSI_SQLRestAPI
             }
         }
 
+
         [Function("DeleteUserById")]
         public async Task<HttpResponseData> DeleteUserById([HttpTrigger(AuthorizationLevel.Function, "delete", Route = "User/Delete/{id:int}")] HttpRequestData req, int id)
         {
             try
             {
-                _logger.LogInformation($"Deleting user with ID: {id}");
+                _logger.LogInformation($"Deleting user with Id: {id}");
                 await _databaseHandler.DeleteUserByIdAsync(id);
                 var response = req.CreateResponse(HttpStatusCode.OK);
                 response.Headers.Add("Content-Type", "text/plain; charset=utf-8");
-                await response.WriteStringAsync($"User with ID {id} deleted successfully.");
+                await response.WriteStringAsync($"User with Id {id} deleted successfully.");
                 return response;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"An error occurred while deleting user with ID {id}.");
+                _logger.LogError(ex, $"An error occurred while deleting user with Id {id}.");
                 return req.CreateResponse(HttpStatusCode.InternalServerError);
             }
         }
@@ -438,15 +494,15 @@ namespace MODSI_SQLRestAPI
         {
             try
             {
-                _logger.LogInformation($"Updating user with ID: {id}");
+                _logger.LogInformation($"Updating user with Id: {id}");
                 var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
                 var user = JsonSerializer.Deserialize<User>(requestBody);
-                user.ID = id;
+                user.Id = id;
 
                 // Map MODSI_SQLRestAPI.User to MODSI_SQLRestAPI.DatabaseHandler.User
                 var dbUser = new User
                 {
-                    ID = user.ID,
+                    Id = user.Id,
                     Name = user.Name,
                     Email = user.Email,
                     Password = user.Password,
@@ -461,12 +517,12 @@ namespace MODSI_SQLRestAPI
 
                 var response = req.CreateResponse(HttpStatusCode.OK);
                 response.Headers.Add("Content-Type", "text/plain; charset=utf-8");
-                await response.WriteStringAsync($"User with ID {id} updated successfully.");
+                await response.WriteStringAsync($"User with Id {id} updated successfully.");
                 return response;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"An error occurred while updating user with ID {id}.");
+                _logger.LogError(ex, $"An error occurred while updating user with Id {id}.");
                 return req.CreateResponse(HttpStatusCode.InternalServerError);
             }
         }
@@ -536,7 +592,7 @@ namespace MODSI_SQLRestAPI
         #endregion
 
     }
-    internal static class PasswordUtils
+    internal static class Utils
     {
         public static string GenerateSalt()
         {
@@ -549,10 +605,40 @@ namespace MODSI_SQLRestAPI
             // Combine password and salt, then hash using SHA256
             using (var sha256 = System.Security.Cryptography.SHA256.Create())
             {
-                var combined = System.Text.Encoding.UTF8.GetBytes(password + salt);
+                var combined = Encoding.UTF8.GetBytes(password + salt);
                 var hash = sha256.ComputeHash(combined);
                 return Convert.ToBase64String(hash);
             }
+        }
+
+        public static string GenerateJwtToken(User user)
+        {
+            // Chave secreta para assinar o token (mantenha isso seguro e com pelo menos 32 caracteres)
+            var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("YourSuperSecureSecretKeyWith32Chars"));
+            var signingCredentials = new SigningCredentials(secretKey, SecurityAlgorithms.HmacSha256);
+
+            // Claims (informações do usuário no token)
+            var claims = new[]
+            {
+                new Claim(JwtRegisteredClaimNames.Sub, user.Username),
+                new Claim(JwtRegisteredClaimNames.Email, user.Email),
+                new Claim("role", user.Role),
+                new Claim("group", user.Group),
+                new Claim("id", user.Id.ToString()),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            };
+
+            // Configurar o token
+            var token = new JwtSecurityToken(
+                issuer: "MODSI_SQLRestAPI",
+                audience: "MODSI_SQLRestAPI",
+                claims: claims,
+                expires: DateTime.UtcNow.AddHours(1), // Token válido por 1 hora
+                signingCredentials: signingCredentials
+            );
+
+            // Retornar o token como string
+            return new JwtSecurityTokenHandler().WriteToken(token);
         }
     }
 }
