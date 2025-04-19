@@ -370,6 +370,55 @@ namespace MODSI_SQLRestAPI
             }
         }
 
+        public async Task<bool> EmailUserExistsAsync(string email)
+        {
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            {
+                await conn.OpenAsync();
+                var query = "SELECT COUNT(*) FROM [user] WHERE Email = @Email";
+                using (SqlCommand cmd = new SqlCommand(query, conn))
+                {
+                    cmd.Parameters.AddWithValue("@Email", email);
+                    int count = (int)await cmd.ExecuteScalarAsync();
+                    return count > 0;
+                }
+            }
+        }
+        // Get user by email
+        public async Task<User> GetUserByEmailAsync(string email)
+        {
+            User user = null;
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            {
+                await conn.OpenAsync();
+                var query = $"SELECT ID, Name, Email, Password, Username, Role, CreatedAt, IsActive FROM [user] WHERE Email = @Email";
+                using (SqlCommand cmd = new SqlCommand(query, conn))
+                {
+                    cmd.Parameters.AddWithValue("@Email", email);
+                    using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
+                    {
+                        if (await reader.ReadAsync())
+                        {
+                            user = new User
+                            {
+                                ID = reader.GetInt32(0),
+                                Name = reader.GetString(1),
+                                Email = reader.GetString(2),
+                                Password = reader.GetString(3),
+                                Username = reader.GetString(4),
+                                Role = reader.GetString(5),
+                                CreatedAt = reader.GetDateTime(6),
+                                IsActive = reader.GetString(7)
+                            };
+                        }
+                    }
+                }
+            }
+            return user;
+        }
+
+
+
         #endregion
 
     }

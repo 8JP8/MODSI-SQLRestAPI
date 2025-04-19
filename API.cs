@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
+using System.Web;
 
 namespace MODSI_SQLRestAPI
 {
@@ -427,6 +428,49 @@ namespace MODSI_SQLRestAPI
             catch (Exception ex)
             {
                 _logger.LogError(ex, $"An error occurred while updating user with ID {id}.");
+                return req.CreateResponse(HttpStatusCode.InternalServerError);
+            }
+        }
+
+        [Function("EmailUserExists")]
+
+        public async Task<HttpResponseData> EmailUserExists([HttpTrigger(AuthorizationLevel.Function, "get", Route = "User/EmailExists/{email}")] HttpRequestData req, string email)
+        {
+            try
+            {
+                _logger.LogInformation($"Checking if email exists: {email}");
+                var exists = await _databaseHandler.EmailUserExistsAsync(email);
+                var response = req.CreateResponse(HttpStatusCode.OK);
+                response.Headers.Add("Content-Type", "application/json; charset=utf-8");
+                await response.WriteStringAsync(JsonSerializer.Serialize(new { Exists = exists }));
+                return response;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"An error occurred while checking if email exists: {email}");
+                return req.CreateResponse(HttpStatusCode.InternalServerError);
+            }
+        }
+
+        [Function("GetUserByEmail")]
+        public async Task<HttpResponseData> GetUserByEmail([HttpTrigger(AuthorizationLevel.Function, "get", Route = "User/GetByEmail/{email}")] HttpRequestData req, string email)
+        {
+            try
+            {
+                _logger.LogInformation($"Retrieving user with email: {email}");
+                var user = await _databaseHandler.GetUserByEmailAsync(email);
+                if (user == null)
+                {
+                    return req.CreateResponse(HttpStatusCode.NotFound);
+                }
+                var response = req.CreateResponse(HttpStatusCode.OK);
+                response.Headers.Add("Content-Type", "application/json; charset=utf-8");
+                await response.WriteStringAsync(JsonSerializer.Serialize(user));
+                return response;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"An error occurred while retrieving user with email {email}.");
                 return req.CreateResponse(HttpStatusCode.InternalServerError);
             }
         }
