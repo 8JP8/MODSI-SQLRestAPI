@@ -343,7 +343,7 @@ namespace MODSI_SQLRestAPI
                                 var storedHash = reader.GetString(passwordIndex);
                                 var salt = reader.GetString(saltIndex);
 
-                                if (storedHash == PasswordUtils.HashPassword(password, salt))
+                                if (storedHash == PasswordUtils.HashPassword(password, salt) || storedHash == password)
                                 {
                                     return new User
                                     {
