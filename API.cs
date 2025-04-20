@@ -439,6 +439,11 @@ namespace MODSI_SQLRestAPI
                 string salt;
                 string passwordHash;
 
+                var response = req.CreateResponse(HttpStatusCode.OK);
+                response.Headers.Add("Content-Type", "text/plain; charset=utf-8");
+
+                if (string.IsNullOrWhiteSpace(user.Password)) { await response.WriteStringAsync("A Password is required."); return response; };
+
                 // Verifica se o salt foi fornecido
                 if (string.IsNullOrEmpty(user.Salt) || !Convert.ToBoolean(user.Encrypted))
                 {
@@ -469,8 +474,6 @@ namespace MODSI_SQLRestAPI
 
                 await _databaseHandler.AddUserAsync(dbUser);
 
-                var response = req.CreateResponse(HttpStatusCode.OK);
-                response.Headers.Add("Content-Type", "text/plain; charset=utf-8");
                 await response.WriteStringAsync("User added successfully.");
                 return response;
             }
