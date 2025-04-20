@@ -312,51 +312,53 @@ namespace MODSI_SQLRestAPI
             }
         }
 
-        internal async Task<User> AuthenticateUserAsync(string username, string password)
+        internal async Task<User> AuthenticateUserAsync(string username_or_email, string password)
         {
             using (SqlConnection conn = new SqlConnection(_connectionString))
             {
+                string identifier = username_or_email.Contains("@") ? "Email" : "Username";
+
                 await conn.OpenAsync();
-                var query = $"SELECT Id, Name, Email, Password, Username, Role, CreatedAt, IsActive, [Group], Salt FROM {_user_DB} WHERE Username = @Username";
+                var query = $"SELECT Id, Name, Email, Password, Username, Role, CreatedAt, IsActive, [Group], Salt FROM {_user_DB} WHERE {identifier} = @{identifier}";
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
-                    cmd.Parameters.AddWithValue("@Username", username);
+                    cmd.Parameters.AddWithValue($"@{identifier}", username_or_email);
                     using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
-                    {
-                        if (await reader.ReadAsync())
                         {
-                            // Obter os índices das colunas pelo nome
-                            int idIndex = reader.GetOrdinal("Id");
-                            int nameIndex = reader.GetOrdinal("Name");
-                            int emailIndex = reader.GetOrdinal("Email");
-                            int passwordIndex = reader.GetOrdinal("Password");
-                            int usernameIndex = reader.GetOrdinal("Username");
-                            int roleIndex = reader.GetOrdinal("Role");
-                            int createdAtIndex = reader.GetOrdinal("CreatedAt");
-                            int isActiveIndex = reader.GetOrdinal("IsActive");
-                            int groupIndex = reader.GetOrdinal("Group");
-                            int saltIndex = reader.GetOrdinal("Salt");
-
-                            // Recuperar os valores das colunas
-                            var storedHash = reader.GetString(passwordIndex);
-                            var salt = reader.GetString(saltIndex);
-
-                            if (storedHash == PasswordUtils.HashPassword(password, salt))
+                            if (await reader.ReadAsync())
                             {
-                                return new User
+                                // Obter os índices das colunas pelo nome
+                                int idIndex = reader.GetOrdinal("Id");
+                                int nameIndex = reader.GetOrdinal("Name");
+                                int emailIndex = reader.GetOrdinal("Email");
+                                int passwordIndex = reader.GetOrdinal("Password");
+                                int usernameIndex = reader.GetOrdinal("Username");
+                                int roleIndex = reader.GetOrdinal("Role");
+                                int createdAtIndex = reader.GetOrdinal("CreatedAt");
+                                int isActiveIndex = reader.GetOrdinal("IsActive");
+                                int groupIndex = reader.GetOrdinal("Group");
+                                int saltIndex = reader.GetOrdinal("Salt");
+
+                                // Recuperar os valores das colunas
+                                var storedHash = reader.GetString(passwordIndex);
+                                var salt = reader.GetString(saltIndex);
+
+                                if (storedHash == PasswordUtils.HashPassword(password, salt))
                                 {
-                                    Id = reader.GetInt32(idIndex),
-                                    Name = reader.GetString(nameIndex),
-                                    Email = reader.GetString(emailIndex),
-                                    Username = reader.GetString(usernameIndex),
-                                    Role = reader.GetString(roleIndex),
-                                    CreatedAt = reader.GetDateTime(createdAtIndex),
-                                    IsActive = reader.GetBoolean(isActiveIndex),
-                                    Group = reader.GetString(groupIndex)
-                                };
+                                    return new User
+                                    {
+                                        Id = reader.GetInt32(idIndex),
+                                        Name = reader.GetString(nameIndex),
+                                        Email = reader.GetString(emailIndex),
+                                        Username = reader.GetString(usernameIndex),
+                                        Role = reader.GetString(roleIndex),
+                                        CreatedAt = reader.GetDateTime(createdAtIndex),
+                                        IsActive = reader.GetBoolean(isActiveIndex),
+                                        Group = reader.GetString(groupIndex)
+                                    };
+                                }
                             }
                         }
-                    }
                 }
             }
             return null;
@@ -384,6 +386,59 @@ namespace MODSI_SQLRestAPI
             }
         }
 
+        internal async Task<User> GetUserByIdentifierAsync(string identifier, bool return_salt = false)
+        {
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            {
+                string column = identifier.Contains("@") ? "Email" : "Username";
+
+                await conn.OpenAsync();
+                var query = $"SELECT Id, Name, Email, Password, Username, Role, CreatedAt, IsActive, [Group], Salt FROM {_user_DB} WHERE {column} = @{column}";
+                using (SqlCommand cmd = new SqlCommand(query, conn))
+                {
+                    cmd.Parameters.AddWithValue($"@{column}", identifier);
+                    using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
+                    {
+                        if (await reader.ReadAsync())
+                        {
+
+                            // Obter os índices das colunas pelo nome
+                            int idIndex = reader.GetOrdinal("Id");
+                            int nameIndex = reader.GetOrdinal("Name");
+                            int emailIndex = reader.GetOrdinal("Email");
+                            int passwordIndex = reader.GetOrdinal("Password");
+                            int usernameIndex = reader.GetOrdinal("Username");
+                            int roleIndex = reader.GetOrdinal("Role");
+                            int createdAtIndex = reader.GetOrdinal("CreatedAt");
+                            int isActiveIndex = reader.GetOrdinal("IsActive");
+                            int groupIndex = reader.GetOrdinal("Group");
+                            int saltIndex = reader.GetOrdinal("Salt");
+
+                            // Recuperar os valores das colunas
+                            var storedHash = reader.GetString(passwordIndex);
+                            var salt = reader.GetString(saltIndex);
+
+                            User returndata = new User
+                            {
+                                Id = reader.GetInt32(idIndex),
+                                Name = reader.GetString(nameIndex),
+                                Email = reader.GetString(emailIndex),
+                                Username = reader.GetString(usernameIndex),
+                                Role = reader.GetString(roleIndex),
+                                CreatedAt = reader.GetDateTime(createdAtIndex),
+                                IsActive = reader.GetBoolean(isActiveIndex),
+                                Group = reader.GetString(groupIndex)
+                            };
+                            if (return_salt) returndata.Salt = reader.GetString(saltIndex);
+
+                            return returndata;
+                        }
+                    }
+                }
+            }
+            return null;
+        }
+
         internal async Task<bool> EmailUserExistsAsync(string email)
         {
             using (SqlConnection conn = new SqlConnection(_connectionString))
@@ -397,39 +452,6 @@ namespace MODSI_SQLRestAPI
                     return count > 0;
                 }
             }
-        }
-
-        internal async Task<User> GetUserByEmailAsync(string email)
-        {
-            User user = null;
-            using (SqlConnection conn = new SqlConnection(_connectionString))
-            {
-                await conn.OpenAsync();
-                var query = $"SELECT Id, Name, Email, Password, Username, Role, CreatedAt, IsActive, [Group] FROM {_user_DB} WHERE Email = @Email";
-                using (SqlCommand cmd = new SqlCommand(query, conn))
-                {
-                    cmd.Parameters.AddWithValue("@Email", email);
-                    using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
-                    {
-                        if (await reader.ReadAsync())
-                        {
-                            user = new User
-                            {
-                                Id = reader.GetInt32(0),
-                                Name = reader.GetString(1),
-                                Email = reader.GetString(2),
-                                Password = reader.GetString(3),
-                                Username = reader.GetString(4),
-                                Role = reader.GetString(5),
-                                CreatedAt = reader.GetDateTime(6),
-                                IsActive = reader.GetBoolean(7),
-                                Group = reader.GetString(8)
-                            };
-                        }
-                    }
-                }
-            }
-            return user;
         }
 
         internal async Task DeleteUserByIdAsync(int id)

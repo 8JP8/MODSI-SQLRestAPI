@@ -345,13 +345,25 @@ namespace MODSI_SQLRestAPI
                 var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
                 var loginRequest = JsonSerializer.Deserialize<LoginRequest>(requestBody);
 
-                // Validar credenciais do usuário
-                var user = await _databaseHandler.AuthenticateUserAsync(loginRequest.Username, loginRequest.Password);
+                // Validar credenciais do usuário por email ou username
+                User user = null;
+                if (!string.IsNullOrEmpty(loginRequest.Email))
+                {
+                    _logger.LogInformation("Attempting login by email.");
+                    user = await _databaseHandler.AuthenticateUserAsync(loginRequest.Email, loginRequest.Password);
+                }
+                else if (!string.IsNullOrEmpty(loginRequest.Username))
+                {
+                    _logger.LogInformation("Attempting login by username.");
+                    user = await _databaseHandler.AuthenticateUserAsync(loginRequest.Username, loginRequest.Password);
+                }
+
+                // Verificar se o usuário foi encontrado e a senha é válida
                 if (user == null)
                 {
                     _logger.LogWarning("Invalid login attempt.");
                     var result = req.CreateResponse(HttpStatusCode.Unauthorized);
-                    await result.WriteStringAsync("Invalid username or password.");
+                    await result.WriteStringAsync("Invalid username/email or password.");
                     return result;
                 }
 
@@ -570,7 +582,7 @@ namespace MODSI_SQLRestAPI
                 }
 
                 _logger.LogInformation($"Retrieving user with email: {email}");
-                var user = await _databaseHandler.GetUserByEmailAsync(email);
+                var user = await _databaseHandler.GetUserByIdentifierAsync(email);
 
                 if (user == null)
                 {
@@ -585,6 +597,82 @@ namespace MODSI_SQLRestAPI
             catch (Exception ex)
             {
                 _logger.LogError(ex, "An error occurred while retrieving user by email.");
+                return req.CreateResponse(HttpStatusCode.InternalServerError);
+            }
+        }
+
+        [Function("GetUserByUsername")]
+        public async Task<HttpResponseData> GetUserByUsername(
+        [HttpTrigger(AuthorizationLevel.Function, "get", Route = "User/GetByUsername")] HttpRequestData req)
+        {
+            try
+            {
+                // Extract email from query string
+                string username = req.Query["username"];
+
+                if (string.IsNullOrEmpty(username))
+                {
+                    return req.CreateResponse(HttpStatusCode.BadRequest);
+                }
+
+                _logger.LogInformation($"Retrieving user with username: {username}");
+                var user = await _databaseHandler.GetUserByIdentifierAsync(username);
+
+                if (user == null)
+                {
+                    return req.CreateResponse(HttpStatusCode.NotFound);
+                }
+
+                var response = req.CreateResponse(HttpStatusCode.OK);
+                response.Headers.Add("Content-Type", "application/json; charset=utf-8");
+                await response.WriteStringAsync(JsonSerializer.Serialize(user));
+                return response;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while retrieving user by email.");
+                return req.CreateResponse(HttpStatusCode.InternalServerError);
+            }
+        }
+
+        [Function("GetUserSalt")]
+        public async Task<HttpResponseData> GetUserSalt(
+        [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "User/GetUserSalt")] HttpRequestData req)
+        {
+            try
+            {
+                // Extrair username ou email da query string
+                var queryParams = Utils.ParseQueryString(req.Url.Query);
+                string identifier = !string.IsNullOrWhiteSpace(queryParams["identifier"]) ? queryParams["identifier"] : queryParams["Identifier"];
+
+                if (string.IsNullOrWhiteSpace(identifier))
+                {
+                    var badRequestResponse = req.CreateResponse(HttpStatusCode.BadRequest);
+                    await badRequestResponse.WriteStringAsync("Identifier (username or email) is required.");
+                    return badRequestResponse;
+                }
+
+                _logger.LogInformation($"Retrieving salt for identifier: {identifier}");
+
+                // Buscar o usuário no banco de dados
+                var user = await _databaseHandler.GetUserByIdentifierAsync(identifier, true);
+
+                if (user == null)
+                {
+                    var notFoundResponse = req.CreateResponse(HttpStatusCode.NotFound);
+                    await notFoundResponse.WriteStringAsync("User not found.");
+                    return notFoundResponse;
+                }
+
+                // Retornar o salt
+                var response = req.CreateResponse(HttpStatusCode.OK);
+                response.Headers.Add("Content-Type", "application/json; charset=utf-8");
+                await response.WriteStringAsync(JsonSerializer.Serialize(new { Salt = user.Salt }));
+                return response;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while retrieving the user salt.");
                 return req.CreateResponse(HttpStatusCode.InternalServerError);
             }
         }
@@ -613,11 +701,10 @@ namespace MODSI_SQLRestAPI
 
         public static string GenerateJwtToken(User user)
         {
-            // Chave secreta para assinar o token (mantenha isso seguro e com pelo menos 32 caracteres)
-            var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("YourSuperSecureSecretKeyWith32Chars"));
+            var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("MODSI$$AUTHT0K3N$$:(:/:)$$2024-2025_JRS"));
             var signingCredentials = new SigningCredentials(secretKey, SecurityAlgorithms.HmacSha256);
 
-            // Claims (informações do usuário no token)
+           // Token Claims
             var claims = new[]
             {
                 new Claim(JwtRegisteredClaimNames.Sub, user.Username),
@@ -627,18 +714,34 @@ namespace MODSI_SQLRestAPI
                 new Claim("id", user.Id.ToString()),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
-
-            // Configurar o token
+            
+            // Token Attributes
             var token = new JwtSecurityToken(
                 issuer: "MODSI_SQLRestAPI",
                 audience: "MODSI_SQLRestAPI",
                 claims: claims,
-                expires: DateTime.UtcNow.AddHours(1), // Token válido por 1 hora
+                expires: DateTime.UtcNow.AddHours(1), // Token valid for 1 hour
                 signingCredentials: signingCredentials
             );
 
-            // Retornar o token como string
-            return new JwtSecurityTokenHandler().WriteToken(token);
+            return new JwtSecurityTokenHandler().WriteToken(token); //Return token as a string
+        }
+
+        public static Dictionary<string, string> ParseQueryString(string query)
+        {
+            var queryParams = new Dictionary<string, string>();
+            if (string.IsNullOrEmpty(query)) return queryParams;
+
+            foreach (var pair in query.TrimStart('?').Split('&'))
+            {
+                var parts = pair.Split('=');
+                if (parts.Length == 2)
+                {
+                    queryParams[Uri.UnescapeDataString(parts[0])] = Uri.UnescapeDataString(parts[1]);
+                }
+            }
+
+            return queryParams;
         }
     }
 }
