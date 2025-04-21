@@ -145,7 +145,7 @@ namespace UserAuthenticate.Repositories
                                     Name = reader.GetString(nameIndex),
                                     Email = reader.GetString(emailIndex),
                                     Username = reader.GetString(usernameIndex),
-                                    Role = reader.GetString(roleIndex),
+                                    Role = !reader.IsDBNull(roleIndex) ? reader.GetString(roleIndex) : "n.d.",
                                     CreatedAt = reader.GetDateTime(createdAtIndex),
                                     IsActive = reader.GetBoolean(isActiveIndex),
                                     Group = reader.GetString(groupIndex)
