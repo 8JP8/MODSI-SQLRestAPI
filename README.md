@@ -111,36 +111,18 @@ This repository contains an Azure Functions REST API designed to interact with a
 - **PUT** `/api/User/Update/{id:int}`
   - Update user details by ID.
 
-## SQL Schema 🗂️🛠
-The SQL database should include the following tables:
-
-### PieCharts Table 📊
-| Column       | Type        | Description                  |
-|--------------|-------------|------------------------------|
-| Id           | INT         | Primary Key                  |
-| Name         | VARCHAR(50) | Name of the pie chart        |
-| Data         | JSON        | Data for the pie chart       |
-| Timestamp    | DATETIME    | Last updated timestamp       |
-
-### Points Table 🗺️
-| Column       | Type        | Description                  |
-|--------------|-------------|------------------------------|
-| Id           | INT         | Primary Key                  |
-| X            | FLOAT       | X coordinate                 |
-| Y            | FLOAT       | Y coordinate                 |
-| Z            | FLOAT       | Z coordinate                 |
-| Timestamp    | DATETIME    | Last updated timestamp       |
-
-### Users Table 👤
-| Column       | Type        | Description                  |
-|--------------|-------------|------------------------------|
-| Id           | INT         | Primary Key                  |
-| Name         | VARCHAR(50) | Name of the user             |
-| Email        | VARCHAR(50) | Email of the user            |
-| Timestamp    | DATETIME    | Last updated timestamp       |
-
 ## Contributing 🙌🤝🌟
 Contributions are welcome! Please submit issues and pull requests to help improve the API.
 
 ## License 📜🛡️🔓
 This project is licensed under the MIT License. See the `LICENSE` file for details.
+
+## Estructured Data
+Our project is structured based on the Domain-Driven Design (DDD) approach, and the code is organized into the following folders:
+- **Controllers**: Contains the API controllers that handle incoming requests and responses.
+- **Services**: Contains the business logic and service classes that interact with the database.
+- **Models**: Contains the data models and DTOs (Data Transfer Objects) used in the application.
+
+- ## We do not use:
+- **WebSocket** - Socket connections are not used in this project, so it DOESN'T provide a persistent connection to the client (real time chats,etc)
+- **Message-Oriented Middleware (MOM)** - We don’t use MOM in this project (monolithic system), so no asynchronous magic here — big load, big boom 💥!
