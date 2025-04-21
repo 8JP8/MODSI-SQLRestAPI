@@ -9,9 +9,9 @@ This repository contains an Azure Functions REST API designed to interact with a
 - **Dashboard Support**: Provides data endpoints tailored for dashboard visualizations.
 - **VR Visualizations**: Exposes data in formats suitable for VR visualization tools.
 
-## Getting Started 🚀💻✨
+## Getting Started 🚀
 
-### Prerequisites 🛠️📋🔑
+### Prerequisites 🛠️
 1. **Azure Account**: Ensure you have an active Azure subscription.
 2. **SQL Database**: A pre-configured SQL database with necessary tables and data.
 3. **Tools**:
@@ -19,7 +19,7 @@ This repository contains an Azure Functions REST API designed to interact with a
    - [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli) for deployment.
    - [.NET SDK](https://dotnet.microsoft.com/download) for Azure Functions development.
 
-### Setup ⚙️📦🛠️
+### Setup ⚙️
 1. Clone the repository:
    ```bash
    git clone https://github.com/yourusername/azure-functions-kpi-api.git
@@ -67,7 +67,7 @@ This repository contains an Azure Functions REST API designed to interact with a
 
 ## Endpoints 📡
 
-### Pie Chart Management 📊
+### Pie Chart Management 🥧
 - **POST** `/api/PieChart/Add`
   - Add a new pie chart.
 - **DELETE** `/api/PieChart/Delete/{id:int}`
@@ -111,18 +111,15 @@ This repository contains an Azure Functions REST API designed to interact with a
 - **PUT** `/api/User/Update/{id:int}`
   - Update user details by ID.
 
-## Contributing 🙌🤝🌟
-Contributions are welcome! Please submit issues and pull requests to help improve the API.
-
-## License 📜🛡️🔓
+## License 📜
 This project is licensed under the MIT License. See the `LICENSE` file for details.
 
-## Estructured Data
+## Estructured Data 📊
 Our project is structured based on the Domain-Driven Design (DDD) approach, and the code is organized into the following folders:
 - **Controllers**: Contains the API controllers that handle incoming requests and responses.
 - **Services**: Contains the business logic and service classes that interact with the database.
 - **Models**: Contains the data models and DTOs (Data Transfer Objects) used in the application.
 
-- ## We do not use:
+- ## We do not use ⚠:
 - **WebSocket** - Socket connections are not used in this project, so it DOESN'T provide a persistent connection to the client (real time chats,etc)
 - **Message-Oriented Middleware (MOM)** - We don’t use MOM in this project (monolithic system), so no asynchronous magic here — big load, big boom 💥!
