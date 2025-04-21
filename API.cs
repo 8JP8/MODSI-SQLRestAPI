@@ -445,7 +445,7 @@ namespace MODSI_SQLRestAPI
                 if (string.IsNullOrWhiteSpace(user.Password)) { await response.WriteStringAsync("A Password is required."); return response; };
 
                 // Verifica se o salt foi fornecido
-                if (string.IsNullOrEmpty(user.Salt) || !Convert.ToBoolean(user.Encrypted))
+                if (string.IsNullOrEmpty(user.Salt) && !Convert.ToBoolean(user.Encrypted))
                 {
                     // Caso o salt não tenha sido fornecido, gera um novo salt e realiza o hashing da senha
                     salt = Utils.GenerateSalt();
