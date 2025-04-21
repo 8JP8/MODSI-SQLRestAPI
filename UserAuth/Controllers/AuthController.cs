@@ -21,81 +21,57 @@ namespace MODSI_SQLRestAPI.Functions.Auth
         {
             _logger = loggerFactory.CreateLogger<Login>();
 
-            // Inicializa o repositório com as configurações do Azure
+            // Inicializa o repositÃ³rio com as configuraÃ§Ãµes do Azure
             string connectionString = ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString;
             _userRepository = new UserRepository();
         }
 
         [Function("Login")]
-        public async Task<HttpResponseData> Run(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "auth/login")] HttpRequestData req,
-            FunctionContext executionContext)
+    public async Task<HttpResponseData> Login([HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "User/Login")] HttpRequestData req)
+    {
+        try
         {
-            _logger.LogInformation("Login request received");
-
-            try
+            _logger.LogInformation("User login attempt.");
+    
+            // Ler o corpo da requisiÃ§Ã£o
+            var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+            var loginRequest = JsonSerializer.Deserialize<LoginRequest>(requestBody);
+    
+            // Validar credenciais do usuÃ¡rio por email ou username
+            User user = null;
+            if (!string.IsNullOrEmpty(loginRequest.Email))
             {
-                var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-                _logger.LogInformation($"Request body: {requestBody}");
-
-                var loginRequest = JsonSerializer.Deserialize<User>(requestBody,
-                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-
-                if (loginRequest == null || string.IsNullOrEmpty(loginRequest.Email) || string.IsNullOrEmpty(loginRequest.Password))
-                {
-                    _logger.LogWarning("Invalid request: missing email or password");
-                    var badResponse = req.CreateResponse();
-                    badResponse.StatusCode = System.Net.HttpStatusCode.BadRequest;
-                    await badResponse.WriteStringAsync("Email and password are required");
-                    return badResponse;
-                }
-
-                _logger.LogInformation($"Attempting login for user: {loginRequest.Email}");
-
-                // Tenta autenticar com repositório Azure
-                var user = await _userRepository.GetByCredentialsAsync(loginRequest.Email, loginRequest.Password);
-
-                // Mantém autenticação hardcoded para desenvolvimento (opcional)
-                var hardcodedValid = loginRequest.Email == "admin" && loginRequest.Password == "1234";
-
-                _logger.LogInformation($"Hardcoded auth result: {hardcodedValid}, Azure repository auth result: {user != null}");
-
-                if (hardcodedValid || user != null)
-                {
-                    var authenticatedUser = user ?? new User
-                    {
-                        Id = 0,
-                        Username = "boss",
-                        Role = "admin",
-                        Name = "Administrator",
-                        Email = loginRequest.Email
-
-                    };
-
-                    // Nunca retornar a senha ao cliente
-                    authenticatedUser.Password = null;
-
-                    var token = TokenService.GenerateToken(authenticatedUser);
-
-                    var response = req.CreateResponse();
-                    await response.WriteAsJsonAsync(new { user = authenticatedUser, token });
-                    return response;
-                }
-
-                _logger.LogWarning($"Authentication failed for user: {loginRequest.Email}");
-                var unauthorizedResponse = req.CreateResponse();
-                unauthorizedResponse.StatusCode = System.Net.HttpStatusCode.Unauthorized;
-                await unauthorizedResponse.WriteStringAsync("Invalid credentials");
-                return unauthorizedResponse;
+                _logger.LogInformation("Attempting login by email.");
+                user = await _databaseHandler.AuthenticateUserAsync(loginRequest.Email, loginRequest.Password);
             }
-            catch (Exception ex)
+            else if (!string.IsNullOrEmpty(loginRequest.Username))
             {
-                _logger.LogError(ex, $"Error during login process: {ex.Message}");
-                var errorResponse = req.CreateResponse();
-                errorResponse.StatusCode = System.Net.HttpStatusCode.InternalServerError;
-                await errorResponse.WriteStringAsync($"An error occurred during authentication: {ex.Message}");
-                return errorResponse;
+                _logger.LogInformation("Attempting login by username.");
+                user = await _databaseHandler.AuthenticateUserAsync(loginRequest.Username, loginRequest.Password);
             }
+    
+            // Verificar se o usuÃ¡rio foi encontrado e a senha Ã© vÃ¡lida
+            if (user == null)
+            {
+                _logger.LogWarning("Invalid login attempt.");
+                var result = req.CreateResponse(HttpStatusCode.Unauthorized);
+                await result.WriteStringAsync("Invalid username/email or password.");
+                return result;
+            }
+    
+            // Gerar o token JWT
+            var token = Utils.GenerateJwtToken(user);
+    
+            // Retornar o token ao cliente
+            var response = req.CreateResponse(HttpStatusCode.OK);
+            response.Headers.Add("Content-Type", "application/json; charset=utf-8");
+            await response.WriteStringAsync(JsonSerializer.Serialize(new { Token = token }));
+            return response;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An error occurred during login.");
+            return req.CreateResponse(HttpStatusCode.InternalServerError);
         }
     }
 }
