@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.Data;
 using System.Data.SqlClient;
 using System.Security.Cryptography;
 using System.Text;
@@ -266,6 +267,12 @@ namespace MODSI_SQLRestAPI
                     {
                         while (await reader.ReadAsync())
                         {
+                            var role = reader.IsDBNull(5) ? "N.D." : reader.GetString(5);
+                            if (role == "N.D.")
+                            {
+                                Console.WriteLine($"User with ID {reader.GetInt32(0)} has a null Role.");
+                            }
+
                             try
                             {
 
@@ -285,7 +292,7 @@ namespace MODSI_SQLRestAPI
                                     Name = reader.GetString(nameIndex),
                                     Username = reader.GetString(usernameIndex),
                                     Email = reader.GetString(emailIndex),
-                                    Role = reader.GetString(roleIndex),
+                                    Role = !reader.IsDBNull(roleIndex) ? reader.GetString(roleIndex) : "n.d.",
                                     CreatedAt = reader.GetDateTime(createdAtIndex),
                                     IsActive = reader.GetBoolean(isActiveIndex),
                                     Group = reader.GetString(groupIndex)
@@ -361,7 +368,7 @@ namespace MODSI_SQLRestAPI
                                         Name = reader.GetString(nameIndex),
                                         Email = reader.GetString(emailIndex),
                                         Username = reader.GetString(usernameIndex),
-                                        Role = reader.GetString(roleIndex),
+                                        Role = !reader.IsDBNull(roleIndex) ? reader.GetString(roleIndex) : "n.d.",
                                         CreatedAt = reader.GetDateTime(createdAtIndex),
                                         IsActive = reader.GetBoolean(isActiveIndex),
                                         Group = reader.GetString(groupIndex)
@@ -428,13 +435,19 @@ namespace MODSI_SQLRestAPI
                             var storedHash = reader.GetString(passwordIndex);
                             var salt = reader.GetString(saltIndex);
 
+                            var role = reader.IsDBNull(5) ? "N.D." : reader.GetString(5);
+                            if (role == "N.D.")
+                            {
+                                Console.WriteLine($"User with ID {reader.GetInt32(0)} has a null Role.");
+                            }
+
                             User returndata = new User
                             {
                                 Id = reader.GetInt32(idIndex),
                                 Name = reader.GetString(nameIndex),
                                 Email = reader.GetString(emailIndex),
                                 Username = reader.GetString(usernameIndex),
-                                Role = reader.GetString(roleIndex),
+                                Role = !reader.IsDBNull(roleIndex) ? reader.GetString(roleIndex) : "n.d.",
                                 CreatedAt = reader.GetDateTime(createdAtIndex),
                                 IsActive = reader.GetBoolean(isActiveIndex),
                                 Group = reader.GetString(groupIndex)
