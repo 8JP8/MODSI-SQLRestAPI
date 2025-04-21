@@ -1,16 +1,8 @@
-﻿using MODSI_SQLRestAPI.Functions;
-using MODSI_SQLRestAPI.UserAuth.Models;
-using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Data.SqlClient;
-using System.Linq;
-using System.Security.Cryptography;
-using System.Text;
-using System.Threading.Tasks;
-using UserAuthenticate.Repositories;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using MODSI_SQLRestAPI.UserAuth.DTO;
+using MODSI_SQLRestAPI.UserAuth.Repositories;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 
 // Ponto entre controlador e Base de Dados , Basicamnete onde se deve colcar if statements não relacionados a autenticação
@@ -40,14 +32,8 @@ namespace MODSI_SQLRestAPI.UserAuth.Services
                 _logger.LogWarning("No users found in the database.");
                 return new List<UserDTO>();
             }
-            // Map User to UserDTO
-            var userDTOs = _dto_mapper.UserListTOUserDTOList(users);
-
-            return userDTOs;
+            return users;
         }
-
-
-
 
     }
 

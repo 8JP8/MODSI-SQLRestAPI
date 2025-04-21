@@ -9,6 +9,7 @@ namespace MODSI_SQLRestAPI.UserAuth.DTO
     // O DTO pode ser usado tanto no backend como no frontend, mas como vamos usar Appsmith vamos então usar o DTO aqui para facilitar 
     public class UserDTO
     {
+        public int Id { get; set; }
         public string Name { get; set; }
         public string Email { get; set; }
         public string Username { get; set; }

@@ -1,4 +1,4 @@
-﻿namespace MODSI_SQLRestAPI.UserAuth.Models.User
+﻿namespace MODSI_SQLRestAPI.UserAuth.Models
 {
     public class LoginRequest
     {

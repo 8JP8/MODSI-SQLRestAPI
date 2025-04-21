@@ -1,11 +1,11 @@
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.Owin;
-using Microsoft.Owin.Security.Jwt;
+using Microsoft.Owin.Cors;
 using Microsoft.Owin.Security;
+using Microsoft.Owin.Security.Jwt;
 using Owin;
 using System.Text;
 using System.Web.Http;
-using Microsoft.Owin.Cors;
-using Microsoft.IdentityModel.Tokens;
 
 [assembly: OwinStartup(typeof(Startup))]
 

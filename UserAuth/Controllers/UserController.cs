@@ -1,20 +1,17 @@
-﻿using Microsoft.Azure.Functions.Worker.Http;
-using Microsoft.Azure.Functions.Worker;
-using System;
-using System.Threading.Tasks;
-using MODSI_SQLRestAPI.Functions;
+﻿using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
-
-using System.IO;
+using MODSI_SQLRestAPI.UserAuth.Models;
+using MODSI_SQLRestAPI.UserAuth.Repositories;
 using MODSI_SQLRestAPI.UserAuth.Services;
+using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Net;
-using System.Text.Json;
 using System.Security.Cryptography;
 using System.Text;
-using UserAuthenticate.Repositories;
-using MODSI_SQLRestAPI.UserAuth.DTO;
-using MODSI_SQLRestAPI.UserAuth.Models.User;
-using System.Collections.Generic;
+using System.Text.Json;
+using System.Threading.Tasks;
 
 
 // Apenas resposável por fazer o CRUD de Users e verificar se autenticação é válida (token) para o pedido efetuado
@@ -24,9 +21,8 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
     class UserController
     {
         //Temporary for testing
-        private readonly Microsoft.Extensions.Logging.ILogger _logger;
+        private readonly ILogger _logger;
         private readonly UserRepository _databaseHandler;
-        private readonly RetrieveToken retrieveToken;
 
         //Service
         private readonly UserService _userService;
@@ -36,7 +32,6 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
             _logger = loggerFactory.CreateLogger<UserController>();
             _databaseHandler = new UserRepository();
             _userService = new UserService(loggerFactory);
-            retrieveToken = new RetrieveToken();
         }
 
 
@@ -122,11 +117,12 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
                 var response = req.CreateResponse(HttpStatusCode.OK);
                 response.Headers.Add("Content-Type", "text/plain; charset=utf-8");
 
-                if (string.IsNullOrWhiteSpace(user.Password)) 
-                { await response.WriteStringAsync("A Password is required.");
-                  return response;
+                if (string.IsNullOrWhiteSpace(user.Password))
+                {
+                    await response.WriteStringAsync("A Password is required.");
+                    return response;
                 }
-                
+
 
                 // Verifica se o salt foi fornecido
                 if (string.IsNullOrEmpty(user.Salt))
@@ -354,7 +350,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
                 // Retornar o salt
                 var response = req.CreateResponse(HttpStatusCode.OK);
                 response.Headers.Add("Content-Type", "application/json; charset=utf-8");
-                await response.WriteStringAsync(JsonSerializer.Serialize(new { Salt = user.Salt }));
+                await response.WriteStringAsync(JsonSerializer.Serialize(new { user.Salt }));
                 return response;
             }
             catch (Exception ex)

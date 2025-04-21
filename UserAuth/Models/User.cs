@@ -1,6 +1,6 @@
 using System;
 
-namespace MODSI_SQLRestAPI.UserAuth.Models.User
+namespace MODSI_SQLRestAPI.UserAuth.Models
 {
     public class User
     {
@@ -32,7 +32,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Models.User
             CreatedAt = DateTime.UtcNow;
             IsActive = true;
             Group = group;
-           
+
         }
 
         // get methos

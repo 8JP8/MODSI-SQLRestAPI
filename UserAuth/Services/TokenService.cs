@@ -1,23 +1,22 @@
+using Microsoft.Azure.Functions.Worker.Http;
+using Microsoft.IdentityModel.Tokens;
+using MODSI_SQLRestAPI.UserAuth.Controllers;
+using MODSI_SQLRestAPI.UserAuth.Models;
 using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
 using System.Text;
-using Microsoft.Azure.Functions.Worker.Http;
-using Microsoft.IdentityModel.Tokens;
-using MODSI_SQLRestAPI.UserAuth.Models.User;
-using UserAuthenticate;
 
 namespace MODSI_SQLRestAPI.UserAuth.Services
 {
     public static class TokenService
     {
-        private static readonly string SecretKey = Settings.Secret;
 
         public static string GenerateToken(User user)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(SecretKey);
+            var key = AuthSecrets.Secret;
 
             var tokenDescriptor = new SecurityTokenDescriptor
             {
@@ -37,7 +36,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Services
         public static ClaimsPrincipal ValidateToken(string token)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(SecretKey);
+            var key = AuthSecrets.Secret;
 
             try
             {

@@ -1,20 +1,19 @@
+using MODSI_SQLRestAPI.UserAuth.DTO;
+using MODSI_SQLRestAPI.UserAuth.Models;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data.SqlClient;
-using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
-using MODSI_SQLRestAPI.UserAuth.DTO;
-using MODSI_SQLRestAPI.UserAuth.Models.User;
 
 // O repositório é responsável por interagir com a base de dados, realizando operações CRUD (Create, Read, Update, Delete)
 // Geralmete não se deve colocar aqui if statems relacionados a autenticação ou outros processos de negócio
 
-namespace UserAuthenticate.Repositories
+namespace MODSI_SQLRestAPI.UserAuth.Repositories
 {
-    public  class UserRepository
+    public class UserRepository
     {
 
         private readonly string _connectionString;
@@ -26,12 +25,9 @@ namespace UserAuthenticate.Repositories
             _user_DB = ConfigurationManager.AppSettings["Users_DBName"];
         }
 
-
-
-
-        internal async Task<List<User>> GetAllUsersAsync()
+        internal async Task<List<UserDTO>> GetAllUsersAsync()
         {
-            var users = new List<User>();
+            var users = new List<UserDTO>();
             using (SqlConnection conn = new SqlConnection(_connectionString))
             {
                 await conn.OpenAsync();
@@ -61,7 +57,7 @@ namespace UserAuthenticate.Repositories
                                 int isActiveIndex = reader.GetOrdinal("IsActive");
                                 int groupIndex = reader.GetOrdinal("Group");
 
-                                users.Add(new User
+                                users.Add(new UserDTO
                                 {
                                     Id = reader.GetInt32(idIndex),
                                     Name = reader.GetString(nameIndex),
@@ -80,8 +76,6 @@ namespace UserAuthenticate.Repositories
             }
             return users;
         }
-
-
 
         internal async Task AddUserAsync(User user)
         {
@@ -223,17 +217,12 @@ namespace UserAuthenticate.Repositories
                             int idIndex = reader.GetOrdinal("Id");
                             int nameIndex = reader.GetOrdinal("Name");
                             int emailIndex = reader.GetOrdinal("Email");
-                            int passwordIndex = reader.GetOrdinal("Password");
                             int usernameIndex = reader.GetOrdinal("Username");
                             int roleIndex = reader.GetOrdinal("Role");
                             int createdAtIndex = reader.GetOrdinal("CreatedAt");
                             int isActiveIndex = reader.GetOrdinal("IsActive");
                             int groupIndex = reader.GetOrdinal("Group");
                             int saltIndex = reader.GetOrdinal("Salt");
-
-                            // Recuperar os valores das colunas
-                            var storedHash = reader.GetString(passwordIndex);
-                            var salt = reader.GetString(saltIndex);
 
                             User returndata = new User
                             {
@@ -285,9 +274,8 @@ namespace UserAuthenticate.Repositories
             }
         }
 
-        internal async Task<User> GetUserByIdAsync(int id)
+        internal async Task<UserDTO> GetUserByIdAsync(int id)
         {
-            User user = null;
             using (SqlConnection conn = new SqlConnection(_connectionString))
             {
                 await conn.OpenAsync();
@@ -299,23 +287,34 @@ namespace UserAuthenticate.Repositories
                     {
                         if (await reader.ReadAsync())
                         {
-                            user = new User
+                            // Obter os Ãndices das colunas pelo nome
+                            int idIndex = reader.GetOrdinal("Id");
+                            int nameIndex = reader.GetOrdinal("Name");
+                            int emailIndex = reader.GetOrdinal("Email");
+                            int usernameIndex = reader.GetOrdinal("Username");
+                            int roleIndex = reader.GetOrdinal("Role");
+                            int createdAtIndex = reader.GetOrdinal("CreatedAt");
+                            int isActiveIndex = reader.GetOrdinal("IsActive");
+                            int groupIndex = reader.GetOrdinal("Group");
+
+                            UserDTO returndata = new UserDTO
                             {
-                                Id = reader.GetInt32(0),
-                                Name = reader.GetString(1),
-                                Email = reader.GetString(2),
-                                Password = reader.GetString(3),
-                                Username = reader.GetString(4),
-                                Role = reader.GetString(5),
-                                CreatedAt = reader.GetDateTime(6),
-                                IsActive = reader.GetBoolean(7),
-                                Group = reader.GetString(8)
+                                Id = reader.GetInt32(idIndex),
+                                Name = reader.GetString(nameIndex),
+                                Email = reader.GetString(emailIndex),
+                                Username = reader.GetString(usernameIndex),
+                                Role = !reader.IsDBNull(roleIndex) ? reader.GetString(roleIndex) : "n.d.",
+                                CreatedAt = reader.GetDateTime(createdAtIndex),
+                                IsActive = reader.GetBoolean(isActiveIndex),
+                                Group = reader.GetString(groupIndex)
                             };
+
+                            return returndata;
                         }
                     }
                 }
             }
-            return user;
+            return null;
         }
 
 

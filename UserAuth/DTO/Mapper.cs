@@ -1,9 +1,5 @@
-﻿using MODSI_SQLRestAPI.UserAuth.Models.User;
-using System;
+﻿using MODSI_SQLRestAPI.UserAuth.Models;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace MODSI_SQLRestAPI.UserAuth.DTO
 {
@@ -29,10 +25,5 @@ namespace MODSI_SQLRestAPI.UserAuth.DTO
             }
             return userDTOs;
         }
-
-
-
-
-
     }
 }

@@ -1,17 +1,16 @@
-using System;
-using System.IO;
-using System.Threading.Tasks;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
-using MODSI_SQLRestAPI.UserAuth.Models.User;
-using System.Text.Json;
+using MODSI_SQLRestAPI.UserAuth.Models;
+using MODSI_SQLRestAPI.UserAuth.Repositories;
 using MODSI_SQLRestAPI.UserAuth.Services;
-using System.Configuration;
-using UserAuthenticate.Repositories;
+using System;
+using System.IO;
 using System.Net;
+using System.Text.Json;
+using System.Threading.Tasks;
 
-namespace MODSI_SQLRestAPI.Functions.Auth
+namespace MODSI_SQLRestAPI.UserAuth.Controllers
 {
     public class Login
     {
@@ -21,9 +20,6 @@ namespace MODSI_SQLRestAPI.Functions.Auth
         public Login(ILoggerFactory loggerFactory)
         {
             _logger = loggerFactory.CreateLogger<Login>();
-
-            // Inicializa o repositório com as configurações do Azure
-            string connectionString = ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString;
             _userRepository = new UserRepository();
         }
 
