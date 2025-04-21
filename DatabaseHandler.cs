@@ -253,9 +253,9 @@ namespace MODSI_SQLRestAPI
 
             await AddPieChartsAsync(pieCharts);
         }
-        internal async Task<List<User>> GetAllUsersAsync()
+        internal async Task<List<UserDTO>> GetAllUsersAsync()
         {
-            var users = new List<User>();
+            var users = new List<UserDTO>();
             using (SqlConnection conn = new SqlConnection(_connectionString))
             {
                 await conn.OpenAsync();
@@ -268,23 +268,27 @@ namespace MODSI_SQLRestAPI
                         {
                             try
                             {
-                                var role = reader.IsDBNull(5) ? "N.D." : reader.GetString(5);
-                                if (role == "N.D.")
-                                {
-                                    Console.WriteLine($"User with ID {reader.GetInt32(0)} has a null Role.");
-                                }
 
-                                users.Add(new User
+                                // Obter os índices das colunas pelo nome
+                                int idIndex = reader.GetOrdinal("Id");
+                                int nameIndex = reader.GetOrdinal("Name");
+                                int emailIndex = reader.GetOrdinal("Email");
+                                int usernameIndex = reader.GetOrdinal("Username");
+                                int roleIndex = reader.GetOrdinal("Role");
+                                int createdAtIndex = reader.GetOrdinal("CreatedAt");
+                                int isActiveIndex = reader.GetOrdinal("IsActive");
+                                int groupIndex = reader.GetOrdinal("Group");
+
+                                users.Add(new UserDTO
                                 {
-                                    Id = reader.GetInt32(0),
-                                    Name = reader.GetString(1),
-                                    Email = reader.GetString(2),
-                                    Password = reader.GetString(3),
-                                    Username = reader.GetString(4),
-                                    Role = role,
-                                    CreatedAt = reader.GetDateTime(6),
-                                    IsActive = reader.GetBoolean(7),
-                                    Group = reader.GetString(8)
+                                    Id = reader.GetInt32(idIndex),
+                                    Name = reader.GetString(nameIndex),
+                                    Username = reader.GetString(usernameIndex),
+                                    Email = reader.GetString(emailIndex),
+                                    Role = reader.GetString(roleIndex),
+                                    CreatedAt = reader.GetDateTime(createdAtIndex),
+                                    IsActive = reader.GetBoolean(isActiveIndex),
+                                    Group = reader.GetString(groupIndex)
                                 });
                             }
                             catch { }
