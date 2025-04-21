@@ -26,7 +26,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
         //Temporary for testing
         private readonly Microsoft.Extensions.Logging.ILogger _logger;
         private readonly UserRepository _databaseHandler;
-        private readonly RetriveToken retriveToken;
+        private readonly RetrieveToken retreiveToken;
 
         //Service
         private readonly UserService _userService;
@@ -36,7 +36,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
             _logger = loggerFactory.CreateLogger<UserController>();
             _databaseHandler = new UserRepository();
             _userService = new UserService(loggerFactory);
-            retriveToken = new RetriveToken();
+            retrieveToken = new RetrieveToken();
         }
 
 
@@ -47,8 +47,8 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
         {
             try
             {
-                var retriveToken = new RetriveToken();
-                var principal = retriveToken.GetPrincipalFromRequest(req);
+                var retrieveToken = new RetrieveToken();
+                var principal = retrieveToken.GetPrincipalFromRequest(req);
 
                 if (principal == null || !principal.Identity.IsAuthenticated)
                 {
