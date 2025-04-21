@@ -312,7 +312,7 @@ namespace MODSI_SQLRestAPI
                     cmd.Parameters.AddWithValue("@Email", user.Email);
                     cmd.Parameters.AddWithValue("@Password", user.Password);
                     cmd.Parameters.AddWithValue("@Username", user.Username);
-                    cmd.Parameters.AddWithValue("@Role", user.Role);
+                    cmd.Parameters.AddWithValue("@Role", DBNull.Value);
                     cmd.Parameters.AddWithValue("@CreatedAt", user.CreatedAt);
                     cmd.Parameters.AddWithValue("@IsActive", user.IsActive);
                     cmd.Parameters.AddWithValue("@Group", user.Group);

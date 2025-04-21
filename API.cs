@@ -465,7 +465,7 @@ namespace MODSI_SQLRestAPI
                     Email = user.Email,
                     Password = passwordHash,
                     Username = user.Username,
-                    Role = null,
+                    Role = "user",
                     CreatedAt = DateTime.UtcNow,
                     IsActive = true,
                     Group = "USER",
