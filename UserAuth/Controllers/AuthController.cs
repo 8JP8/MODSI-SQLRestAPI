@@ -26,7 +26,7 @@ namespace MODSI_SQLRestAPI.Functions.Auth
             _userRepository = new UserRepository();
         }
 
-        [Function("Login")]
+    [Function("Login")]
     public async Task<HttpResponseData> Login([HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "User/Login")] HttpRequestData req)
     {
         try
