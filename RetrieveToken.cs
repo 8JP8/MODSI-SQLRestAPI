@@ -9,10 +9,8 @@ using System.Threading.Tasks;
 
 namespace MODSI_SQLRestAPI
 {
-    class RetriveToken
+    class RetrieveToken
     {
-
-
         public ClaimsPrincipal GetPrincipalFromRequest(HttpRequestData req)
         {
             // Extract token from Authorization header
