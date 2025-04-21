@@ -14,6 +14,7 @@ using System.Text;
 using UserAuthenticate.Repositories;
 using MODSI_SQLRestAPI.UserAuth.DTO;
 using MODSI_SQLRestAPI.UserAuth.Models.User;
+using System.Collections.Generic;
 
 
 // Apenas resposável por fazer o CRUD de Users e verificar se autenticação é válida (token) para o pedido efetuado
@@ -321,7 +322,47 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
             }
         }
 
+        [Function("GetUserSalt")]
+        public async Task<HttpResponseData> GetUserSalt(
+        [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "User/GetUserSalt")] HttpRequestData req)
+        {
+            try
+            {
+                // Extrair username ou email da query string
+                var queryParams = Utils.ParseQueryString(req.Url.Query);
+                string identifier = !string.IsNullOrWhiteSpace(queryParams["identifier"]) ? queryParams["identifier"] : queryParams["Identifier"];
 
+                if (string.IsNullOrWhiteSpace(identifier))
+                {
+                    var badRequestResponse = req.CreateResponse(HttpStatusCode.BadRequest);
+                    await badRequestResponse.WriteStringAsync("Identifier (username or email) is required.");
+                    return badRequestResponse;
+                }
+
+                _logger.LogInformation($"Retrieving salt for identifier: {identifier}");
+
+                // Buscar o usuário no banco de dados
+                var user = await _databaseHandler.GetUserByIdentifierAsync(identifier, true);
+
+                if (user == null)
+                {
+                    var notFoundResponse = req.CreateResponse(HttpStatusCode.NotFound);
+                    await notFoundResponse.WriteStringAsync("User not found.");
+                    return notFoundResponse;
+                }
+
+                // Retornar o salt
+                var response = req.CreateResponse(HttpStatusCode.OK);
+                response.Headers.Add("Content-Type", "application/json; charset=utf-8");
+                await response.WriteStringAsync(JsonSerializer.Serialize(new { Salt = user.Salt }));
+                return response;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while retrieving the user salt.");
+                return req.CreateResponse(HttpStatusCode.InternalServerError);
+            }
+        }
         // MUDADO para não tratar do token visto que o token só depende do login e não do registo!
         internal static class Utils
         {
@@ -345,9 +386,24 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
                     return Convert.ToBase64String(hash);
                 }
             }
+
+            public static Dictionary<string, string> ParseQueryString(string query)
+            {
+                var queryParams = new Dictionary<string, string>();
+                if (string.IsNullOrEmpty(query)) return queryParams;
+
+                foreach (var pair in query.TrimStart('?').Split('&'))
+                {
+                    var parts = pair.Split('=');
+                    if (parts.Length == 2)
+                    {
+                        queryParams[Uri.UnescapeDataString(parts[0])] = Uri.UnescapeDataString(parts[1]);
+                    }
+                }
+
+                return queryParams;
+            }
         }
-
-
 
 
 
