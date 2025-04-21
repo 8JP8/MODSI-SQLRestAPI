@@ -26,7 +26,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
         //Temporary for testing
         private readonly Microsoft.Extensions.Logging.ILogger _logger;
         private readonly UserRepository _databaseHandler;
-        private readonly RetrieveToken retreiveToken;
+        private readonly RetrieveToken retrieveToken;
 
         //Service
         private readonly UserService _userService;

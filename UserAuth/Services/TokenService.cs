@@ -1,7 +1,9 @@
 using System;
 using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
 using System.Security.Claims;
 using System.Text;
+using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.IdentityModel.Tokens;
 using MODSI_SQLRestAPI.UserAuth.Models.User;
 using UserAuthenticate;
@@ -54,6 +56,23 @@ namespace MODSI_SQLRestAPI.UserAuth.Services
             {
                 return null;
             }
+        }
+    }
+
+    class RetrieveToken
+    {
+        public ClaimsPrincipal GetPrincipalFromRequest(HttpRequestData req)
+        {
+            // Extract token from Authorization header
+            if (!req.Headers.TryGetValues("Authorization", out var authHeaders))
+                return null;
+
+            var authHeader = authHeaders.FirstOrDefault();
+            if (string.IsNullOrEmpty(authHeader) || !authHeader.StartsWith("Bearer "))
+                return null;
+
+            var token = authHeader.Substring("Bearer ".Length);
+            return TokenService.ValidateToken(token);
         }
     }
 }
