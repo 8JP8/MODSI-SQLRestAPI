@@ -253,10 +253,6 @@ namespace MODSI_SQLRestAPI
 
             await AddPieChartsAsync(pieCharts);
         }
-        #endregion
-
-        #region User Management
-
         internal async Task<List<User>> GetAllUsersAsync()
         {
             var users = new List<User>();
@@ -270,18 +266,28 @@ namespace MODSI_SQLRestAPI
                     {
                         while (await reader.ReadAsync())
                         {
-                            users.Add(new User
+                            try
                             {
-                                Id = reader.GetInt32(0),
-                                Name = reader.GetString(1),
-                                Email = reader.GetString(2),
-                                Password = reader.GetString(3),
-                                Username = reader.GetString(4),
-                                Role = reader.GetString(5),
-                                CreatedAt = reader.GetDateTime(6),
-                                IsActive = reader.GetBoolean(7),
-                                Group = reader.GetString(8)
-                            });
+                                var role = reader.IsDBNull(5) ? "N.D." : reader.GetString(5);
+                                if (role == "N.D.")
+                                {
+                                    Console.WriteLine($"User with ID {reader.GetInt32(0)} has a null Role.");
+                                }
+
+                                users.Add(new User
+                                {
+                                    Id = reader.GetInt32(0),
+                                    Name = reader.GetString(1),
+                                    Email = reader.GetString(2),
+                                    Password = reader.GetString(3),
+                                    Username = reader.GetString(4),
+                                    Role = role,
+                                    CreatedAt = reader.GetDateTime(6),
+                                    IsActive = reader.GetBoolean(7),
+                                    Group = reader.GetString(8)
+                                });
+                            }
+                            catch { }
                         }
                     }
                 }
