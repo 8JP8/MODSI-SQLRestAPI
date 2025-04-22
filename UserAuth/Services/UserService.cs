@@ -67,6 +67,63 @@ namespace MODSI_SQLRestAPI.UserAuth.Services
         }
 
 
+        internal async Task DeleteUser(int id)
+        {
+            var user = await _databaseHandler.GetUserByIdAsync(id);
+            if (user == null)
+            {
+                throw new NotFoundException($"Usuário com ID {id} não encontrado.");
+            }
+            await _databaseHandler.DeleteUserByIdAsync(id);
+            
+        }
+
+        internal async Task<UserDTO> UpdateUser(int id, User user)
+        {
+            var existingUser = await _databaseHandler.GetUserByIdAsync(id);
+            if (existingUser == null)
+            {
+                throw new NotFoundException($"Usuário com ID {id} não encontrado.");
+            }
+            // Verifica se o email de usuário já existe
+            var useremail = await _databaseHandler.EmailUserExistsAsync(user.Email);
+            if (useremail == true)
+            {
+                throw new BadRequestException($"Usuário com email {user.Email} já existe.");
+            }
+            // Verifica se o nome de usuário já existe
+            var existingUsername1 = await _databaseHandler.UsernameUserExistsAsync(user.Username);
+            if (existingUsername1 == true)
+            {
+                throw new BadRequestException($"Usuário com nome de usuário {user.Username} já existe.");
+            }
+
+            user.Id = id;
+
+            await _databaseHandler.UpdateUserByIdAsync(user);
+
+            return new UserDTO(user.Name, user.Email, user.Username, user.Role, user.Group);
+        }
+
+
+
+        internal async Task<bool> EmailUserExists(string email)
+        {
+            var exists = await _databaseHandler.EmailUserExistsAsync(email);
+            return exists;
+
+        }
+
+        internal async Task<User> GetUserByIdentifier(string identifier, bool return_salt= false)
+        {
+            var user = await _databaseHandler.GetUserByIdentifierAsync(identifier, return_salt);
+            if (user == null)
+            {
+                throw new NotFoundException($"Usuário com username/email {identifier} não encontrado.");
+            }
+            return user;
+        }
+
 
     }
 

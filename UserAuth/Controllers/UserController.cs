@@ -20,17 +20,12 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
 {
     class UserController
     {
-        //Temporary for testing
+
         private readonly ILogger _logger;
-        private readonly UserRepository _databaseHandler;
-
-        //Service
         private readonly UserService _userService;
-
         public UserController(ILoggerFactory loggerFactory)
         {
             _logger = loggerFactory.CreateLogger<UserController>();
-            _databaseHandler = new UserRepository();
             _userService = new UserService(loggerFactory);
         }
 
@@ -157,24 +152,25 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
         }
 
 
-
-
         [Function("DeleteUserById")]
         public async Task<HttpResponseData> DeleteUserById([HttpTrigger(AuthorizationLevel.Function, "delete", Route = "User/Delete/{id:int}")] HttpRequestData req, int id)
         {
             try
             {
                 _logger.LogInformation($"Deleting user with Id: {id}");
-                await _databaseHandler.DeleteUserByIdAsync(id);
+                await _userService.DeleteUser(id);
                 var response = req.CreateResponse(HttpStatusCode.OK);
                 response.Headers.Add("Content-Type", "text/plain; charset=utf-8");
                 await response.WriteStringAsync($"User with Id {id} deleted successfully.");
                 return response;
             }
-            catch (Exception ex)
+            catch (HttpException ex)
             {
-                _logger.LogError(ex, $"An error occurred while deleting user with Id {id}.");
-                return req.CreateResponse(HttpStatusCode.InternalServerError);
+                _logger.LogWarning(ex, ex.Message);
+                var response = req.CreateResponse(ex.StatusCode);
+                response.Headers.Add("Content-Type", "application/json; charset=utf-8");
+                await response.WriteStringAsync(JsonSerializer.Serialize(new { error = ex.Message }));
+                return response;
             }
         }
 
@@ -183,38 +179,34 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
         {
             try
             {
-                _logger.LogInformation($"Updating user with Id: {id}");
+                
                 var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+
                 var user = JsonSerializer.Deserialize<User>(requestBody);
-                user.Id = id;
+    
 
-                // Map MODSI_SQLRestAPI.User to MODSI_SQLRestAPI.DatabaseHandler.User
-                var dbUser = new User
-                {
-                    Id = user.Id,
-                    Name = user.Name,
-                    Email = user.Email,
-                    Password = user.Password,
-                    Username = user.Username,
-                    Role = user.Role,
-                    CreatedAt = user.CreatedAt,
-                    IsActive = user.IsActive,
-                    Group = user.Group
-                };
+                var dbUser = new User(user.Name, user.Email, user.Password, user.Username, user.Role, user.Group);
 
-                await _databaseHandler.UpdateUserByIdAsync(dbUser);
+                await _userService.UpdateUser(id, dbUser);
 
                 var response = req.CreateResponse(HttpStatusCode.OK);
                 response.Headers.Add("Content-Type", "text/plain; charset=utf-8");
                 await response.WriteStringAsync($"User with Id {id} updated successfully.");
                 return response;
             }
-            catch (Exception ex)
+            catch (HttpException ex)
             {
-                _logger.LogError(ex, $"An error occurred while updating user with Id {id}.");
-                return req.CreateResponse(HttpStatusCode.InternalServerError);
+                _logger.LogWarning(ex, ex.Message);
+                var response = req.CreateResponse(ex.StatusCode);
+                response.Headers.Add("Content-Type", "application/json; charset=utf-8");
+                await response.WriteStringAsync(JsonSerializer.Serialize(new { error = ex.Message }));
+                return response;
             }
         }
+
+
+
+
 
         [Function("EmailUserExists")]
         public async Task<HttpResponseData> EmailUserExists(
@@ -231,18 +223,25 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
                 }
 
                 _logger.LogInformation($"Checking if email exists: {email}");
-                var exists = await _databaseHandler.EmailUserExistsAsync(email);
+                var exists =  await _userService.EmailUserExists(email);
+
                 var response = req.CreateResponse(HttpStatusCode.OK);
                 response.Headers.Add("Content-Type", "application/json; charset=utf-8");
                 await response.WriteStringAsync(JsonSerializer.Serialize(new { Exists = exists }));
                 return response;
             }
-            catch (Exception ex)
+            catch (HttpException ex)
             {
-                _logger.LogError(ex, $"An error occurred while checking if email exists");
-                return req.CreateResponse(HttpStatusCode.InternalServerError);
+                _logger.LogWarning(ex, ex.Message);
+                var response = req.CreateResponse(ex.StatusCode);
+                response.Headers.Add("Content-Type", "application/json; charset=utf-8");
+                await response.WriteStringAsync(JsonSerializer.Serialize(new { error = ex.Message }));
+                return response;
             }
         }
+
+
+
 
         [Function("GetUserByEmail")]
         public async Task<HttpResponseData> GetUserByEmail(
@@ -259,7 +258,8 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
                 }
 
                 _logger.LogInformation($"Retrieving user with email: {email}");
-                var user = await _databaseHandler.GetUserByIdentifierAsync(email);
+
+                var user=  await _userService.GetUserByIdentifier(email);
 
                 if (user == null)
                 {
@@ -271,10 +271,13 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
                 await response.WriteStringAsync(JsonSerializer.Serialize(user));
                 return response;
             }
-            catch (Exception ex)
+            catch (HttpException ex)
             {
-                _logger.LogError(ex, "An error occurred while retrieving user by email.");
-                return req.CreateResponse(HttpStatusCode.InternalServerError);
+                _logger.LogWarning(ex, ex.Message);
+                var response = req.CreateResponse(ex.StatusCode);
+                response.Headers.Add("Content-Type", "application/json; charset=utf-8");
+                await response.WriteStringAsync(JsonSerializer.Serialize(new { error = ex.Message }));
+                return response;
             }
         }
 
@@ -293,7 +296,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
                 }
 
                 _logger.LogInformation($"Retrieving user with username: {username}");
-                var user = await _databaseHandler.GetUserByIdentifierAsync(username);
+                var user = await _userService.GetUserByIdentifier(username);
 
                 if (user == null)
                 {
@@ -305,10 +308,13 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
                 await response.WriteStringAsync(JsonSerializer.Serialize(user));
                 return response;
             }
-            catch (Exception ex)
+            catch (HttpException ex)
             {
-                _logger.LogError(ex, "An error occurred while retrieving user by email.");
-                return req.CreateResponse(HttpStatusCode.InternalServerError);
+                _logger.LogWarning(ex, ex.Message);
+                var response = req.CreateResponse(ex.StatusCode);
+                response.Headers.Add("Content-Type", "application/json; charset=utf-8");
+                await response.WriteStringAsync(JsonSerializer.Serialize(new { error = ex.Message }));
+                return response;
             }
         }
 
@@ -332,7 +338,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
                 _logger.LogInformation($"Retrieving salt for identifier: {identifier}");
 
                 // Buscar o usuário no banco de dados
-                var user = await _databaseHandler.GetUserByIdentifierAsync(identifier, true);
+                var user = await _userService.GetUserByIdentifier(identifier, true);
 
                 if (user == null)
                 {
@@ -347,10 +353,13 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
                 await response.WriteStringAsync(JsonSerializer.Serialize(new { user.Salt }));
                 return response;
             }
-            catch (Exception ex)
+            catch (HttpException ex)
             {
-                _logger.LogError(ex, "An error occurred while retrieving the user salt.");
-                return req.CreateResponse(HttpStatusCode.InternalServerError);
+                _logger.LogWarning(ex, ex.Message);
+                var response = req.CreateResponse(ex.StatusCode);
+                response.Headers.Add("Content-Type", "application/json; charset=utf-8");
+                await response.WriteStringAsync(JsonSerializer.Serialize(new { error = ex.Message }));
+                return response;
             }
         }
         // MUDADO para não tratar do token visto que o token só depende do login e não do registo!

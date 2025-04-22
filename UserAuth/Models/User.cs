@@ -61,6 +61,45 @@ namespace MODSI_SQLRestAPI.UserAuth.Models
             Salt = salt;
         }
 
+        public User(string name, string email, string password, string username, string role, string group)
+        {
+            if (string.IsNullOrEmpty(name))
+            {
+                throw new BadRequestException($"Name cannot be null");
+            }
+            if (string.IsNullOrEmpty(email))
+            {
+                throw new BadRequestException($"Email cannot be null");
+            }
+            if (string.IsNullOrEmpty(password))
+            {
+                throw new BadRequestException($"Password cannot be null");
+            }
+            if (string.IsNullOrEmpty(username))
+            {
+                throw new BadRequestException($"Username cannot be null or empty");
+            }
+            if (string.IsNullOrEmpty(role))
+            {
+                throw new BadRequestException($"Role cannot be null or empty");
+            }
+            if (string.IsNullOrEmpty(group))
+            {
+                throw new BadRequestException($"Group cannot be null or empty");
+            }
+
+
+            Name = name;
+            Email = email;
+            Password = password;
+            Username = username;
+            Role = role;
+            CreatedAt = DateTime.UtcNow;
+            IsActive = true;
+            Group = group;
+
+        }
+
         // get methos
         public string GetName()
         {
