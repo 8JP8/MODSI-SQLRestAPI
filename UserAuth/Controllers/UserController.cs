@@ -13,7 +13,6 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-
 // Apenas resposável por fazer o CRUD de Users e verificar se autenticação é válida (token) para o pedido efetuado
 
 namespace MODSI_SQLRestAPI.UserAuth.Controllers
@@ -37,19 +36,29 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
         {
             try
             {
-                var retrieveToken = new RetrieveToken();
-                var principal = retrieveToken.GetPrincipalFromRequest(req);
-
-                if (principal == null)
+                var retriveToken = new RetrieveToken();
+                var principal = retriveToken.GetPrincipalFromRequest(req);
+                _logger.LogInformation("Retrieving all users.", retriveToken);
+                if (principal == null || !principal.Identity.IsAuthenticated)
                 {
                     var unauthorizedResponse = req.CreateResponse(HttpStatusCode.Unauthorized);
-                    unauthorizedResponse.WriteString("Unauthorized or insufficient permissions.");
+                    unauthorizedResponse.WriteString("Unauthorized");
                     return unauthorizedResponse;
                 }
 
-                var users = await _userService.GetAllUsers();
-                _logger.LogInformation($"Retrieved users: {JsonSerializer.Serialize(users)}");
 
+                if (!principal.IsInRole("admin"))
+                {
+                    var forbiddenResponse = req.CreateResponse(HttpStatusCode.Forbidden);
+                    forbiddenResponse.WriteString("Forbidden");
+                    return forbiddenResponse;
+                }
+
+                var users = await _userService.GetAllUsers();
+
+
+
+                _logger.LogInformation($"Retrieved users: {JsonSerializer.Serialize(users)}");
                 var response = req.CreateResponse(HttpStatusCode.OK);
                 response.Headers.Add("Content-Type", "application/json; charset=utf-8");
                 await response.WriteStringAsync(JsonSerializer.Serialize(users));
