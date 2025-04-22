@@ -45,26 +45,16 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
                 var retrieveToken = new RetrieveToken();
                 var principal = retrieveToken.GetPrincipalFromRequest(req);
 
-                if (principal == null || !principal.Identity.IsAuthenticated)
+                if (principal == null)
                 {
                     var unauthorizedResponse = req.CreateResponse(HttpStatusCode.Unauthorized);
-                    unauthorizedResponse.WriteString("Unauthorized");
+                    unauthorizedResponse.WriteString("Unauthorized or insufficient permissions.");
                     return unauthorizedResponse;
                 }
 
-
-                if (!principal.IsInRole("manager") && !principal.IsInRole("admin"))
-                {
-                    var forbiddenResponse = req.CreateResponse(HttpStatusCode.Forbidden);
-                    forbiddenResponse.WriteString("Forbidden");
-                    return forbiddenResponse;
-                }
-
                 var users = await _userService.GetAllUsers();
-
-
-
                 _logger.LogInformation($"Retrieved users: {JsonSerializer.Serialize(users)}");
+
                 var response = req.CreateResponse(HttpStatusCode.OK);
                 response.Headers.Add("Content-Type", "application/json; charset=utf-8");
                 await response.WriteStringAsync(JsonSerializer.Serialize(users));
@@ -170,8 +160,19 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
         {
             try
             {
+                var retrieveToken = new RetrieveToken();
+                var principal = retrieveToken.GetPrincipalFromRequest(req);
+
+                if (principal == null)
+                {
+                    var unauthorizedResponse = req.CreateResponse(HttpStatusCode.Unauthorized);
+                    unauthorizedResponse.WriteString("Unauthorized or insufficient permissions.");
+                    return unauthorizedResponse;
+                }
+
                 _logger.LogInformation($"Deleting user with Id: {id}");
                 await _databaseHandler.DeleteUserByIdAsync(id);
+
                 var response = req.CreateResponse(HttpStatusCode.OK);
                 response.Headers.Add("Content-Type", "text/plain; charset=utf-8");
                 await response.WriteStringAsync($"User with Id {id} deleted successfully.");
@@ -183,6 +184,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
                 return req.CreateResponse(HttpStatusCode.InternalServerError);
             }
         }
+
 
         [Function("UpdateUserById")]
         public async Task<HttpResponseData> UpdateUserById([HttpTrigger(AuthorizationLevel.Function, "put", Route = "User/Update/{id:int}")] HttpRequestData req, int id)
