@@ -77,6 +77,10 @@ namespace MODSI_SQLRestAPI.UserAuth.Repositories
             return users;
         }
 
+
+
+
+
         internal async Task AddUserAsync(User user)
         {
             using (SqlConnection conn = new SqlConnection(_connectionString))
@@ -259,6 +263,22 @@ namespace MODSI_SQLRestAPI.UserAuth.Repositories
                 }
             }
         }
+        // Username exists
+        internal async Task<bool> UsernameUserExistsAsync(string username)
+        {
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            {
+                await conn.OpenAsync();
+                var query = $"SELECT COUNT(*) FROM {_user_DB} WHERE Username = @Username";
+                using (SqlCommand cmd = new SqlCommand(query, conn))
+                {
+                    cmd.Parameters.AddWithValue("@Username", username);
+                    var count = (int)await cmd.ExecuteScalarAsync();
+                    return count > 0;
+                }
+            }
+        }
+        // U
 
         internal async Task DeleteUserByIdAsync(int id)
         {
@@ -316,10 +336,6 @@ namespace MODSI_SQLRestAPI.UserAuth.Repositories
             }
             return null;
         }
-
-
-
-
 
 
         public async Task<User> GetByCredentialsAsync(string username, string password)

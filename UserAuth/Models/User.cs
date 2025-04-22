@@ -22,7 +22,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Models
             IsActive = true;
 
         }
-        public User(string name, string email, string password, string username, string role, string group)
+        public User(string name, string email, string password, string username, string role, string group, string salt)
         {
             if (string.IsNullOrEmpty(name))
             {
@@ -58,7 +58,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Models
             CreatedAt = DateTime.UtcNow;
             IsActive = true;
             Group = group;
-
+            Salt = salt;
         }
 
         // get methos

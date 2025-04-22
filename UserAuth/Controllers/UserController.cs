@@ -116,8 +116,6 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
                 string salt;
                 string passwordHash;
 
-                var response = req.CreateResponse(HttpStatusCode.OK);
-                response.Headers.Add("Content-Type", "text/plain; charset=utf-8");
 
                 if (string.IsNullOrWhiteSpace(user.Password))
                     throw new BadRequestException($"Password cannot be empty");
@@ -138,12 +136,15 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
                 }
 
                 // Map MODSI_SQLRestAPI.User to MODSI_SQLRestAPI.DatabaseHandler.User
-                var dbUser = new User(email: user.Email, password: passwordHash, name: user.Name, username: user.Username, role: user.Role ?? "User", group: user.Group ?? "USER");
+                var dbUser = new User(email: user.Email,password: passwordHash,name: user.Name,username: user.Username,role: user.Role ?? "User",
+                    group: user.Group ?? "USER",salt: salt);
 
-                await _databaseHandler.AddUserAsync(dbUser);
-
-                await response.WriteStringAsync("User added successfully.");
+                var userDTO = await _userService.CreateUser(dbUser);
+                var response = req.CreateResponse(HttpStatusCode.Created);
+                response.Headers.Add("Content-Type", "application/json; charset=utf-8");
+                await response.WriteStringAsync(JsonSerializer.Serialize(userDTO, new JsonSerializerOptions { WriteIndented = true }));
                 return response;
+
             }
             catch (HttpException ex)
             {
