@@ -77,30 +77,32 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
             }
         }
 
-
+        // Second organized function as example with exeption handling
         [Function("GetUserById")]
-        public async Task<HttpResponseData> GetUserById([HttpTrigger(AuthorizationLevel.Function, "get", Route = "User/Get/{id:int}")] HttpRequestData req, int id)
+        public async Task<HttpResponseData> GetUserById(
+            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "User/Get/{id:int}")] HttpRequestData req, int id)
         {
             try
             {
-                _logger.LogInformation($"Retrieving user with Id: {id}");
-                var user = await _databaseHandler.GetUserByIdAsync(id);
-
-                if (user == null)
-                {
-                    return req.CreateResponse(HttpStatusCode.NotFound);
-                }
+                var user = await _userService.GetUserById(id);
                 var response = req.CreateResponse(HttpStatusCode.OK);
                 response.Headers.Add("Content-Type", "application/json; charset=utf-8");
                 await response.WriteStringAsync(JsonSerializer.Serialize(user));
                 return response;
             }
-            catch (Exception ex)
+            catch (HttpException ex) 
             {
-                _logger.LogError(ex, $"An error occurred while retrieving user with Id {id}.");
-                return req.CreateResponse(HttpStatusCode.InternalServerError);
+                _logger.LogWarning(ex, ex.Message);
+                var response = req.CreateResponse(ex.StatusCode);
+                response.Headers.Add("Content-Type", "application/json; charset=utf-8");
+                await response.WriteStringAsync(JsonSerializer.Serialize(new { error = ex.Message }));
+                return response;
             }
         }
+
+
+
+        //Kinda organized put more exceptions
 
         [Function("AddUser")]
         public async Task<HttpResponseData> AddUser([HttpTrigger(AuthorizationLevel.Function, "post", Route = "User/Add")] HttpRequestData req)
@@ -118,10 +120,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
                 response.Headers.Add("Content-Type", "text/plain; charset=utf-8");
 
                 if (string.IsNullOrWhiteSpace(user.Password))
-                {
-                    await response.WriteStringAsync("A Password is required.");
-                    return response;
-                }
+                    throw new BadRequestException($"Password cannot be empty");
 
 
                 // Verifica se o salt foi fornecido
@@ -139,30 +138,24 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
                 }
 
                 // Map MODSI_SQLRestAPI.User to MODSI_SQLRestAPI.DatabaseHandler.User
-                var dbUser = new User
-                {
-                    Name = user.Name,
-                    Email = user.Email,
-                    Password = passwordHash,
-                    Username = user.Username,
-                    Role = user.Role ?? "User",
-                    CreatedAt = DateTime.UtcNow,
-                    IsActive = true,
-                    Group = user.Group ?? "USER",
-                    Salt = salt
-                };
+                var dbUser = new User(email: user.Email, password: passwordHash, name: user.Name, username: user.Username, role: user.Role ?? "User", group: user.Group ?? "USER");
 
                 await _databaseHandler.AddUserAsync(dbUser);
 
                 await response.WriteStringAsync("User added successfully.");
                 return response;
             }
-            catch (Exception ex)
+            catch (HttpException ex)
             {
-                _logger.LogError(ex, "An error occurred while adding user.");
-                return req.CreateResponse(HttpStatusCode.InternalServerError);
+                _logger.LogWarning(ex, ex.Message);
+                var response = req.CreateResponse(ex.StatusCode);
+                response.Headers.Add("Content-Type", "application/json; charset=utf-8");
+                await response.WriteStringAsync(JsonSerializer.Serialize(new { error = ex.Message }));
+                return response;
             }
         }
+
+
 
 
         [Function("DeleteUserById")]

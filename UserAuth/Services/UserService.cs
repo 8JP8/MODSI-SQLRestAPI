@@ -22,18 +22,28 @@ namespace MODSI_SQLRestAPI.UserAuth.Services
             _dto_mapper = new Mapper();
         }
 
-        //GetAllUsers
         internal async Task<List<UserDTO>> GetAllUsers()
         {
             var users = await _databaseHandler.GetAllUsersAsync();
 
             if (users == null || users.Count == 0)
             {
-                _logger.LogWarning("No users found in the database.");
-                return new List<UserDTO>();
+                throw new NotFoundException("Nenhum usuário encontrado.");
             }
+
             return users;
         }
+
+        internal async Task<UserDTO> GetUserById(int id)
+        {
+            var user = await _databaseHandler.GetUserByIdAsync(id);
+            if (user == null)
+            {
+                throw new NotFoundException($"Usuário com ID {id} não encontrado.");
+            }
+            return user;
+        }
+
 
     }
 
