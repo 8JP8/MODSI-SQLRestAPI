@@ -29,6 +29,4 @@ namespace MODSI_SQLRestAPI.UserAuth
             : base(HttpStatusCode.BadRequest, message) { }
     }
 
-
-
 }

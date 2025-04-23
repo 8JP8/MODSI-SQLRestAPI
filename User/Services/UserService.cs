@@ -6,14 +6,14 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 
 
-// Ponto entre controlador e Base de Dados , Basicamnete onde se deve colcar if statements não relacionados a autenticação
-// Ou seja processos de negocio aqui como tamanho de password, letras válidas, etc
-//DTO retriver
+// Point between the controller and the database – essentially where you should place 'if' statements unrelated to authentication.
+// In other words, this is where business logic goes, like password length checks, valid characters, etc.
+// DTO retriever
 namespace MODSI_SQLRestAPI.UserAuth.Services
 {
     class UserService
     {
-        private readonly Microsoft.Extensions.Logging.ILogger _logger;
+        private readonly ILogger _logger;
         private readonly UserRepository _databaseHandler;
         public UserService(ILoggerFactory loggerFactory)
         {
@@ -46,27 +46,26 @@ namespace MODSI_SQLRestAPI.UserAuth.Services
         internal async Task<UserDTO> CreateUser(User user)
         {
 
-            // Verifica se o email de usuário já existe
+            // Check if the email exists
             var existingUser = await _databaseHandler.EmailUserExistsAsync(user.Email);
             if (existingUser == true)
             {
                 throw new BadRequestException($"Usuário com email {user.Email} já existe.");
             }
             
-            // Verifica se o nome de usuário já existe
+            // Cehck if the username exists
             var existingUsername = await _databaseHandler.UsernameUserExistsAsync(user.Username);
             if (existingUsername == true)
             {
                 throw new BadRequestException($"Usuário com nome de usuário {user.Username} já existe.");
             }
             await _databaseHandler.AddUserAsync(user);
-            // Cruar DTO user
-            var userDTO = new UserDTO(user.Name, user.Email, user.Username, user.Role, user.Group);
+
+            // Create DTO User
+            var userDTO = new UserDTO(user.Name, user.Email, user.Username, user.Role, user.Group, user.Photo);
 
             return userDTO;
         }
-
-
 
     }
 

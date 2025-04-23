@@ -26,14 +26,28 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
 
         //Service
         private readonly UserService _userService;
-
         public UserController(ILoggerFactory loggerFactory)
         {
             _logger = loggerFactory.CreateLogger<UserController>();
             _databaseHandler = new UserRepository();
             _userService = new UserService(loggerFactory);
+
+            // Adjusted to call asynchronous methods properly
+            Task.Run(() => InitializeGroupsAsync()).Wait();
         }
 
+        public async Task InitializeGroupsAsync()
+        {
+            var groupsRepository = new GroupsRepository();
+            var predefinedGroups = new List<Groups>
+            {
+                new Groups(1, "Admin"),
+                new Groups(2, "User"),
+                new Groups(3, "Guest")
+            };
+
+            await groupsRepository.EnsureGroupsExistAsync(predefinedGroups);
+        }
 
         // First Organized function as example
 
@@ -47,7 +61,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
 
                 if (principal == null)
                 {
-                    var unauthorizedResponse = req.CreateResponse(HttpStatusCode.Unauthorized);
+                    var unauthorizedResponse = req.CreateResponse(HttpStatusCode.Forbidden);
                     unauthorizedResponse.WriteString("Unauthorized or insufficient permissions.");
                     return unauthorizedResponse;
                 }
@@ -106,35 +120,39 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
                 string salt;
                 string passwordHash;
 
-
                 if (string.IsNullOrWhiteSpace(user.Password))
                     throw new BadRequestException($"Password cannot be empty");
-
 
                 // Verifica se o salt foi fornecido
                 if (string.IsNullOrEmpty(user.Salt))
                 {
-                    // Caso o salt não tenha sido fornecido, gera um novo salt e realiza o hashing da senha
                     salt = Utils.GenerateSalt();
                     passwordHash = Utils.HashPassword(user.Password, salt);
                 }
                 else
                 {
-                    // Caso o salt tenha sido fornecido, utiliza o salt e a senha como estão
                     salt = user.Salt;
                     passwordHash = user.Password;
                 }
 
                 // Map MODSI_SQLRestAPI.User to MODSI_SQLRestAPI.DatabaseHandler.User
-                var dbUser = new User(email: user.Email,password: passwordHash,name: user.Name,username: user.Username,role: user.Role ?? "User",
-                    group: user.Group ?? "USER",salt: salt);
+                var dbUser = new User(
+                    name: user.Name,
+                    email: user.Email,
+                    password: passwordHash,
+                    username: user.Username,
+                    role: user.Role ?? "User",
+                    group: user.Group ?? "USER",
+                    salt: salt,
+                    tel: user.Tel,
+                    photo: user.Photo ?? new byte[0]
+                );
 
                 var userDTO = await _userService.CreateUser(dbUser);
                 var response = req.CreateResponse(HttpStatusCode.Created);
                 response.Headers.Add("Content-Type", "application/json; charset=utf-8");
                 await response.WriteStringAsync(JsonSerializer.Serialize(userDTO, new JsonSerializerOptions { WriteIndented = true }));
                 return response;
-
             }
             catch (HttpException ex)
             {
@@ -147,8 +165,6 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
         }
 
 
-
-
         [Function("DeleteUserById")]
         public async Task<HttpResponseData> DeleteUserById([HttpTrigger(AuthorizationLevel.Function, "delete", Route = "User/Delete/{id:int}")] HttpRequestData req, int id)
         {
@@ -159,7 +175,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
 
                 if (principal == null)
                 {
-                    var unauthorizedResponse = req.CreateResponse(HttpStatusCode.Unauthorized);
+                    var unauthorizedResponse = req.CreateResponse(HttpStatusCode.Forbidden);
                     unauthorizedResponse.WriteString("Unauthorized or insufficient permissions.");
                     return unauthorizedResponse;
                 }
@@ -201,7 +217,9 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
                     Role = user.Role,
                     CreatedAt = user.CreatedAt,
                     IsActive = user.IsActive,
-                    Group = user.Group
+                    Group = user.Group,
+                    Tel = user.Tel, // Pode ser null
+                    Photo = user.Photo // Pode ser null
                 };
 
                 await _databaseHandler.UpdateUserByIdAsync(dbUser);
