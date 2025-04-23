@@ -52,13 +52,16 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
         {
             try
             {
-                var retriveToken = new RetrieveToken();
-                var principal = retriveToken.GetPrincipalFromRequest(req);
-                _logger.LogInformation("Retrieving all users.", retriveToken);
+                var retrieveToken = new RetrieveToken();
+                var principal = retrieveToken.GetPrincipalFromRequest(req);
+                _logger.LogInformation("Retrieving all users.", retrieveToken);
+
+                try { _logger.LogInformation(principal.Identity.IsAuthenticated?"User successfully authenticated.":""); } catch (Exception ex) { _logger.LogInformation("Erro de Token: "+ex.Message); }
+
                 if (principal == null || !principal.Identity.IsAuthenticated)
                 {
                     var unauthorizedResponse = req.CreateResponse(HttpStatusCode.Forbidden);
-                    unauthorizedResponse.WriteString("Unauthorized or insufficient permissions.");
+                    unauthorizedResponse.WriteString("Unauthorized: Invalid auth token.");
                     return unauthorizedResponse;
                 }
 
@@ -225,7 +228,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
                 var retriveToken = new RetrieveToken();
                 var principal = retriveToken.GetPrincipalFromRequest(req);
 
-                if (principal == null || !principal.Identity.IsAuthenticated || !principal.IsInGroup("Admin"))
+                if (principal == null || !principal.Identity.IsAuthenticated || !principal.IsInRole("Admin"))
                 {
                     var forbiddenResponse = req.CreateResponse(HttpStatusCode.Forbidden);
                     await forbiddenResponse.WriteStringAsync("Unauthorized or insufficient permissions.");
