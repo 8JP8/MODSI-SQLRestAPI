@@ -103,7 +103,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Services
 
             await _databaseHandler.UpdateUserByIdAsync(user);
 
-            return new UserDTO(user.Name, user.Email, user.Username, user.Role, user.Group);
+            return new UserDTO(user.Name, user.Email, user.Username, user.Role, user.Group, user.Photo);
         }
 
 

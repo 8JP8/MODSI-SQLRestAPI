@@ -230,8 +230,6 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
                     Photo = user.Photo // Pode ser null
                 };
 
-                var dbUser = new User(user.Name, user.Email, user.Password, user.Username, user.Role, user.Group);
-
                 await _userService.UpdateUser(id, dbUser);
 
                 var response = req.CreateResponse(HttpStatusCode.OK);
