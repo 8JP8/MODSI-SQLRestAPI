@@ -63,7 +63,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
                 }
 
 
-                if (!principal.IsInRole("admin"))
+                if (!principal.IsInGroup("Admin"))
                 {
                     var forbiddenResponse = req.CreateResponse(HttpStatusCode.Forbidden);
                     forbiddenResponse.WriteString("Forbidden");
@@ -179,11 +179,12 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
                 var retrieveToken = new RetrieveToken();
                 var principal = retrieveToken.GetPrincipalFromRequest(req);
 
-                if (principal == null)
+
+                if (principal == null || !principal.Identity.IsAuthenticated || !principal.IsInGroup("Admin"))
                 {
-                    var unauthorizedResponse = req.CreateResponse(HttpStatusCode.Forbidden);
-                    unauthorizedResponse.WriteString("Unauthorized or insufficient permissions.");
-                    return unauthorizedResponse;
+                    var forbiddenResponse = req.CreateResponse(HttpStatusCode.Forbidden);
+                    await forbiddenResponse.WriteStringAsync("Unauthorized or insufficient permissions.");
+                    return forbiddenResponse;
                 }
 
                 _logger.LogInformation($"Deleting user with Id: {id}");
@@ -213,6 +214,32 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
                 var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
 
                 var user = JsonSerializer.Deserialize<User>(requestBody);
+                if (user == null)
+                {
+                    var badRequest = req.CreateResponse(HttpStatusCode.BadRequest);
+                    await badRequest.WriteStringAsync("Request body is invalid.");
+                    return badRequest;
+                }
+
+                // Verifica se está autenticado e se tem permissões de admin
+                var retriveToken = new RetrieveToken();
+                var principal = retriveToken.GetPrincipalFromRequest(req);
+
+                if (principal == null || !principal.Identity.IsAuthenticated || !principal.IsInGroup("Admin"))
+                {
+                    var forbiddenResponse = req.CreateResponse(HttpStatusCode.Forbidden);
+                    await forbiddenResponse.WriteStringAsync("Unauthorized or insufficient permissions.");
+                    return forbiddenResponse;
+                }
+
+                var existingUser = await _userService.GetUserById(id);
+                if (existingUser == null)
+                {
+                    var notFoundResponse = req.CreateResponse(HttpStatusCode.NotFound);
+                    await notFoundResponse.WriteStringAsync($"User with id {id} not found.");
+                    return notFoundResponse;
+                }
+
                 user.Id = id;
 
                 // Map MODSI_SQLRestAPI.User to MODSI_SQLRestAPI.DatabaseHandler.User
@@ -270,7 +297,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
                 var retriveToken = new RetrieveToken();
                 var principal = retriveToken.GetPrincipalFromRequest(req);
 
-                if (principal == null || !principal.Identity.IsAuthenticated || !principal.IsInRole("admin"))
+                if (principal == null || !principal.Identity.IsAuthenticated || !principal.IsInGroup("Admin"))
                 {
                     var forbiddenResponse = req.CreateResponse(HttpStatusCode.Forbidden);
                     await forbiddenResponse.WriteStringAsync("Unauthorized or insufficient permissions.");
@@ -432,43 +459,6 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
                 return response;
             }
         }
-
-
-
-
-   
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
         [Function("GetUserSalt")]
         public async Task<HttpResponseData> GetUserSalt(
