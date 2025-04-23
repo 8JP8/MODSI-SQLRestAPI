@@ -7,6 +7,7 @@ using MODSI_SQLRestAPI.UserAuth.Services;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Security.Cryptography;
 using System.Text;
@@ -208,7 +209,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
         {
             try
             {
-                
+
                 var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
 
                 var user = JsonSerializer.Deserialize<User>(requestBody);
@@ -246,6 +247,75 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
                 return response;
             }
         }
+
+
+
+        [Function("UpdateUserByEmail")]
+        public async Task<HttpResponseData> UpdateUserByEmail(
+            [HttpTrigger(AuthorizationLevel.Function, "put", Route = "User/UpdateByAdmin/{email}")] HttpRequestData req,
+            string email)
+        {
+            try
+            {
+                var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+                var user = JsonSerializer.Deserialize<User>(requestBody);
+                if (user == null)
+                {
+                    var badRequest = req.CreateResponse(HttpStatusCode.BadRequest);
+                    await badRequest.WriteStringAsync("Request body is invalid.");
+                    return badRequest;
+                }
+
+                // Verifica se está autenticado e se tem permissões de admin
+                var retriveToken = new RetrieveToken();
+                var principal = retriveToken.GetPrincipalFromRequest(req);
+
+                if (principal == null || !principal.Identity.IsAuthenticated || !principal.IsInRole("admin"))
+                {
+                    var forbiddenResponse = req.CreateResponse(HttpStatusCode.Forbidden);
+                    await forbiddenResponse.WriteStringAsync("Unauthorized or insufficient permissions.");
+                    return forbiddenResponse;
+                }
+
+                var existingUser = await _userService.GetUserByIdentifier(email);
+                if (existingUser == null)
+                {
+                    var notFoundResponse = req.CreateResponse(HttpStatusCode.NotFound);
+                    await notFoundResponse.WriteStringAsync($"User with email {email} not found.");
+                    return notFoundResponse;
+                }
+
+                // Atualiza campos fornecidos
+                existingUser.Role = string.IsNullOrWhiteSpace(user.Role) ? existingUser.Role : user.Role;
+                existingUser.Group = string.IsNullOrWhiteSpace(user.Group) ? existingUser.Group : user.Group;
+
+                // Atualiza a password apenas se for fornecida
+                if (!string.IsNullOrWhiteSpace(user.Password))
+                {
+                    string newSalt = Utils.GenerateSalt();
+                    string hashedPassword = Utils.HashPassword(user.Password, newSalt);
+
+                    existingUser.Password = hashedPassword;
+                    existingUser.Salt = newSalt;
+                }
+
+                var userDTO = await _userService.UpdateUser(existingUser.Id, existingUser);
+
+                var response = req.CreateResponse(HttpStatusCode.OK);
+                response.Headers.Add("Content-Type", "application/json; charset=utf-8");
+                await response.WriteStringAsync(JsonSerializer.Serialize(userDTO, new JsonSerializerOptions { WriteIndented = true }));
+                return response;
+            }
+            catch (HttpException ex)
+            {
+                _logger.LogWarning(ex, ex.Message);
+                var response = req.CreateResponse(ex.StatusCode);
+                response.Headers.Add("Content-Type", "application/json; charset=utf-8");
+                await response.WriteStringAsync(JsonSerializer.Serialize(new { error = ex.Message }));
+                return response;
+            }
+        }
+
 
 
 
@@ -324,6 +394,8 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
             }
         }
 
+
+
         [Function("GetUserByUsername")]
         public async Task<HttpResponseData> GetUserByUsername(
         [HttpTrigger(AuthorizationLevel.Function, "get", Route = "User/GetByUsername")] HttpRequestData req)
@@ -360,6 +432,43 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
                 return response;
             }
         }
+
+
+
+
+   
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         [Function("GetUserSalt")]
         public async Task<HttpResponseData> GetUserSalt(

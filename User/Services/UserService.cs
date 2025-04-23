@@ -86,20 +86,6 @@ namespace MODSI_SQLRestAPI.UserAuth.Services
             {
                 throw new NotFoundException($"Usuário com ID {id} não encontrado.");
             }
-            // Verifica se o email de usuário já existe
-            var useremail = await _databaseHandler.EmailUserExistsAsync(user.Email);
-            if (useremail == true)
-            {
-                throw new BadRequestException($"Usuário com email {user.Email} já existe.");
-            }
-            // Verifica se o nome de usuário já existe
-            var existingUsername1 = await _databaseHandler.UsernameUserExistsAsync(user.Username);
-            if (existingUsername1 == true)
-            {
-                throw new BadRequestException($"Usuário com nome de usuário {user.Username} já existe.");
-            }
-
-            user.Id = id;
 
             await _databaseHandler.UpdateUserByIdAsync(user);
 

@@ -172,7 +172,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Repositories
             using (SqlConnection conn = new SqlConnection(_connectionString))
             {
                 await conn.OpenAsync();
-                var query = $"UPDATE {_user_DB} SET Name = @Name, Email = @Email, Password = @Password, Username = @Username, Role = @Role, CreatedAt = @CreatedAt, IsActive = @IsActive, [Group] = @Group WHERE Id = @id";
+                var query = $"UPDATE {_user_DB} SET Name = @Name, Email = @Email, Password = @Password, Username = @Username, Role = @Role, CreatedAt = @CreatedAt, IsActive = @IsActive, [Group] = @Group, Salt = @Salt WHERE Id = @id";
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
                     cmd.Parameters.AddWithValue("@Id", user.Id);
@@ -184,6 +184,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Repositories
                     cmd.Parameters.AddWithValue("@CreatedAt", user.CreatedAt);
                     cmd.Parameters.AddWithValue("@IsActive", user.IsActive);
                     cmd.Parameters.AddWithValue("@Group", user.Group);
+                    cmd.Parameters.AddWithValue("@Salt", user.Salt);
                     try { await cmd.ExecuteNonQueryAsync(); } catch (Exception ex) { throw new Exception(ex.Message); }
                 }
             }
