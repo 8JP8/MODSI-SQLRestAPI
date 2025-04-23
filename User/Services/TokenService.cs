@@ -12,7 +12,8 @@ namespace MODSI_SQLRestAPI.UserAuth.Services
 {
     public static class TokenService
     {
-        private static string Issuer = "_MODSI-SQLRestAPI_";
+        private static string Issuer = "MODSI_SQLRestAPI";
+
 
         public static string GenerateToken(User user)
         {
