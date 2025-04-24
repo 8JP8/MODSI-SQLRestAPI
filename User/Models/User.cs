@@ -15,7 +15,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Models
         public string Group { get; set; }
         public string Salt { get; set; }
         public string Tel { get; set; }
-        public byte[] Photo { get; set; }
+        public string Photo { get; set; }
 
         public User()
         {
@@ -23,7 +23,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Models
             IsActive = true;
         }
 
-        public User(string name, string email, string password, string username, string role, string group, string salt, string tel, byte[] photo)
+        public User(string name, string email, string password, string username, string role, string group, string salt, string tel, string photo)
         {
             if (string.IsNullOrEmpty(name))
             {
@@ -153,7 +153,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Models
             return Tel;
         }
 
-        public byte[] GetPhoto()
+        public string GetPhoto()
         {
             return Photo;
         }
@@ -209,7 +209,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Models
             Tel = tel;
         }
 
-        public void SetPhoto(byte[] photo)
+        public void SetPhoto(string photo)
         {
             Photo = photo;
         }

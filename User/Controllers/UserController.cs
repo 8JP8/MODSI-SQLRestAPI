@@ -155,7 +155,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
                     group: user.Group ?? "USER",
                     salt: salt,
                     tel: user.Tel,
-                    photo: user.Photo ?? new byte[0]
+                    photo: user.Photo ?? new string(' ', 0)
                 );
 
                 var userDTO = await _userService.CreateUser(dbUser);
@@ -280,11 +280,10 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
         }
 
 
-
         [Function("UpdateUserByEmail")]
         public async Task<HttpResponseData> UpdateUserByEmail(
-            [HttpTrigger(AuthorizationLevel.Function, "put", Route = "User/UpdateByAdmin/{email}")] HttpRequestData req,
-            string email)
+    [HttpTrigger(AuthorizationLevel.Function, "put", Route = "User/Update/{email}")] HttpRequestData req,
+    string email)
         {
             try
             {
@@ -297,16 +296,9 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
                     return badRequest;
                 }
 
-                // Verifica se está autenticado e se tem permissões de admin
                 var retriveToken = new RetrieveToken();
                 var principal = retriveToken.GetPrincipalFromRequest(req);
-
-                if (principal == null || !principal.Identity.IsAuthenticated || !principal.IsInGroup("Admin"))
-                {
-                    var forbiddenResponse = req.CreateResponse(HttpStatusCode.Forbidden);
-                    await forbiddenResponse.WriteStringAsync("Unauthorized or insufficient permissions.");
-                    return forbiddenResponse;
-                }
+                bool isAdmin = principal != null && principal.Identity.IsAuthenticated && principal.IsInGroup("Admin");
 
                 var existingUser = await _userService.GetUserByIdentifier(email);
                 if (existingUser == null)
@@ -316,18 +308,32 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
                     return notFoundResponse;
                 }
 
-                // Atualiza campos fornecidos
-                existingUser.Role = string.IsNullOrWhiteSpace(user.Role) ? existingUser.Role : user.Role;
-                existingUser.Group = string.IsNullOrWhiteSpace(user.Group) ? existingUser.Group : user.Group;
-
-                // Atualiza a password apenas se for fornecida
-                if (!string.IsNullOrWhiteSpace(user.Password))
+                if (isAdmin)
                 {
-                    string newSalt = Utils.GenerateSalt();
-                    string hashedPassword = Utils.HashPassword(user.Password, newSalt);
+                    // Admin can update everything
+                    existingUser.Role = string.IsNullOrWhiteSpace(user.Role) ? existingUser.Role : user.Role;
+                    existingUser.Group = string.IsNullOrWhiteSpace(user.Group) ? existingUser.Group : user.Group;
 
-                    existingUser.Password = hashedPassword;
-                    existingUser.Salt = newSalt;
+                    if (!string.IsNullOrWhiteSpace(user.Password))
+                    {
+                        string newSalt = Utils.GenerateSalt();
+                        string hashedPassword = Utils.HashPassword(user.Password, newSalt);
+                        existingUser.Password = hashedPassword;
+                        existingUser.Salt = newSalt;
+                    }
+                }
+
+                // Everyone can update these fields
+                existingUser.Name = string.IsNullOrWhiteSpace(user.Name) ? existingUser.Name : user.Name;
+                existingUser.Tel = string.IsNullOrWhiteSpace(user.Tel) ? existingUser.Tel : user.Tel;
+                existingUser.Photo = user.Photo ?? existingUser.Photo;
+
+                // If not admin and trying to update restricted fields, deny
+                if (!isAdmin && (!string.IsNullOrWhiteSpace(user.Role) || !string.IsNullOrWhiteSpace(user.Group) || !string.IsNullOrWhiteSpace(user.Password)))
+                {
+                    var forbiddenResponse = req.CreateResponse(HttpStatusCode.Forbidden);
+                    await forbiddenResponse.WriteStringAsync("Unauthorized to update certain fields.");
+                    return forbiddenResponse;
                 }
 
                 var userDTO = await _userService.UpdateUser(existingUser.Id, existingUser);
@@ -346,7 +352,6 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
                 return response;
             }
         }
-
 
 
 
@@ -464,6 +469,9 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
             }
         }
 
+
+
+
         [Function("GetUserSalt")]
         public async Task<HttpResponseData> GetUserSalt(
         [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "User/GetUserSalt")] HttpRequestData req)
@@ -509,6 +517,11 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
             }
         }
         // MUDADO para não tratar do token visto que o token só depende do login e não do registo!
+
+
+
+
+
         internal static class Utils
         {
             /// <summary>

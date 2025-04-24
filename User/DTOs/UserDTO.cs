@@ -17,7 +17,8 @@ namespace MODSI_SQLRestAPI.UserAuth.DTO
         public DateTime CreatedAt { get; set; }
         public bool IsActive { get; set; }
         public string Group { get; set; }
-        public byte[] Photo { get; set; }
+        public string Photo { get; set; }
+        public string Tel { get; set; }
 
 
         public UserDTO()
@@ -25,7 +26,7 @@ namespace MODSI_SQLRestAPI.UserAuth.DTO
             CreatedAt = DateTime.UtcNow;
             IsActive = true;
         }
-        public UserDTO(string name, string email, string username, string role, string group, byte[] photo)
+        public UserDTO(string name, string email, string username, string role, string group, string photo, string tel)
         {
             Name = name;
             Email = email;
@@ -35,6 +36,7 @@ namespace MODSI_SQLRestAPI.UserAuth.DTO
             IsActive = true;
             Group = group;
             Photo = photo;
+            Tel = tel;
         }
         public string GetName()
         {
@@ -64,7 +66,7 @@ namespace MODSI_SQLRestAPI.UserAuth.DTO
         {
             return Group;
         }
-        public byte[] GetPhoto()
+        public string GetPhoto()
         {
             return Photo;
         }
@@ -96,7 +98,7 @@ namespace MODSI_SQLRestAPI.UserAuth.DTO
         {
             Group = group;
         }
-        public void SetPhoto(byte[] photo)
+        public void SetPhoto(string photo)
         {
             Photo = photo;
         }
