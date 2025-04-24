@@ -11,6 +11,8 @@ namespace MODSI_SQLRestAPI.UserAuth.Models
         public int Id { get; set; }
         public string Name { get; set; }
 
+        public string Code { get; set; }
+
         public Roles() { }
 
         public Roles(int id, string name)
@@ -24,5 +26,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Models
 
         public string GetName() => Name;
         public void SetName(string name) => Name = name;
+
+        public void SetCode(string code) => Code = code;
     }
 }

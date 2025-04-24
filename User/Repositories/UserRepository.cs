@@ -38,7 +38,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Repositories
                 IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive")),
                 Group = reader.GetString(reader.GetOrdinal("Group")),
                 Tel = !reader.IsDBNull(reader.GetOrdinal("Tel")) ? reader.GetString(reader.GetOrdinal("Tel")) : null,
-                Photo = !reader.IsDBNull(reader.GetOrdinal("Photo")) ? (byte[])reader.GetValue(reader.GetOrdinal("Photo")) : null,
+                Photo = !reader.IsDBNull(reader.GetOrdinal("Photo")) ? (string)reader.GetValue(reader.GetOrdinal("Photo")) : null,
                 Password = includePasswordAndSalt ? reader.GetString(reader.GetOrdinal("Password")) : null,
                 Salt = includePasswordAndSalt ? reader.GetString(reader.GetOrdinal("Salt")) : null
             };
@@ -56,7 +56,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Repositories
                 CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
                 IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive")),
                 Group = reader.GetString(reader.GetOrdinal("Group")),
-                Photo = !reader.IsDBNull(reader.GetOrdinal("Photo")) ? (byte[])reader.GetValue(reader.GetOrdinal("Photo")) : null
+                Photo = !reader.IsDBNull(reader.GetOrdinal("Photo")) ? (string)reader.GetValue(reader.GetOrdinal("Photo")) : null
             };
         }
 

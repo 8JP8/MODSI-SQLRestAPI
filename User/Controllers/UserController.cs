@@ -151,7 +151,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
                     group: user.Group ?? "USER",
                     salt: salt,
                     tel: user.Tel,
-                    photo: user.Photo ?? new byte[0]
+                    photo: user.Photo ?? new string(' ', 0)
                 );
 
                 var userDTO = await _userService.CreateUser(dbUser);
@@ -249,7 +249,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
         }
 
 
-
+        // For admin only
         [Function("UpdateUserByEmail")]
         public async Task<HttpResponseData> UpdateUserByEmail(
             [HttpTrigger(AuthorizationLevel.Function, "put", Route = "User/UpdateByAdmin/{email}")] HttpRequestData req,
@@ -316,7 +316,55 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
             }
         }
 
+        // For all users
 
+        [Function("UpdatebyAnyUserByEmail")]
+        public async Task<HttpResponseData> UpdatebyAnyUserByEmail(
+    [HttpTrigger(AuthorizationLevel.Function, "put", Route = "User/UpdatebyAnyUserByEmail/{email}")] HttpRequestData req,
+    string email)
+        {
+            try
+            {
+                var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+                var user = JsonSerializer.Deserialize<User>(requestBody);
+                if (user == null)
+                {
+                    var badRequest = req.CreateResponse(HttpStatusCode.BadRequest);
+                    await badRequest.WriteStringAsync("Request body is invalid.");
+                    return badRequest;
+                }
+
+                var existingUser = await _userService.GetUserByIdentifier(email);
+
+                if (existingUser == null)
+                {
+                    var notFoundResponse = req.CreateResponse(HttpStatusCode.NotFound);
+                    await notFoundResponse.WriteStringAsync($"User with email {email} not found.");
+                    return notFoundResponse;
+                }
+
+
+                existingUser.Name = string.IsNullOrWhiteSpace(user.Name) ? existingUser.Name : user.Name;
+                existingUser.Tel = string.IsNullOrWhiteSpace(user.Tel) ? existingUser.Tel : user.Tel;
+                existingUser.Photo = user.Photo ?? existingUser.Photo;
+
+
+                var userDTO = await _userService.UpdateUser(existingUser.Id, existingUser);
+
+                var response = req.CreateResponse(HttpStatusCode.OK);
+                response.Headers.Add("Content-Type", "application/json; charset=utf-8");
+                await response.WriteStringAsync(JsonSerializer.Serialize(userDTO, new JsonSerializerOptions { WriteIndented = true }));
+                return response;
+            }
+            catch (HttpException ex)
+            {
+                _logger.LogWarning(ex, ex.Message);
+                var response = req.CreateResponse(ex.StatusCode);
+                response.Headers.Add("Content-Type", "application/json; charset=utf-8");
+                await response.WriteStringAsync(JsonSerializer.Serialize(new { error = ex.Message }));
+                return response;
+            }
+        }
 
 
 
@@ -436,40 +484,6 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
 
 
 
-   
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
         [Function("GetUserSalt")]
         public async Task<HttpResponseData> GetUserSalt(
         [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "User/GetUserSalt")] HttpRequestData req)
@@ -515,6 +529,11 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
             }
         }
         // MUDADO para não tratar do token visto que o token só depende do login e não do registo!
+
+
+
+
+
         internal static class Utils
         {
             /// <summary>
