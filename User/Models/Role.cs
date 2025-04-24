@@ -1,6 +1,7 @@
 ﻿using MODSI_SQLRestAPI.UserAuth.Models;
 using System.Collections.Generic;
 using System;
+using MODSI_SQLRestAPI.Company.Departments.Models;
 
 public class Role
 {

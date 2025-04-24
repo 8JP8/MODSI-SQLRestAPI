@@ -1,0 +1,44 @@
+﻿using MODSI_SQLRestAPI.Company.Departments.Models;
+using MODSI_SQLRestAPI.Company.KPIs.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace MODSI_SQLRestAPI.Company.Services
+{
+    public interface IDepartmentService
+    {
+        Task<IEnumerable<Department>> GetAllDepartmentsAsync();
+        Task<Department> GetDepartmentByIdAsync(int id);
+        Task<Department> GetDepartmentWithKPIsAsync(int id);
+        Task<IEnumerable<Department>> GetDepartmentsByRoleIdAsync(int roleId);
+        Task<Department> CreateDepartmentAsync(Department department);
+        Task<Department> UpdateDepartmentAsync(int id, Department department);
+        Task DeleteDepartmentAsync(int id);
+        Task AddKPIToDepartmentAsync(int departmentId, int kpiId);
+        Task RemoveKPIFromDepartmentAsync(int departmentId, int kpiId);
+        Task UpdatePermissionsAsync(int roleId, int departmentId, bool canRead, bool canWrite);
+    }
+
+    public interface IKPIService
+    {
+        Task<IEnumerable<KPI>> GetAllKPIsAsync();
+        Task<KPI> GetKPIByIdAsync(int id);
+        Task<IEnumerable<KPI>> GetKPIsByDepartmentIdAsync(int departmentId);
+        Task<KPI> CreateKPIAsync(KPI kpi);
+        Task<KPI> UpdateKPIAsync(int id, KPI kpi);
+        Task DeleteKPIAsync(int id);
+    }
+
+    public interface IRoleService
+    {
+        Task<IEnumerable<Role>> GetAllRolesAsync();
+        Task<Role> GetRoleByIdAsync(int id);
+        Task<Role> GetRoleWithPermissionsAsync(int id);
+        Task<Role> CreateRoleAsync(Role role);
+        Task<Role> UpdateRoleAsync(int id, Role role);
+        Task DeleteRoleAsync(int id);
+    }
+}

@@ -282,8 +282,8 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
 
         [Function("UpdateUserByEmail")]
         public async Task<HttpResponseData> UpdateUserByEmail(
-    [HttpTrigger(AuthorizationLevel.Function, "put", Route = "User/Update/{email}")] HttpRequestData req,
-    string email)
+            [HttpTrigger(AuthorizationLevel.Function, "put", Route = "User/Update/{email}")] HttpRequestData req,
+            string email)
         {
             try
             {

@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System;
+using MODSI_SQLRestAPI.Company.KPIs.Models;
 
 namespace MODSI_SQLRestAPI.Company.Departments.Models
 {
