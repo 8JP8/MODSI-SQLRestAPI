@@ -144,7 +144,8 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
                     passwordHash = user.Password;
                 }
 
-                // Map MODSI_SQLRestAPI.User to MODSI_SQLRestAPI.DatabaseHandler.User
+                // Map
+                // to MODSI_SQLRestAPI.DatabaseHandler.User
                 var dbUser = new User(
                     name: user.Name,
                     email: user.Email,
