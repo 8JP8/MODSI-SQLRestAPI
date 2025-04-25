@@ -1,3 +1,4 @@
+using MODSI_SQLRestAPI.Infrastructure.Data;
 using MODSI_SQLRestAPI.UserAuth.DTO;
 using MODSI_SQLRestAPI.UserAuth.Models;
 using System;
@@ -15,13 +16,10 @@ namespace MODSI_SQLRestAPI.UserAuth.Repositories
 {
     public class UserRepository
     {
-
-        private readonly string _connectionString;
         private readonly string _user_DB;
 
         public UserRepository()
         {
-            _connectionString = ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString;
             _user_DB = ConfigurationManager.AppSettings["Users_DBName"];
         }
 
@@ -63,7 +61,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Repositories
         internal async Task<List<UserDTO>> GetAllUsersAsync()
         {
             var users = new List<UserDTO>();
-            using (SqlConnection conn = new SqlConnection(_connectionString))
+            using (SqlConnection conn = new SqlConnection(ApplicationDbContext.ConnectionString))
             {
                 await conn.OpenAsync();
                 var query = $"SELECT Id, Name, Email, Password, Username, Role, CreatedAt, IsActive, [Group], Photo FROM {_user_DB}";
@@ -91,7 +89,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Repositories
 
         internal async Task AddUserAsync(User user)
         {
-            using (var connection = new SqlConnection(_connectionString))
+            using (var connection = new SqlConnection(ApplicationDbContext.ConnectionString))
             {
                 await connection.OpenAsync();
                 var query = $"INSERT INTO {_user_DB} (Name, Email, Password, Username, Role, CreatedAt, IsActive, [Group], Salt, Tel, Photo) " +
@@ -117,7 +115,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Repositories
 
         internal async Task<User> AuthenticateUserAsync(string username_or_email, string password)
         {
-            using (SqlConnection conn = new SqlConnection(_connectionString))
+            using (SqlConnection conn = new SqlConnection(ApplicationDbContext.ConnectionString))
             {
                 string identifier = username_or_email.Contains("@") ? "Email" : "Username";
 
@@ -169,7 +167,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Repositories
 
         internal async Task UpdateUserByIdAsync(User user)
         {
-            using (SqlConnection conn = new SqlConnection(_connectionString))
+            using (SqlConnection conn = new SqlConnection(ApplicationDbContext.ConnectionString))
             {
                 await conn.OpenAsync();
                 var query = $"UPDATE {_user_DB} SET Name = @Name, Email = @Email, Password = @Password, Username = @Username, Role = @Role, CreatedAt = @CreatedAt, IsActive = @IsActive, [Group] = @Group, Salt = @Salt, Tel= @Tel , Photo=@Photo WHERE Id = @id";
@@ -194,7 +192,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Repositories
 
         internal async Task<User> GetUserByIdentifierAsync(string identifier, bool return_salt = false)
         {
-            using (SqlConnection conn = new SqlConnection(_connectionString))
+            using (SqlConnection conn = new SqlConnection(ApplicationDbContext.ConnectionString))
             {
                 string column = identifier.Contains("@") ? "Email" : "Username";
 
@@ -222,7 +220,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Repositories
 
         internal async Task<bool> EmailUserExistsAsync(string email)
         {
-            using (SqlConnection conn = new SqlConnection(_connectionString))
+            using (SqlConnection conn = new SqlConnection(ApplicationDbContext.ConnectionString))
             {
                 await conn.OpenAsync();
                 var query = $"SELECT COUNT(*) FROM {_user_DB} WHERE Email = @Email";
@@ -237,7 +235,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Repositories
         // Username exists
         internal async Task<bool> UsernameUserExistsAsync(string username)
         {
-            using (SqlConnection conn = new SqlConnection(_connectionString))
+            using (SqlConnection conn = new SqlConnection(ApplicationDbContext.ConnectionString))
             {
                 await conn.OpenAsync();
                 var query = $"SELECT COUNT(*) FROM {_user_DB} WHERE Username = @Username";
@@ -253,7 +251,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Repositories
 
         internal async Task DeleteUserByIdAsync(int id)
         {
-            using (SqlConnection conn = new SqlConnection(_connectionString))
+            using (SqlConnection conn = new SqlConnection(ApplicationDbContext.ConnectionString))
             {
                 await conn.OpenAsync();
                 var query = $"DELETE FROM {_user_DB} WHERE Id = @Id";
@@ -267,7 +265,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Repositories
 
         internal async Task<UserDTO> GetUserByIdAsync(int id)
         {
-            using (SqlConnection conn = new SqlConnection(_connectionString))
+            using (SqlConnection conn = new SqlConnection(ApplicationDbContext.ConnectionString))
             {
                 await conn.OpenAsync();
                 var query = $"SELECT Id, Name, Email, Password, Username, Role, CreatedAt, IsActive, [Group], Photo FROM {_user_DB} WHERE Id = @Id";

@@ -1,4 +1,5 @@
-﻿using MODSI_SQLRestAPI.UserAuth.Models;
+﻿using MODSI_SQLRestAPI.Infrastructure.Data;
+using MODSI_SQLRestAPI.UserAuth.Models;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data.SqlClient;
@@ -8,18 +9,16 @@ namespace MODSI_SQLRestAPI.UserAuth.Repositories
 {
     public class GroupsRepository
     {
-        private readonly string _connectionString;
         private readonly string _groups_DB;
 
         public GroupsRepository()
         {
-            _connectionString = ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString;
             _groups_DB = ConfigurationManager.AppSettings["Groups_DBName"];
         }
 
         public async Task EnsureGroupsExistAsync(List<Groups> groups)
         {
-            using (SqlConnection conn = new SqlConnection(_connectionString))
+            using (SqlConnection conn = new SqlConnection(ApplicationDbContext.ConnectionString))
             {
                 await conn.OpenAsync();
 

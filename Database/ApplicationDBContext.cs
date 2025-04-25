@@ -3,15 +3,17 @@ using MODSI_SQLRestAPI.Company.Departments.Models;
 using MODSI_SQLRestAPI.Company.KPIs.Models;
 using MODSI_SQLRestAPI.UserAuth.Models;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Reflection.Emit;
 
 namespace MODSI_SQLRestAPI.Infrastructure.Data
 {
     public class ApplicationDbContext : DbContext
     {
+        public static string ConnectionString = ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString;
+
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
-        {
-        }
+        {  }
 
         public DbSet<User> Users { get; set; }
         public DbSet<Role> Roles { get; set; }
