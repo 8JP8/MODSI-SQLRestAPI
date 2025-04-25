@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace MODSI_SQLRestAPI.Company.DTOs
 {
-    public class RoleDepartmentPermissionDto
+    public class RoleDepartmentPermissionDTO
     {
         public int RoleId { get; set; }
         public int DepartmentId { get; set; }
@@ -15,7 +15,7 @@ namespace MODSI_SQLRestAPI.Company.DTOs
         public bool CanWrite { get; set; }
     }
 
-    public class UpdatePermissionDto
+    public class UpdatePermissionDTO
     {
         public int RoleId { get; set; }
         public int DepartmentId { get; set; }

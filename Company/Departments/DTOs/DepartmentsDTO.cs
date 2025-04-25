@@ -8,26 +8,26 @@ using System.Threading.Tasks;
 
 namespace MODSI_SQLRestAPI.Company.Departments.DTO
 {
-    public class DepartmentDto
+    public class DepartmentDTO
     {
         public int Id { get; set; }
         public string Name { get; set; }
     }
 
-    public class DepartmentDetailDto
+    public class DepartmentDetailDTO
     {
         public int Id { get; set; }
         public string Name { get; set; }
-        public List<KPIDto> KPIs { get; set; } = new List<KPIDto>();
-        public List<RoleDepartmentPermissionDto> Permissions { get; set; } = new List<RoleDepartmentPermissionDto>();
+        public List<KPIDTO> KPIs { get; set; } = new List<KPIDTO>();
+        public List<RoleDepartmentPermissionDTO> Permissions { get; set; } = new List<RoleDepartmentPermissionDTO>();
     }
 
-    public class CreateDepartmentDto
+    public class CreateDepartmentDTO
     {
         public string Name { get; set; }
     }
 
-    public class UpdateDepartmentDto
+    public class UpdateDepartmentDTO
     {
         public string Name { get; set; }
     }

@@ -7,25 +7,25 @@ using System.Threading.Tasks;
 
 namespace MODSI_SQLRestAPI.Company.Roles.DTOs
 {
-    public class RoleDto
+    public class RoleDTO
     {
         public int Id { get; set; }
         public string Name { get; set; }
     }
 
-    public class RoleDetailDto
+    public class RoleDetailDTO
     {
         public int Id { get; set; }
         public string Name { get; set; }
-        public List<RoleDepartmentPermissionDto> Permissions { get; set; } = new List<RoleDepartmentPermissionDto>();
+        public List<RoleDepartmentPermissionDTO> Permissions { get; set; } = new List<RoleDepartmentPermissionDTO>();
     }
 
-    public class CreateRoleDto
+    public class CreateRoleDTO
     {
         public string Name { get; set; }
     }
 
-    public class UpdateRoleDto
+    public class UpdateRoleDTO
     {
         public string Name { get; set; }
     }

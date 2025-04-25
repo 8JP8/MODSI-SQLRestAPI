@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace MODSI_SQLRestAPI.Company.DTOs
 {
-    public class DepartmentKPIDto
+    public class DepartmentKPIDTO
     {
         public int DepartmentId { get; set; }
         public int KPIId { get; set; }

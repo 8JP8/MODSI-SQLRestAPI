@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace MODSI_SQLRestAPI.Company.KPIs.DTO
 {
-    public class KPIDto
+    public class KPIDTO
     {
         public int Id { get; set; }
         public string Name { get; set; }
@@ -17,7 +17,7 @@ namespace MODSI_SQLRestAPI.Company.KPIs.DTO
         public string Value_2 { get; set; }
     }
 
-    public class KPIDetailDto
+    public class KPIDetailDTO
     {
         public int Id { get; set; }
         public string Name { get; set; }
@@ -25,10 +25,10 @@ namespace MODSI_SQLRestAPI.Company.KPIs.DTO
         public string Unit { get; set; }
         public string Value_1 { get; set; }
         public string Value_2 { get; set; }
-        public List<DepartmentDto> Departments { get; set; } = new List<DepartmentDto>();
+        public List<DepartmentDTO> Departments { get; set; } = new List<DepartmentDTO>();
     }
 
-    public class CreateKPIDto
+    public class CreateKPIDTO
     {
         public string Name { get; set; }
         public string Description { get; set; }
@@ -37,7 +37,7 @@ namespace MODSI_SQLRestAPI.Company.KPIs.DTO
         public string Value_2 { get; set; }
     }
 
-    public class UpdateKPIDto
+    public class UpdateKPIDTO
     {
         public string Name { get; set; }
         public string Description { get; set; }

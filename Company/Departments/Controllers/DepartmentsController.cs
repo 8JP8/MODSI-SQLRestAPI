@@ -1,8 +1,6 @@
 ﻿using System;
 using System.IO;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Microsoft.Azure.Functions.Worker;
@@ -11,6 +9,12 @@ using Microsoft.Azure.Functions.Worker.Http;
 using MODSI_SQLRestAPI.Company.Departments.Models;
 using System.Collections.Generic;
 using System.Net;
+using System.Text.Json.Serialization;
+using System.Text.Json;
+using MODSI_SQLRestAPI.Company.Departments.DTO;
+using System.Linq;
+using MODSI_SQLRestAPI.Company.KPIs.DTO;
+using MODSI_SQLRestAPI.Company.DTOs;
 
 namespace MODSI_SQLRestAPI.Company.Departments.Controllers
 {
@@ -79,14 +83,15 @@ namespace MODSI_SQLRestAPI.Company.Departments.Controllers
 
         [Function("GetDepartmentWithKPIs")]
         public async Task<HttpResponseData> GetDepartmentWithKPIs(
-            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "departments/{id}/kpis")] HttpRequestData req,
-            int id)
+           [HttpTrigger(AuthorizationLevel.Function, "get", Route = "departments/{id}/detail")] HttpRequestData req,
+           int id)
         {
             _logger.LogInformation($"GetDepartmentWithKPIs function processed a request for department {id}.");
 
             try
             {
                 var department = await _departmentService.GetDepartmentWithKPIsAsync(id);
+
                 if (department == null)
                 {
                     var notFoundResponse = req.CreateResponse(HttpStatusCode.NotFound);
@@ -94,36 +99,44 @@ namespace MODSI_SQLRestAPI.Company.Departments.Controllers
                     return notFoundResponse;
                 }
 
+                // Mapear para DTO para evitar ciclos de serialização
+                var departmentDTO = new DepartmentDetailDTO
+                {
+                    Id = department.Id,
+                    Name = department.Name,
+
+                    // Mapear KPIs associados
+                    KPIs = department.DepartmentKPIs
+                        .Select(dk => new KPIDTO
+                        {
+                            Id = dk.KPI.Id,
+                            Name = dk.KPI.Name,
+                            Description = dk.KPI.Description,
+                            Unit = dk.KPI.Unit,
+                            Value_1 = dk.KPI.Value_1,
+                            Value_2 = dk.KPI.Value_2
+                        })
+                        .ToList(),
+
+                    // Mapear permissões de função
+                    Permissions = department.RoleDepartmentPermissions
+                        .Select(rdp => new RoleDepartmentPermissionDTO
+                        {
+                            RoleId = rdp.RoleId,
+                            DepartmentId = rdp.DepartmentId,
+                            CanRead = rdp.CanRead,
+                            CanWrite = rdp.CanWrite
+                        })
+                        .ToList()
+                };
+
                 var response = req.CreateResponse(HttpStatusCode.OK);
-                await response.WriteAsJsonAsync(department);
+                await response.WriteAsJsonAsync(departmentDTO);
                 return response;
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, $"Error getting department {id} with KPIs");
-                var response = req.CreateResponse(HttpStatusCode.InternalServerError);
-                await response.WriteStringAsync("An error occurred while processing your request.");
-                return response;
-            }
-        }
-
-        [Function("GetDepartmentsByRoleId")]
-        public async Task<HttpResponseData> GetDepartmentsByRoleId(
-            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "roles/{roleId}/departments")] HttpRequestData req,
-            int roleId)
-        {
-            _logger.LogInformation($"GetDepartmentsByRoleId function processed a request for role {roleId}.");
-
-            try
-            {
-                var departments = await _departmentService.GetDepartmentsByRoleIdAsync(roleId);
-                var response = req.CreateResponse(HttpStatusCode.OK);
-                await response.WriteAsJsonAsync(departments);
-                return response;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"Error getting departments for role {roleId}");
                 var response = req.CreateResponse(HttpStatusCode.InternalServerError);
                 await response.WriteStringAsync("An error occurred while processing your request.");
                 return response;

@@ -53,7 +53,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Services
                 throw new BadRequestException($"Usuário com email {user.Email} já existe.");
             }
             
-            // Cehck if the username exists
+            // Check if the username exists
             var existingUsername = await _databaseHandler.UsernameUserExistsAsync(user.Username);
             if (existingUsername == true)
             {

@@ -9,6 +9,8 @@ using MODSI_SQLRestAPI.Company.Services;
 using MODSI_SQLRestAPI.Infrastructure.Data;
 using MODSI_SQLRestAPI.Company.Departments.Repositories;
 using MODSI_SQLRestAPI.Company.Repositories;
+using MODSI_SQLRestAPI.Company.KPIs.Repositories;
+using MODSI_SQLRestAPI.Company.Roles.Repositories;
 
 namespace MODSI_SQLRestAPI
 {
@@ -31,7 +33,8 @@ namespace MODSI_SQLRestAPI
                     services.AddScoped<IKPIService, KPIService>();
                     services.AddScoped<IRoleService, RoleService>();
                     services.AddScoped<IDepartmentRepository, DepartmentRepository>();
-                    services.AddScoped<IDepartmentService, DepartmentService>();
+                    services.AddScoped<IKPIRepository, KPIRepository>();
+                    services.AddScoped<IRoleRepository, RoleRepository>();
                 })
                 .Build();
 

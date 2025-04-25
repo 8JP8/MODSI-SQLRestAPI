@@ -7,6 +7,9 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 using System.Net;
+using MODSI_SQLRestAPI.Company.Roles.DTOs;
+using System.Linq;
+using MODSI_SQLRestAPI.Company.DTOs;
 
 namespace MODSI_SQLRestAPI.Company.Roles.Controllers
 {
@@ -78,7 +81,7 @@ namespace MODSI_SQLRestAPI.Company.Roles.Controllers
             [HttpTrigger(AuthorizationLevel.Function, "get", Route = "roles/{id}/permissions")] HttpRequestData req,
             int id)
         {
-            _logger.LogInformation($"GetRoleWithPermissions function processed a request for role {id}.");
+            _logger.LogInformation($"Getting role {id} with permissions.");
 
             try
             {
@@ -90,8 +93,23 @@ namespace MODSI_SQLRestAPI.Company.Roles.Controllers
                     return notFoundResponse;
                 }
 
+                // Map to DTO to avoid serialization cycles
+                var roleDTO = new RoleDetailDTO
+                {
+                    Id = role.Id,
+                    Name = role.Name,
+                    Permissions = role.RoleDepartmentPermissions.Select(rdp => new RoleDepartmentPermissionDTO
+                    {
+                        RoleId = rdp.RoleId,
+                        DepartmentId = rdp.DepartmentId,
+                        DepartmentName = rdp.Department?.Name ?? "Unknown",
+                        CanRead = rdp.CanRead,
+                        CanWrite = rdp.CanWrite
+                    }).ToList()
+                };
+
                 var response = req.CreateResponse(HttpStatusCode.OK);
-                await response.WriteAsJsonAsync(role);
+                await response.WriteAsJsonAsync(roleDTO);
                 return response;
             }
             catch (Exception ex)
