@@ -1,5 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using MODSI_SQLRestAPI.Company.Departments.DTO;
 using MODSI_SQLRestAPI.Company.Departments.Models;
+using MODSI_SQLRestAPI.Company.DTOs;
+using MODSI_SQLRestAPI.Company.KPIs.DTO;
 using MODSI_SQLRestAPI.Company.KPIs.Models;
 using MODSI_SQLRestAPI.Company.Repositories;
 using MODSI_SQLRestAPI.Infrastructure.Data;
@@ -9,7 +12,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
-
+using MODSI_SQLRestAPI.Company.Departments.DTO;
 namespace MODSI_SQLRestAPI.Company.Departments.Repositories
 {
     public class DepartmentRepository : IDepartmentRepository
@@ -78,13 +81,11 @@ namespace MODSI_SQLRestAPI.Company.Departments.Repositories
 
         public async Task<IEnumerable<Department>> GetDepartmentsByRoleIdAsync(int roleId)
         {
-            return await _context.RoleDepartmentPermissions
-                .Where(rdp => rdp.RoleId == roleId)
-                .Select(rdp => rdp.Department)
-                .Include(d => d.DepartmentKPIs)
-                    .ThenInclude(dk => dk.KPI)
+            return await _context.Departments
+                .Where(d => d.RoleDepartmentPermissions.Any(rdp => rdp.RoleId == roleId))
                 .ToListAsync();
         }
+
 
         public async Task AddKPIToDepartmentAsync(int departmentId, int kpiId)
         {
@@ -137,5 +138,7 @@ namespace MODSI_SQLRestAPI.Company.Departments.Repositories
 
             await _context.SaveChangesAsync();
         }
+
+
     }
 }

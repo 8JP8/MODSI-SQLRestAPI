@@ -5,16 +5,19 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using MODSI_SQLRestAPI.Company.Departments.Models;
 
 namespace MODSI_SQLRestAPI.Company.Departments.DTO
 {
-    public class DepartmentDto
+    public class DepartmentDTO
     {
         public int Id { get; set; }
         public string Name { get; set; }
+        public List<RoleDepartmentPermissionDto> RoleDepartmentPermissions { get; internal set; } = new List<RoleDepartmentPermissionDto>();
+    }
     }
 
-    public class DepartmentDetailDto
+    public class DepartmentDetailDTO
     {
         public int Id { get; set; }
         public string Name { get; set; }
@@ -22,13 +25,12 @@ namespace MODSI_SQLRestAPI.Company.Departments.DTO
         public List<RoleDepartmentPermissionDto> Permissions { get; set; } = new List<RoleDepartmentPermissionDto>();
     }
 
-    public class CreateDepartmentDto
+    public class CreateDepartmentDTO
     {
         public string Name { get; set; }
     }
 
-    public class UpdateDepartmentDto
-    {
-        public string Name { get; set; }
-    }
+public class UpdateDepartmentDTO
+{
+    public string Name { get; set; }
 }

@@ -5,6 +5,7 @@ using MODSI_SQLRestAPI.UserAuth.Models;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Reflection.Emit;
+using System.Text.Json.Serialization;
 
 namespace MODSI_SQLRestAPI.Infrastructure.Data
 {
@@ -19,6 +20,8 @@ namespace MODSI_SQLRestAPI.Infrastructure.Data
         public DbSet<Role> Roles { get; set; }
         public DbSet<Department> Departments { get; set; }
         public DbSet<KPI> KPIs { get; set; }
+
+        
         public DbSet<RoleDepartmentPermission> RoleDepartmentPermissions { get; set; }
         public DbSet<DepartmentKPI> DepartmentKPIs { get; set; }
 
