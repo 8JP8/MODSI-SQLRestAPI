@@ -516,11 +516,6 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
                 return response;
             }
         }
-        // MUDADO para não tratar do token visto que o token só depende do login e não do registo!
-
-
-
-
 
         internal static class Utils
         {
