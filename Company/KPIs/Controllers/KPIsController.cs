@@ -74,29 +74,6 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Controllers
             }
         }
 
-        [Function("GetKPIsByDepartmentId")]
-        public async Task<HttpResponseData> GetKPIsByDepartmentId(
-            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "departments/{departmentId}/kpis")] HttpRequestData req,
-            int departmentId)
-        {
-            _logger.LogInformation($"GetKPIsByDepartmentId function processed a request for department {departmentId}.");
-
-            try
-            {
-                var kpis = await _kpiService.GetKPIsByDepartmentIdAsync(departmentId);
-                var response = req.CreateResponse(HttpStatusCode.OK);
-                await response.WriteAsJsonAsync(kpis);
-                return response;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"Error getting KPIs for department {departmentId}");
-                var response = req.CreateResponse(HttpStatusCode.InternalServerError);
-                await response.WriteStringAsync("An error occurred while processing your request.");
-                return response;
-            }
-        }
-
         [Function("CreateKPI")]
         public async Task<HttpResponseData> CreateKPI(
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = "kpis")] HttpRequestData req)

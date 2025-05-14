@@ -81,9 +81,9 @@ namespace MODSI_SQLRestAPI.Company.Departments.Controllers
             }
         }
 
-        [Function("GetDepartmentWithKPIs")]
+        [Function("GetDepartmentKPIs")]
         public async Task<HttpResponseData> GetDepartmentWithKPIs(
-           [HttpTrigger(AuthorizationLevel.Function, "get", Route = "departments/{id}/detail")] HttpRequestData req,
+           [HttpTrigger(AuthorizationLevel.Function, "get", Route = "departments/{id}/kpis")] HttpRequestData req,
            int id)
         {
             _logger.LogInformation($"GetDepartmentWithKPIs function processed a request for department {id}.");
