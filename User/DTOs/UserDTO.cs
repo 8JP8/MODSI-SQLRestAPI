@@ -31,10 +31,10 @@ namespace MODSI_SQLRestAPI.UserAuth.DTO
             Name = name;
             Email = email;
             Username = username;
-            Role = role;
+            Role = role ?? "n.d.";
             CreatedAt = DateTime.UtcNow;
             IsActive = true;
-            Group = group;
+            Group = group ?? "n.d.";
             Photo = photo;
             Tel = tel;
         }

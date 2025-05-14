@@ -4,6 +4,7 @@ using MODSI_SQLRestAPI.UserAuth.Models;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.Data.Common;
 using System.Data.SqlClient;
 using System.Security.Cryptography;
 using System.Text;
@@ -34,7 +35,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Repositories
                 Role = !reader.IsDBNull(reader.GetOrdinal("Role")) ? reader.GetString(reader.GetOrdinal("Role")) : "n.d.",
                 CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
                 IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive")),
-                Group = reader.GetString(reader.GetOrdinal("Group")),
+                Group = !reader.IsDBNull(reader.GetOrdinal("Group")) ? reader.GetString(reader.GetOrdinal("Group")) : null,
                 Tel = !reader.IsDBNull(reader.GetOrdinal("Tel")) ? reader.GetString(reader.GetOrdinal("Tel")) : null,
                 Photo = !reader.IsDBNull(reader.GetOrdinal("Photo")) ? (string)reader.GetValue(reader.GetOrdinal("Photo")) : null,
                 Password = includePasswordAndSalt ? reader.GetString(reader.GetOrdinal("Password")) : null,
@@ -53,9 +54,9 @@ namespace MODSI_SQLRestAPI.UserAuth.Repositories
                 Role = !reader.IsDBNull(reader.GetOrdinal("Role")) ? reader.GetString(reader.GetOrdinal("Role")) : "n.d.",
                 CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
                 IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive")),
-                Group = reader.GetString(reader.GetOrdinal("Group")),
-                Photo = !reader.IsDBNull(reader.GetOrdinal("Photo")) ? (string)reader.GetValue(reader.GetOrdinal("Photo")) : null,
-                Tel = !reader.IsDBNull(reader.GetOrdinal("Tel")) ? (string)reader.GetValue(reader.GetOrdinal("Tel")) : null
+                Group = !reader.IsDBNull(reader.GetOrdinal("Group")) ? reader.GetString(reader.GetOrdinal("Group")) : null,
+                Tel = !reader.IsDBNull(reader.GetOrdinal("Tel")) ? reader.GetString(reader.GetOrdinal("Tel")) : null,
+                Photo = !reader.IsDBNull(reader.GetOrdinal("Photo")) ? (string)reader.GetValue(reader.GetOrdinal("Photo")) : null
             };
         }
 
@@ -269,7 +270,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Repositories
             using (SqlConnection conn = new SqlConnection(ApplicationDbContext.ConnectionString))
             {
                 await conn.OpenAsync();
-                var query = $"SELECT Id, Name, Email, Password, Username, Role, CreatedAt, IsActive, [Group], Photo FROM {_user_DB} WHERE Id = @Id";
+                var query = $"SELECT Id, Name, Email, Password, Username, Role, CreatedAt, IsActive, [Group], Salt, Tel, Photo FROM {_user_DB} WHERE Id = @Id";
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
                     cmd.Parameters.AddWithValue("@Id", id);

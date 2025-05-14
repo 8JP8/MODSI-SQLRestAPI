@@ -210,7 +210,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
 
 
         [Function("UpdateUserById")]
-        public async Task<HttpResponseData> UpdateUserById([HttpTrigger(AuthorizationLevel.Function, "put", Route = "User/Update/{id:int}")] HttpRequestData req, int id)
+        public async Task<HttpResponseData> UpdateUserById([HttpTrigger(AuthorizationLevel.Function, "put", Route = "User/UpdateById/{id:int}")] HttpRequestData req, int id)
         {
             try
             {
@@ -229,7 +229,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
                 var retriveToken = new RetrieveToken();
                 var principal = retriveToken.GetPrincipalFromRequest(req);
 
-                if (principal == null || !principal.Identity.IsAuthenticated || !principal.IsInRole("Admin"))
+                if (principal == null || !principal.Identity.IsAuthenticated || !principal.IsInGroup("Admin"))
                 {
                     var forbiddenResponse = req.CreateResponse(HttpStatusCode.Forbidden);
                     await forbiddenResponse.WriteStringAsync("Unauthorized or insufficient permissions.");
