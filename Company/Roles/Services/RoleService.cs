@@ -27,11 +27,6 @@ namespace MODSI_SQLRestAPI.Company.Roles.Services
             return await _roleRepository.GetByIdAsync(id);
         }
 
-        public async Task<Role> GetRoleWithPermissionsAsync(int id)
-        {
-            return await _roleRepository.GetRoleWithPermissionsAsync(id);
-        }
-
         public async Task<Role> CreateRoleAsync(Role role)
         {
             if (role == null)

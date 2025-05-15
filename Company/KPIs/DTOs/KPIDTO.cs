@@ -15,6 +15,7 @@ namespace MODSI_SQLRestAPI.Company.KPIs.DTO
         public string Unit { get; set; }
         public string Value_1 { get; set; }
         public string Value_2 { get; set; }
+        public List<DepartmentDTO> AvailableInDepartments { get; set; }
     }
 
     public class KPIDetailDTO
@@ -25,7 +26,7 @@ namespace MODSI_SQLRestAPI.Company.KPIs.DTO
         public string Unit { get; set; }
         public string Value_1 { get; set; }
         public string Value_2 { get; set; }
-        public List<DepartmentDTO> Departments { get; set; } = new List<DepartmentDTO>();
+        public List<string> AvailableInDepartments { get; set; }
     }
 
     public class CreateKPIDTO

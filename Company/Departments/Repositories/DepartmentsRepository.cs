@@ -12,7 +12,6 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
-using MODSI_SQLRestAPI.Company.Departments.DTO;
 namespace MODSI_SQLRestAPI.Company.Departments.Repositories
 {
     public class DepartmentRepository : IDepartmentRepository
@@ -61,21 +60,23 @@ namespace MODSI_SQLRestAPI.Company.Departments.Repositories
             }
         }
 
-        public async Task<IEnumerable<Department>> GetDepartmentsWithKPIsAsync()
+        public async Task<IEnumerable<Department>> GetDepartmentKPIsAsync()
         {
             return await _context.Departments
                 .Include(d => d.DepartmentKPIs)
                     .ThenInclude(dk => dk.KPI)
                 .Include(d => d.RoleDepartmentPermissions)
+                    .ThenInclude(rdp => rdp.Role)
                 .ToListAsync();
         }
 
-        public async Task<Department> GetDepartmentWithKPIsAsync(int id)
+        public async Task<Department> GetDepartmentKPIsAsync(int id)
         {
             return await _context.Departments
                 .Include(d => d.DepartmentKPIs)
                     .ThenInclude(dk => dk.KPI)
                 .Include(d => d.RoleDepartmentPermissions)
+                    .ThenInclude(rdp => rdp.Role)
                 .FirstOrDefaultAsync(d => d.Id == id);
         }
 
@@ -87,7 +88,7 @@ namespace MODSI_SQLRestAPI.Company.Departments.Repositories
         }
 
 
-        public async Task AddKPIToDepartmentAsync(int departmentId, int kpiId)
+        public async Task AddKPIFromDepartmentAsync(int departmentId, int kpiId)
         {
             var exists = await _context.DepartmentKPIs
                 .AnyAsync(dk => dk.DepartmentId == departmentId && dk.KPIId == kpiId);

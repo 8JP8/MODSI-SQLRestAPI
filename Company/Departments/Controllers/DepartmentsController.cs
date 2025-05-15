@@ -15,6 +15,7 @@ using MODSI_SQLRestAPI.Company.Departments.DTO;
 using System.Linq;
 using MODSI_SQLRestAPI.Company.KPIs.DTO;
 using MODSI_SQLRestAPI.Company.DTOs;
+using MODSI_SQLRestAPI.Company.KPIs.Models;
 
 namespace MODSI_SQLRestAPI.Company.Departments.Controllers
 {
@@ -31,15 +32,33 @@ namespace MODSI_SQLRestAPI.Company.Departments.Controllers
 
         [Function("GetAllDepartments")]
         public async Task<HttpResponseData> GetAllDepartments(
-            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "departments")] HttpRequestData req)
+    [HttpTrigger(AuthorizationLevel.Function, "get", Route = "departments")] HttpRequestData req)
         {
             _logger.LogInformation("GetAllDepartments function processed a request.");
 
             try
             {
                 var departments = await _departmentService.GetAllDepartmentsAsync();
+                var departmentDTOs = departments.Select(department => new DepartmentSummaryDTO
+                {
+                    Id = department.Id,
+                    Name = department.Name,
+                    RolesWithReadAccess = (department.RoleDepartmentPermissions ?? new List<RoleDepartmentPermission>())
+                        .Where(rdp => rdp.CanRead)
+                        .Select(rdp => rdp.Role != null ? rdp.Role.Name : null)
+                        .Where(name => !string.IsNullOrEmpty(name))
+                        .Distinct()
+                        .ToList(),
+                    RolesWithWriteAccess = (department.RoleDepartmentPermissions ?? new List<RoleDepartmentPermission>())
+                        .Where(rdp => rdp.CanWrite)
+                        .Select(rdp => rdp.Role != null ? rdp.Role.Name : null)
+                        .Where(name => !string.IsNullOrEmpty(name))
+                        .Distinct()
+                        .ToList()
+                }).ToList();
+
                 var response = req.CreateResponse(HttpStatusCode.OK);
-                await response.WriteAsJsonAsync(departments);
+                await response.WriteAsJsonAsync(departmentDTOs);
                 return response;
             }
             catch (Exception ex)
@@ -68,8 +87,26 @@ namespace MODSI_SQLRestAPI.Company.Departments.Controllers
                     return notFoundResponse;
                 }
 
+                var departmentDTO = new DepartmentSummaryDTO
+                {
+                    Id = department.Id,
+                    Name = department.Name,
+                    RolesWithReadAccess = (department.RoleDepartmentPermissions ?? new List<RoleDepartmentPermission>())
+                        .Where(rdp => rdp.CanRead)
+                        .Select(rdp => rdp.Role != null ? rdp.Role.Name : null)
+                        .Where(name => !string.IsNullOrEmpty(name))
+                        .Distinct()
+                        .ToList(),
+                    RolesWithWriteAccess = (department.RoleDepartmentPermissions ?? new List<RoleDepartmentPermission>())
+                        .Where(rdp => rdp.CanWrite)
+                        .Select(rdp => rdp.Role != null ? rdp.Role.Name : null)
+                        .Where(name => !string.IsNullOrEmpty(name))
+                        .Distinct()
+                        .ToList()
+                };
+
                 var response = req.CreateResponse(HttpStatusCode.OK);
-                await response.WriteAsJsonAsync(department);
+                await response.WriteAsJsonAsync(departmentDTO);
                 return response;
             }
             catch (Exception ex)
@@ -82,15 +119,15 @@ namespace MODSI_SQLRestAPI.Company.Departments.Controllers
         }
 
         [Function("GetDepartmentKPIs")]
-        public async Task<HttpResponseData> GetDepartmentWithKPIs(
-           [HttpTrigger(AuthorizationLevel.Function, "get", Route = "departments/{id}/kpis")] HttpRequestData req,
-           int id)
+        public async Task<HttpResponseData> GetDepartmentKPIs(
+          [HttpTrigger(AuthorizationLevel.Function, "get", Route = "departments/{id}/kpis")] HttpRequestData req,
+          int id)
         {
-            _logger.LogInformation($"GetDepartmentWithKPIs function processed a request for department {id}.");
+            _logger.LogInformation($"GetDepartmentKPIs function processed a request for department {id}.");
 
             try
             {
-                var department = await _departmentService.GetDepartmentWithKPIsAsync(id);
+                var department = await _departmentService.GetDepartmentKPIsAsync(id);
 
                 if (department == null)
                 {
@@ -99,14 +136,24 @@ namespace MODSI_SQLRestAPI.Company.Departments.Controllers
                     return notFoundResponse;
                 }
 
-                // Mapear para DTO para evitar ciclos de serialização
-                var departmentDTO = new DepartmentDetailDTO
+                var departmentDTO = new DepartmentDetailDTO()
                 {
                     Id = department.Id,
                     Name = department.Name,
-
-                    // Mapear KPIs associados
-                    KPIs = department.DepartmentKPIs
+                    RolesWithReadAccess = (department.RoleDepartmentPermissions ?? new List<RoleDepartmentPermission>())
+                        .Where(rdp => rdp.CanRead)
+                        .Select(rdp => rdp.Role != null ? rdp.Role.Name : null)
+                        .Where(name => !string.IsNullOrEmpty(name))
+                        .Distinct()
+                        .ToList(),
+                    RolesWithWriteAccess = (department.RoleDepartmentPermissions ?? new List<RoleDepartmentPermission>())
+                        .Where(rdp => rdp.CanWrite)
+                        .Select(rdp => rdp.Role != null ? rdp.Role.Name : null)
+                        .Where(name => !string.IsNullOrEmpty(name))
+                        .Distinct()
+                        .ToList(),
+                    KPIs = (department.DepartmentKPIs ?? new List<DepartmentKPI>())
+                        .Where(dk => dk.KPI != null)
                         .Select(dk => new KPIDTO
                         {
                             Id = dk.KPI.Id,
@@ -115,17 +162,6 @@ namespace MODSI_SQLRestAPI.Company.Departments.Controllers
                             Unit = dk.KPI.Unit,
                             Value_1 = dk.KPI.Value_1,
                             Value_2 = dk.KPI.Value_2
-                        })
-                        .ToList(),
-
-                    // Mapear permissões de função
-                    Permissions = department.RoleDepartmentPermissions
-                        .Select(rdp => new RoleDepartmentPermissionDTO
-                        {
-                            RoleId = rdp.RoleId,
-                            DepartmentId = rdp.DepartmentId,
-                            CanRead = rdp.CanRead,
-                            CanWrite = rdp.CanWrite
                         })
                         .ToList()
                 };
@@ -237,17 +273,17 @@ namespace MODSI_SQLRestAPI.Company.Departments.Controllers
             }
         }
 
-        [Function("AddKPIToDepartment")]
-        public async Task<HttpResponseData> AddKPIToDepartment(
+        [Function("AddKPIFromDepartment")]
+        public async Task<HttpResponseData> AddKPIFromDepartment(
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = "departments/{departmentId}/kpis/{kpiId}")] HttpRequestData req,
             int departmentId,
             int kpiId)
         {
-            _logger.LogInformation($"AddKPIToDepartment function processed a request for department {departmentId} and KPI {kpiId}.");
+            _logger.LogInformation($"AddKPIFromDepartment function processed a request for department {departmentId} and KPI {kpiId}.");
 
             try
             {
-                await _departmentService.AddKPIToDepartmentAsync(departmentId, kpiId);
+                await _departmentService.AddKPIFromDepartmentAsync(departmentId, kpiId);
                 var response = req.CreateResponse(HttpStatusCode.NoContent);
                 return response;
             }

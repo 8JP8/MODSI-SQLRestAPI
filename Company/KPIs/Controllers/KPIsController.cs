@@ -8,70 +8,78 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 using System.Net;
+using MODSI_SQLRestAPI.Company.KPIs.DTO;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace MODSI_SQLRestAPI.Company.KPIs.Controllers
 {
     public class KPIFunctions
     {
-        private readonly ILogger<KPIFunctions> _logger;
         private readonly IKPIService _kpiService;
+        private readonly ILogger<KPIFunctions> _logger;
 
-        public KPIFunctions(ILogger<KPIFunctions> logger, IKPIService kpiService)
+        public KPIFunctions(IKPIService kpiService, ILogger<KPIFunctions> logger)
         {
-            _logger = logger;
             _kpiService = kpiService;
+            _logger = logger;
         }
 
         [Function("GetAllKPIs")]
         public async Task<HttpResponseData> GetAllKPIs(
             [HttpTrigger(AuthorizationLevel.Function, "get", Route = "kpis")] HttpRequestData req)
         {
-            _logger.LogInformation("GetAllKPIs function processed a request.");
+            var kpis = await _kpiService.GetAllKPIsAsync();
+            var kpiDTOs = kpis.Select(kpi => new KPIDetailDTO
+            {
+                Id = kpi.Id,
+                Name = kpi.Name,
+                Description = kpi.Description,
+                Unit = kpi.Unit,
+                Value_1 = kpi.Value_1,
+                Value_2 = kpi.Value_2,
+                AvailableInDepartments = kpi.AvailableInDepartments?
+                    .Select(d => d.Name)
+                    .Where(name => !string.IsNullOrEmpty(name))
+                    .Distinct()
+                    .ToList() ?? new List<string>()
+        }).ToList();
 
-            try
-            {
-                var kpis = await _kpiService.GetAllKPIsAsync();
-                var response = req.CreateResponse(HttpStatusCode.OK);
-                await response.WriteAsJsonAsync(kpis);
-                return response;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error getting all KPIs");
-                var response = req.CreateResponse(HttpStatusCode.InternalServerError);
-                await response.WriteStringAsync("An error occurred while processing your request.");
-                return response;
-            }
+            var response = req.CreateResponse(HttpStatusCode.OK);
+            await response.WriteAsJsonAsync(kpiDTOs);
+            return response;
         }
 
         [Function("GetKPIById")]
         public async Task<HttpResponseData> GetKPIById(
-            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "kpis/{id}")] HttpRequestData req,
-            int id)
+            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "kpis/{id}")] HttpRequestData req, int id)
         {
-            _logger.LogInformation($"GetKPIById function processed a request for KPI {id}.");
-
-            try
+            var kpi = await _kpiService.GetKPIByIdAsync(id);
+            if (kpi == null)
             {
-                var kpi = await _kpiService.GetKPIByIdAsync(id);
-                if (kpi == null)
-                {
-                    var notFoundResponse = req.CreateResponse(HttpStatusCode.NotFound);
-                    await notFoundResponse.WriteStringAsync($"KPI with ID {id} not found.");
-                    return notFoundResponse;
-                }
+                var notFoundResponse = req.CreateResponse(HttpStatusCode.NotFound);
+                await notFoundResponse.WriteStringAsync($"KPI with ID {id} not found.");
+                return notFoundResponse;
+            }
 
-                var response = req.CreateResponse(HttpStatusCode.OK);
-                await response.WriteAsJsonAsync(kpi);
-                return response;
-            }
-            catch (Exception ex)
+            var kpiDTO = new KPIDetailDTO
             {
-                _logger.LogError(ex, $"Error getting KPI {id}");
-                var response = req.CreateResponse(HttpStatusCode.InternalServerError);
-                await response.WriteStringAsync("An error occurred while processing your request.");
-                return response;
-            }
+                Id = kpi.Id,
+                Name = kpi.Name,
+                Description = kpi.Description,
+                Unit = kpi.Unit,
+                Value_1 = kpi.Value_1,
+                Value_2 = kpi.Value_2,
+                AvailableInDepartments = kpi.AvailableInDepartments?
+                    .Select(d => d.Name)
+                    .Where(name => !string.IsNullOrEmpty(name))
+                    .Distinct()
+                    .ToList() ?? new List<string>()
+            };
+
+            var response = req.CreateResponse(HttpStatusCode.OK);
+            await response.WriteAsJsonAsync(kpiDTO);
+            return response;
         }
 
         [Function("CreateKPI")]

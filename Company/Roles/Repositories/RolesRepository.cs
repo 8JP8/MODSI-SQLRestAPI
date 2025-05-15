@@ -22,12 +22,18 @@ namespace MODSI_SQLRestAPI.Company.Roles.Repositories
 
         public async Task<IEnumerable<Role>> GetAllAsync()
         {
-            return await _context.Roles.ToListAsync();
+            return await _context.Roles
+                .Include(r => r.RoleDepartmentPermissions)
+                    .ThenInclude(rdp => rdp.Department)
+                .ToListAsync();
         }
 
         public async Task<Role> GetByIdAsync(int id)
         {
-            return await _context.Roles.FindAsync(id);
+            return await _context.Roles
+                .Include(r => r.RoleDepartmentPermissions)
+                    .ThenInclude(rdp => rdp.Department)
+                .FirstOrDefaultAsync(r => r.Id == id);
         }
 
         public async Task<IEnumerable<Role>> FindAsync(Expression<Func<Role, bool>> predicate)
@@ -63,14 +69,6 @@ namespace MODSI_SQLRestAPI.Company.Roles.Repositories
                 .Include(r => r.RoleDepartmentPermissions)
                     .ThenInclude(rdp => rdp.Department)
                 .ToListAsync();
-        }
-
-        public async Task<Role> GetRoleWithPermissionsAsync(int id)
-        {
-            return await _context.Roles
-                .Include(r => r.RoleDepartmentPermissions)
-                    .ThenInclude(rdp => rdp.Department)
-                .FirstOrDefaultAsync(r => r.Id == id);
         }
     }
 }

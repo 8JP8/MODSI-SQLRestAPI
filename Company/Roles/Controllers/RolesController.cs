@@ -10,40 +10,48 @@ using System.Net;
 using MODSI_SQLRestAPI.Company.Roles.DTOs;
 using System.Linq;
 using MODSI_SQLRestAPI.Company.DTOs;
+using System.Collections.Generic;
+using MODSI_SQLRestAPI.UserAuth.Services;
 
 namespace MODSI_SQLRestAPI.Company.Roles.Controllers
 {
     public class RoleFunctions
     {
-        private readonly ILogger<RoleFunctions> _logger;
         private readonly IRoleService _roleService;
+        private readonly ILogger<RoleFunctions> _logger;
 
-        public RoleFunctions(ILogger<RoleFunctions> logger, IRoleService roleService)
+        public RoleFunctions(IRoleService roleService, ILogger<RoleFunctions> logger)
         {
-            _logger = logger;
             _roleService = roleService;
+            _logger = logger;
         }
 
         [Function("GetAllRoles")]
         public async Task<HttpResponseData> GetAllRoles(
-            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "roles")] HttpRequestData req)
+    [HttpTrigger(AuthorizationLevel.Function, "get", Route = "roles")] HttpRequestData req)
         {
-            _logger.LogInformation("GetAllRoles function processed a request.");
+            var roles = await _roleService.GetAllRolesAsync();
+            var roleDTOs = roles.Select(role => new RoleDTO
+            {
+                Id = role.Id,
+                Name = role.Name,
+                DepartmentsWithReadAccess = role.RoleDepartmentPermissions?
+                    .Where(rdp => rdp.CanRead)
+                    .Select(rdp => rdp.Department?.Name)
+                    .Where(name => !string.IsNullOrEmpty(name))
+                    .Distinct()
+                    .ToList() ?? new List<string>(),
+                DepartmentsWithWriteAccess = role.RoleDepartmentPermissions?
+                    .Where(rdp => rdp.CanWrite)
+                    .Select(rdp => rdp.Department?.Name)
+                    .Where(name => !string.IsNullOrEmpty(name))
+                    .Distinct()
+                    .ToList() ?? new List<string>()
+            }).ToList();
 
-            try
-            {
-                var roles = await _roleService.GetAllRolesAsync();
-                var response = req.CreateResponse(HttpStatusCode.OK);
-                await response.WriteAsJsonAsync(roles);
-                return response;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error getting all roles");
-                var response = req.CreateResponse(HttpStatusCode.InternalServerError);
-                await response.WriteStringAsync("An error occurred while processing your request.");
-                return response;
-            }
+            var response = req.CreateResponse(HttpStatusCode.OK);
+            await response.WriteAsJsonAsync(roleDTOs);
+            return response;
         }
 
         [Function("GetRoleById")]
@@ -51,74 +59,35 @@ namespace MODSI_SQLRestAPI.Company.Roles.Controllers
             [HttpTrigger(AuthorizationLevel.Function, "get", Route = "roles/{id}")] HttpRequestData req,
             int id)
         {
-            _logger.LogInformation($"GetRoleById function processed a request for role {id}.");
-
-            try
+            var role = await _roleService.GetRoleByIdAsync(id);
+            if (role == null)
             {
-                var role = await _roleService.GetRoleByIdAsync(id);
-                if (role == null)
-                {
-                    var notFoundResponse = req.CreateResponse(HttpStatusCode.NotFound);
-                    await notFoundResponse.WriteStringAsync($"Role with ID {id} not found.");
-                    return notFoundResponse;
-                }
-
-                var response = req.CreateResponse(HttpStatusCode.OK);
-                await response.WriteAsJsonAsync(role);
-                return response;
+                var notFoundResponse = req.CreateResponse(HttpStatusCode.NotFound);
+                await notFoundResponse.WriteStringAsync($"Role with ID {id} not found.");
+                return notFoundResponse;
             }
-            catch (Exception ex)
+
+            var roleDTO = new RoleDTO
             {
-                _logger.LogError(ex, $"Error getting role {id}");
-                var response = req.CreateResponse(HttpStatusCode.InternalServerError);
-                await response.WriteStringAsync("An error occurred while processing your request.");
-                return response;
-            }
-        }
+                Id = role.Id,
+                Name = role.Name,
+                DepartmentsWithReadAccess = role.RoleDepartmentPermissions?
+                    .Where(rdp => rdp.CanRead)
+                    .Select(rdp => rdp.Department?.Name)
+                    .Where(name => !string.IsNullOrEmpty(name))
+                    .Distinct()
+                    .ToList() ?? new List<string>(),
+                DepartmentsWithWriteAccess = role.RoleDepartmentPermissions?
+                    .Where(rdp => rdp.CanWrite)
+                    .Select(rdp => rdp.Department?.Name)
+                    .Where(name => !string.IsNullOrEmpty(name))
+                    .Distinct()
+                    .ToList() ?? new List<string>()
+            };
 
-        [Function("GetRoleWithPermissions")]
-        public async Task<HttpResponseData> GetRoleWithPermissions(
-            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "roles/{id}/permissions")] HttpRequestData req,
-            int id)
-        {
-            _logger.LogInformation($"Getting role {id} with permissions.");
-
-            try
-            {
-                var role = await _roleService.GetRoleWithPermissionsAsync(id);
-                if (role == null)
-                {
-                    var notFoundResponse = req.CreateResponse(HttpStatusCode.NotFound);
-                    await notFoundResponse.WriteStringAsync($"Role with ID {id} not found.");
-                    return notFoundResponse;
-                }
-
-                // Map to DTO to avoid serialization cycles
-                var roleDTO = new RoleDetailDTO
-                {
-                    Id = role.Id,
-                    Name = role.Name,
-                    Permissions = role.RoleDepartmentPermissions.Select(rdp => new RoleDepartmentPermissionDTO
-                    {
-                        RoleId = rdp.RoleId,
-                        DepartmentId = rdp.DepartmentId,
-                        DepartmentName = rdp.Department?.Name ?? "Unknown",
-                        CanRead = rdp.CanRead,
-                        CanWrite = rdp.CanWrite
-                    }).ToList()
-                };
-
-                var response = req.CreateResponse(HttpStatusCode.OK);
-                await response.WriteAsJsonAsync(roleDTO);
-                return response;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"Error getting role {id} with permissions");
-                var response = req.CreateResponse(HttpStatusCode.InternalServerError);
-                await response.WriteStringAsync("An error occurred while processing your request.");
-                return response;
-            }
+            var response = req.CreateResponse(HttpStatusCode.OK);
+            await response.WriteAsJsonAsync(roleDTO);
+            return response;
         }
 
         [Function("CreateRole")]

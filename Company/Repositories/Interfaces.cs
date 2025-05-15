@@ -19,15 +19,15 @@ namespace MODSI_SQLRestAPI.Company.Repositories
 
     public interface IDepartmentRepository : IRepository<Departments.Models.Department>
     {
-        Task<IEnumerable<Departments.Models.Department>> GetDepartmentsWithKPIsAsync();
-        Task<Departments.Models.Department> GetDepartmentWithKPIsAsync(int id);
+        Task<IEnumerable<Departments.Models.Department>> GetDepartmentKPIsAsync();
+        Task<Departments.Models.Department> GetDepartmentKPIsAsync(int id);
         Task<IEnumerable<Departments.Models.Department>> GetDepartmentsByRoleIdAsync(int roleId);
-        Task AddKPIToDepartmentAsync(int departmentId, int kpiId);
+        Task AddKPIFromDepartmentAsync(int departmentId, int kpiId);
         Task RemoveKPIFromDepartmentAsync(int departmentId, int kpiId);
         Task UpdatePermissionsAsync(int roleId, int departmentId, bool canRead, bool canWrite);
     }
 
-    public interface IKPIRepository : IRepository<MODSI_SQLRestAPI.Company.KPIs.Models.KPI>
+    public interface IKPIRepository : IRepository<KPIs.Models.KPI>
     {
         Task<IEnumerable<KPIs.Models.KPI>> GetKPIsByDepartmentIdAsync(int departmentId);
         Task<IEnumerable<KPIs.Models.KPI>> GetKPIsWithDepartmentsAsync();
@@ -36,7 +36,5 @@ namespace MODSI_SQLRestAPI.Company.Repositories
 
     public interface IRoleRepository : IRepository<Role>
     {
-        Task<IEnumerable<Role>> GetRolesWithPermissionsAsync();
-        Task<Role> GetRoleWithPermissionsAsync(int id);
     }
 }

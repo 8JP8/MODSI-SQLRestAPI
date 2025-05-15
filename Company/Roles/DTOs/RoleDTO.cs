@@ -11,17 +11,13 @@ namespace MODSI_SQLRestAPI.Company.Roles.DTOs
     {
         public int Id { get; set; }
         public string Name { get; set; }
-    }
-
-    public class RoleDetailDTO
-    {
-        public int Id { get; set; }
-        public string Name { get; set; }
-        public List<RoleDepartmentPermissionDTO> Permissions { get; set; } = new List<RoleDepartmentPermissionDTO>();
+        public List<string> DepartmentsWithReadAccess { get; set; }
+        public List<string> DepartmentsWithWriteAccess { get; set; }
     }
 
     public class CreateRoleDTO
     {
+        public int Id { get; set; }
         public string Name { get; set; }
     }
 

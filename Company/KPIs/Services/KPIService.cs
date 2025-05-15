@@ -1,4 +1,6 @@
-﻿using MODSI_SQLRestAPI.Company.KPIs.Models;
+﻿using MODSI_SQLRestAPI.Company.Departments.DTO;
+using MODSI_SQLRestAPI.Company.KPIs.DTO;
+using MODSI_SQLRestAPI.Company.KPIs.Models;
 using MODSI_SQLRestAPI.Company.Repositories;
 using MODSI_SQLRestAPI.Company.Services;
 using System;
@@ -18,14 +20,49 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Services
             _kpiRepository = kpiRepository ?? throw new ArgumentNullException(nameof(kpiRepository));
         }
 
-        public async Task<IEnumerable<KPI>> GetAllKPIsAsync()
+        public async Task<IEnumerable<KPIDTO>> GetAllKPIsAsync()
         {
-            return await _kpiRepository.GetAllAsync();
+            var kpis = await _kpiRepository.GetKPIsWithDepartmentsAsync();
+            return kpis.Select(kpi => new KPIDTO
+            {
+                Id = kpi.Id,
+                Name = kpi.Name,
+                Description = kpi.Description,
+                Unit = kpi.Unit,
+                Value_1 = kpi.Value_1,
+                Value_2 = kpi.Value_2,
+                AvailableInDepartments = kpi.DepartmentKPIs?
+                    .Where(dk => dk.Department != null)
+                    .Select(dk => new DepartmentDTO
+                    {
+                        Id = dk.Department.Id,
+                        Name = dk.Department.Name
+                    }).ToList() ?? new List<DepartmentDTO>()
+            }).ToList();
         }
 
-        public async Task<KPI> GetKPIByIdAsync(int id)
+        public async Task<KPIDTO> GetKPIByIdAsync(int id)
         {
-            return await _kpiRepository.GetByIdAsync(id);
+            var kpi = await _kpiRepository.GetKPIWithDepartmentsAsync(id);
+            if (kpi == null)
+                return null;
+
+            return new KPIDTO
+            {
+                Id = kpi.Id,
+                Name = kpi.Name,
+                Description = kpi.Description,
+                Unit = kpi.Unit,
+                Value_1 = kpi.Value_1,
+                Value_2 = kpi.Value_2,
+                AvailableInDepartments = kpi.DepartmentKPIs?
+                    .Where(dk => dk.Department != null)
+                    .Select(dk => new DepartmentDTO
+                    {
+                        Id = dk.Department.Id,
+                        Name = dk.Department.Name
+                    }).ToList() ?? new List<DepartmentDTO>()
+            };
         }
 
         public async Task<IEnumerable<KPI>> GetKPIsByDepartmentIdAsync(int departmentId)

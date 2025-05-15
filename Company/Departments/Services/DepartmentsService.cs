@@ -16,22 +16,25 @@ namespace MODSI_SQLRestAPI.Company.Departments.Services
 
         public DepartmentService(IDepartmentRepository departmentRepository)
         {
-            _departmentRepository = departmentRepository ?? throw new ArgumentNullException(nameof(departmentRepository));
+            _departmentRepository = departmentRepository;
         }
 
         public async Task<IEnumerable<Department>> GetAllDepartmentsAsync()
         {
-            return await _departmentRepository.GetAllAsync();
+            // Garante que as coleções de navegação são carregadas
+            return await _departmentRepository.GetDepartmentKPIsAsync();
         }
 
         public async Task<Department> GetDepartmentByIdAsync(int id)
         {
-            return await _departmentRepository.GetByIdAsync(id);
+            // Garante que as coleções de navegação são carregadas
+            return await _departmentRepository.GetDepartmentKPIsAsync(id);
         }
 
-        public async Task<Department> GetDepartmentWithKPIsAsync(int id)
+        public async Task<Department> GetDepartmentKPIsAsync(int id)
         {
-            return await _departmentRepository.GetDepartmentWithKPIsAsync(id);
+            // Garante que as coleções de navegação são carregadas
+            return await _departmentRepository.GetDepartmentKPIsAsync(id);
         }
 
         public async Task<IEnumerable<Department>> GetDepartmentsByRoleIdAsync(int roleId)
@@ -41,25 +44,20 @@ namespace MODSI_SQLRestAPI.Company.Departments.Services
 
         public async Task<Department> CreateDepartmentAsync(Department department)
         {
-            if (department == null)
-                throw new ArgumentNullException(nameof(department));
-
             await _departmentRepository.AddAsync(department);
             return department;
         }
 
         public async Task<Department> UpdateDepartmentAsync(int id, Department department)
         {
-            if (department == null)
-                throw new ArgumentNullException(nameof(department));
-
-            var existingDepartment = await _departmentRepository.GetByIdAsync(id);
-            if (existingDepartment == null)
+            var existing = await _departmentRepository.GetByIdAsync(id);
+            if (existing == null)
                 return null;
 
-            existingDepartment.Name = department.Name;
-            await _departmentRepository.UpdateAsync(existingDepartment);
-            return existingDepartment;
+            existing.Name = department.Name;
+
+            await _departmentRepository.UpdateAsync(existing);
+            return existing;
         }
 
         public async Task DeleteDepartmentAsync(int id)
@@ -67,9 +65,9 @@ namespace MODSI_SQLRestAPI.Company.Departments.Services
             await _departmentRepository.DeleteAsync(id);
         }
 
-        public async Task AddKPIToDepartmentAsync(int departmentId, int kpiId)
+        public async Task AddKPIFromDepartmentAsync(int departmentId, int kpiId)
         {
-            await _departmentRepository.AddKPIToDepartmentAsync(departmentId, kpiId);
+            await _departmentRepository.AddKPIFromDepartmentAsync(departmentId, kpiId);
         }
 
         public async Task RemoveKPIFromDepartmentAsync(int departmentId, int kpiId)

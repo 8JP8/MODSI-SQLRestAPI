@@ -15,7 +15,6 @@ namespace MODSI_SQLRestAPI.Company.Departments.Models
 
         public Department()
         {
-            RoleDepartmentPermissions = new List<RoleDepartmentPermission>();
             DepartmentKPIs = new List<DepartmentKPI>();
         }
 
@@ -25,7 +24,6 @@ namespace MODSI_SQLRestAPI.Company.Departments.Models
                 throw new ArgumentException("Department name cannot be null or empty.");
             Id = id;
             Name = name;
-            RoleDepartmentPermissions = new List<RoleDepartmentPermission>();
             DepartmentKPIs = new List<DepartmentKPI>();
         }
 
