@@ -85,10 +85,6 @@ namespace MODSI_SQLRestAPI.UserAuth.Repositories
             return users;
         }
 
-
-
-
-
         internal async Task AddUserAsync(User user)
         {
             using (var connection = new SqlConnection(ApplicationDbContext.ConnectionString))
@@ -234,7 +230,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Repositories
                 }
             }
         }
-        // Username exists
+
         internal async Task<bool> UsernameUserExistsAsync(string username)
         {
             using (SqlConnection conn = new SqlConnection(ApplicationDbContext.ConnectionString))
@@ -249,7 +245,6 @@ namespace MODSI_SQLRestAPI.UserAuth.Repositories
                 }
             }
         }
-        // U
 
         internal async Task DeleteUserByIdAsync(int id)
         {
@@ -286,5 +281,36 @@ namespace MODSI_SQLRestAPI.UserAuth.Repositories
             return null;
         }
 
+        internal async Task<bool> ChangeUserRoleAsync(int userId, string role)
+        {
+            using (var conn = new SqlConnection(ApplicationDbContext.ConnectionString))
+            {
+                await conn.OpenAsync();
+                var query = $"UPDATE {_user_DB} SET Role = @Role WHERE Id = @Id";
+                using (var cmd = new SqlCommand(query, conn))
+                {
+                    cmd.Parameters.AddWithValue("@Role", role);
+                    cmd.Parameters.AddWithValue("@Id", userId);
+                    var rows = await cmd.ExecuteNonQueryAsync();
+                    return rows > 0;
+                }
+            }
+        }
+
+        internal async Task<bool> ChangeUserGroupAsync(int userId, string group)
+        {
+            using (var conn = new SqlConnection(ApplicationDbContext.ConnectionString))
+            {
+                await conn.OpenAsync();
+                var query = $"UPDATE {_user_DB} SET [Group] = @Group WHERE Id = @Id";
+                using (var cmd = new SqlCommand(query, conn))
+                {
+                    cmd.Parameters.AddWithValue("@Group", group);
+                    cmd.Parameters.AddWithValue("@Id", userId);
+                    var rows = await cmd.ExecuteNonQueryAsync();
+                    return rows > 0;
+                }
+            }
+        }
     }
 }

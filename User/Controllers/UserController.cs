@@ -23,12 +23,10 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
 
         private readonly ILogger _logger;
         private readonly UserService _userService;
-        public UserController(ILoggerFactory loggerFactory)
+        public UserController(ILoggerFactory loggerFactory, UserService userService)
         {
             _logger = loggerFactory.CreateLogger<UserController>();
-            _userService = new UserService(loggerFactory);
-
-            // Adjusted to call asynchronous methods properly
+            _userService = userService;
             Task.Run(() => InitializeGroupsAsync()).Wait();
         }
 
@@ -282,8 +280,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
 
         [Function("UpdateUserByEmail")]
         public async Task<HttpResponseData> UpdateUserByEmail(
-            [HttpTrigger(AuthorizationLevel.Function, "put", Route = "User/Update/{email}")] HttpRequestData req,
-            string email)
+        [HttpTrigger(AuthorizationLevel.Function, "put", Route = "User/Update/{email}")] HttpRequestData req, string email)
         {
             try
             {
@@ -505,6 +502,68 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
                 var response = req.CreateResponse(HttpStatusCode.OK);
                 response.Headers.Add("Content-Type", "application/json; charset=utf-8");
                 await response.WriteStringAsync(JsonSerializer.Serialize(new { user.Salt }));
+                return response;
+            }
+            catch (HttpException ex)
+            {
+                _logger.LogWarning(ex, ex.Message);
+                var response = req.CreateResponse(ex.StatusCode);
+                response.Headers.Add("Content-Type", "application/json; charset=utf-8");
+                await response.WriteStringAsync(JsonSerializer.Serialize(new { error = ex.Message }));
+                return response;
+            }
+        }
+
+        [Function("ChangeUserRole")]
+        public async Task<HttpResponseData> ChangeUserRole(
+        [HttpTrigger(AuthorizationLevel.Function, "put", Route = "User/ChangeRole/{userId:int}")] HttpRequestData req, int userId)
+        {
+            try
+            {
+                var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+                var data = JsonSerializer.Deserialize<Dictionary<string, string>>(requestBody);
+                if (data == null || !data.ContainsKey("role"))
+                {
+                    var badRequest = req.CreateResponse(HttpStatusCode.BadRequest);
+                    await badRequest.WriteStringAsync("Request body must contain 'role' (name or id).");
+                    return badRequest;
+                }
+
+                var userDTO = await _userService.ChangeUserRole(userId, data["role"]);
+                var response = req.CreateResponse(HttpStatusCode.OK);
+                response.Headers.Add("Content-Type", "application/json; charset=utf-8");
+                await response.WriteStringAsync(JsonSerializer.Serialize(userDTO, new JsonSerializerOptions { WriteIndented = true }));
+                return response;
+            }
+            catch (HttpException ex)
+            {
+                _logger.LogWarning(ex, ex.Message);
+                var response = req.CreateResponse(ex.StatusCode);
+                response.Headers.Add("Content-Type", "application/json; charset=utf-8");
+                await response.WriteStringAsync(JsonSerializer.Serialize(new { error = ex.Message }));
+                return response;
+            }
+        }
+
+        [Function("ChangeUserGroup")]
+        public async Task<HttpResponseData> UpdateUserGroup(
+        [HttpTrigger(AuthorizationLevel.Function, "put", Route = "User/ChangeGroup/{userId:int}")] HttpRequestData req, int userId)
+        {
+            try
+            {
+                var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+                var data = JsonSerializer.Deserialize<Dictionary<string, string>>(requestBody);
+                if (data == null || !data.ContainsKey("group"))
+                {
+                    var badRequest = req.CreateResponse(HttpStatusCode.BadRequest);
+                    await badRequest.WriteStringAsync("Request body must contain 'group' (name or id).");
+                    return badRequest;
+                }
+
+                var userDTO = await _userService.ChangeUserGroup(userId, data["group"]);
+                var response = req.CreateResponse(HttpStatusCode.OK);
+                response.Headers.Add("Content-Type", "application/json; charset=utf-8");
+                await response.WriteStringAsync(JsonSerializer.Serialize(userDTO, new JsonSerializerOptions { WriteIndented = true }));
                 return response;
             }
             catch (HttpException ex)

@@ -4,8 +4,8 @@
     <AzureFunctionsVersion>v4</AzureFunctionsVersion>
     <OutputType>Exe</OutputType>
     <RootNamespace>MODSI_SQLRestAPI</RootNamespace>
-    <AssemblyVersion>0.3</AssemblyVersion>
-    <FileVersion>0.2</FileVersion>
+    <AssemblyVersion>0.4</AssemblyVersion>
+    <FileVersion>0.4</FileVersion>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="EntityFramework" Version="6.5.1" />

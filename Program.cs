@@ -11,6 +11,7 @@ using MODSI_SQLRestAPI.Company.Departments.Repositories;
 using MODSI_SQLRestAPI.Company.Repositories;
 using MODSI_SQLRestAPI.Company.KPIs.Repositories;
 using MODSI_SQLRestAPI.Company.Roles.Repositories;
+using MODSI_SQLRestAPI.UserAuth.Services;
 
 namespace MODSI_SQLRestAPI
 {
@@ -29,6 +30,7 @@ namespace MODSI_SQLRestAPI
                         options.UseSqlServer(ApplicationDbContext.ConnectionString));
 
                     // Registrar os serviços
+                    services.AddScoped<UserService>();
                     services.AddScoped<IDepartmentService, DepartmentService>();
                     services.AddScoped<IKPIService, KPIService>();
                     services.AddScoped<IRoleService, RoleService>();

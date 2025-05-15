@@ -1,8 +1,12 @@
 ﻿using Microsoft.Extensions.Logging;
+using MODSI_SQLRestAPI.Infrastructure.Data;
 using MODSI_SQLRestAPI.UserAuth.DTO;
 using MODSI_SQLRestAPI.UserAuth.Models;
 using MODSI_SQLRestAPI.UserAuth.Repositories;
+using System;
 using System.Collections.Generic;
+using System.Data.Entity;
+using System.Data.SqlClient;
 using System.Threading.Tasks;
 
 
@@ -15,10 +19,12 @@ namespace MODSI_SQLRestAPI.UserAuth.Services
     {
         private readonly ILogger _logger;
         private readonly UserRepository _databaseHandler;
-        public UserService(ILoggerFactory loggerFactory)
+        private readonly ApplicationDbContext _dbContext;
+        public UserService(ILoggerFactory loggerFactory, ApplicationDbContext dbContext)
         {
             _logger = loggerFactory.CreateLogger<UserService>();
             _databaseHandler = new UserRepository();
+            _dbContext = dbContext;
         }
 
         internal async Task<List<UserDTO>> GetAllUsers()
@@ -111,6 +117,119 @@ namespace MODSI_SQLRestAPI.UserAuth.Services
             return user;
         }
 
+        internal async Task<UserDTO> ChangeUserRole(int userId, string roleNameOrId)
+        {
+            // Verifica se o usuário existe
+            var user = await _databaseHandler.GetUserByIdAsync(userId);
+            if (user == null)
+                throw new NotFoundException($"Usuário com ID {userId} não encontrado.");
+
+            string roleName = roleNameOrId;
+
+            // Se for um número, trata como ID
+            if (int.TryParse(roleNameOrId, out int roleId))
+            {
+                roleName = await GetRoleNameByIdAsync(roleId);
+                if (string.IsNullOrEmpty(roleName))
+                    throw new NotFoundException($"Role com ID {roleId} não encontrado.");
+            }
+            else
+            {
+                // Confirma se existe a role pelo nome
+                using (var conn = new SqlConnection(ApplicationDbContext.ConnectionString))
+                {
+                    await conn.OpenAsync();
+                    var query = "SELECT COUNT(*) FROM Roles WHERE Name = @Name";
+                    using (var cmd = new SqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@Name", roleNameOrId);
+                        var count = (int)await cmd.ExecuteScalarAsync();
+                        if (count == 0)
+                            throw new NotFoundException($"Role com nome '{roleNameOrId}' não encontrado.");
+                    }
+                }
+            }
+
+            var updated = await _databaseHandler.ChangeUserRoleAsync(userId, roleName);
+            if (!updated)
+                throw new System.Exception("Falha ao atualizar o papel do usuário.");
+
+            // Retorna o usuário atualizado
+            var updatedUser = await _databaseHandler.GetUserByIdAsync(userId);
+            return updatedUser;
+        }
+
+        internal async Task<UserDTO> ChangeUserGroup(int userId, string groupNameOrId)
+        {
+            // Verifica se o usuário existe
+            var user = await _databaseHandler.GetUserByIdAsync(userId);
+            if (user == null)
+                throw new NotFoundException($"Usuário com ID {userId} não encontrado.");
+
+            string groupName = groupNameOrId;
+
+            // Se for um número, trata como ID
+            if (int.TryParse(groupNameOrId, out int groupId))
+            {
+                groupName = await GetGroupNameByIdAsync(groupId);
+                if (string.IsNullOrEmpty(groupName))
+                    throw new NotFoundException($"Grupo com ID {groupId} não encontrado.");
+            }
+            else
+            {
+                // Confirma se existe o grupo pelo nome
+                using (var conn = new SqlConnection(ApplicationDbContext.ConnectionString))
+                {
+                    await conn.OpenAsync();
+                    var query = "SELECT COUNT(*) FROM Groups WHERE Name = @Name";
+                    using (var cmd = new SqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@Name", groupNameOrId);
+                        var count = (int)await cmd.ExecuteScalarAsync();
+                        if (count == 0)
+                            throw new NotFoundException($"Grupo com nome '{groupNameOrId}' não encontrado.");
+                    }
+                }
+            }
+
+            var updated = await _databaseHandler.ChangeUserGroupAsync(userId, groupName);
+            if (!updated)
+                throw new System.Exception("Falha ao atualizar o grupo do usuário.");
+
+            // Retorna o usuário atualizado
+            var updatedUser = await _databaseHandler.GetUserByIdAsync(userId);
+            return updatedUser;
+        }
+
+        private async Task<string> GetRoleNameByIdAsync(int roleId)
+        {
+            using (var conn = new SqlConnection(ApplicationDbContext.ConnectionString))
+            {
+                await conn.OpenAsync();
+                var query = "SELECT Name FROM Roles WHERE Id = @Id";
+                using (var cmd = new SqlCommand(query, conn))
+                {
+                    cmd.Parameters.AddWithValue("@Id", roleId);
+                    var result = await cmd.ExecuteScalarAsync();
+                    return result as string;
+                }
+            }
+        }
+
+        private async Task<string> GetGroupNameByIdAsync(int groupId)
+        {
+            using (var conn = new SqlConnection(ApplicationDbContext.ConnectionString))
+            {
+                await conn.OpenAsync();
+                var query = "SELECT Name FROM Groups WHERE Id = @Id";
+                using (var cmd = new SqlCommand(query, conn))
+                {
+                    cmd.Parameters.AddWithValue("@Id", groupId);
+                    var result = await cmd.ExecuteScalarAsync();
+                    return result as string;
+                }
+            }
+        }
 
     }
 
