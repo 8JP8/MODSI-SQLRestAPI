@@ -60,7 +60,7 @@ namespace MODSI_SQLRestAPI.Company.Departments.Repositories
             }
         }
 
-        public async Task<IEnumerable<Department>> GetDepartmentKPIsAsync()
+        public async Task<IEnumerable<Department>> GetDepartmentAndKPIsAsync()
         {
             return await _context.Departments
                 .Include(d => d.DepartmentKPIs)
@@ -70,7 +70,7 @@ namespace MODSI_SQLRestAPI.Company.Departments.Repositories
                 .ToListAsync();
         }
 
-        public async Task<Department> GetDepartmentKPIsAsync(int id)
+        public async Task<Department> GetDepartmentAndKPIsAsync(int id)
         {
             return await _context.Departments
                 .Include(d => d.DepartmentKPIs)

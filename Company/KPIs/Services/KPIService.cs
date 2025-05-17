@@ -1,5 +1,6 @@
 ﻿using MODSI_SQLRestAPI.Company.Departments.DTO;
 using MODSI_SQLRestAPI.Company.KPIs.DTO;
+using MODSI_SQLRestAPI.Company.KPIs.DTOs;
 using MODSI_SQLRestAPI.Company.KPIs.Models;
 using MODSI_SQLRestAPI.Company.Repositories;
 using MODSI_SQLRestAPI.Company.Services;
@@ -13,6 +14,8 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Services
 {
     public class KPIService : IKPIService
     {
+        private readonly DTOMap _mapper = new DTOMap();
+
         private readonly IKPIRepository _kpiRepository;
 
         public KPIService(IKPIRepository kpiRepository)
@@ -20,54 +23,24 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Services
             _kpiRepository = kpiRepository ?? throw new ArgumentNullException(nameof(kpiRepository));
         }
 
-        public async Task<IEnumerable<KPIDTO>> GetAllKPIsAsync()
+        public async Task<IEnumerable<KPIDetailDTO>> GetAllKPIsAsync()
         {
-            var kpis = await _kpiRepository.GetKPIsWithDepartmentsAsync();
-            return kpis.Select(kpi => new KPIDTO
-            {
-                Id = kpi.Id,
-                Name = kpi.Name,
-                Description = kpi.Description,
-                Unit = kpi.Unit,
-                Value_1 = kpi.Value_1,
-                Value_2 = kpi.Value_2,
-                AvailableInDepartments = kpi.DepartmentKPIs?
-                    .Where(dk => dk.Department != null)
-                    .Select(dk => new DepartmentDTO
-                    {
-                        Id = dk.Department.Id,
-                        Name = dk.Department.Name
-                    }).ToList() ?? new List<DepartmentDTO>()
-            }).ToList();
+            var kpis = await _kpiRepository.GetAllAsync();
+            return kpis.Select(kpi => _mapper.MapToKPIDetailDTO(kpi)).ToList();
         }
 
-        public async Task<KPIDTO> GetKPIByIdAsync(int id)
+        public async Task<KPIDetailDTO> GetKPIByIdAsync(int id)
         {
-            var kpi = await _kpiRepository.GetKPIWithDepartmentsAsync(id);
+            var kpi = await _kpiRepository.GetByIdAsync(id);
             if (kpi == null)
                 return null;
-
-            return new KPIDTO
-            {
-                Id = kpi.Id,
-                Name = kpi.Name,
-                Description = kpi.Description,
-                Unit = kpi.Unit,
-                Value_1 = kpi.Value_1,
-                Value_2 = kpi.Value_2,
-                AvailableInDepartments = kpi.DepartmentKPIs?
-                    .Where(dk => dk.Department != null)
-                    .Select(dk => new DepartmentDTO
-                    {
-                        Id = dk.Department.Id,
-                        Name = dk.Department.Name
-                    }).ToList() ?? new List<DepartmentDTO>()
-            };
+            return _mapper.MapToKPIDetailDTO(kpi);
         }
 
-        public async Task<IEnumerable<KPI>> GetKPIsByDepartmentIdAsync(int departmentId)
+        public async Task<IEnumerable<KPIDTO>> GetKPIsByDepartmentIdAsync(int departmentId)
         {
-            return await _kpiRepository.GetKPIsByDepartmentIdAsync(departmentId);
+            var kpis = await _kpiRepository.GetKPIsByDepartmentIdAsync(departmentId);
+            return kpis.Select(kpi => _mapper.MapToKPIDTO(kpi)).ToList();
         }
 
         public async Task<KPI> CreateKPIAsync(KPI kpi)

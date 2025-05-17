@@ -13,7 +13,7 @@ namespace MODSI_SQLRestAPI.Company.Services
     {
         Task<IEnumerable<Department>> GetAllDepartmentsAsync();
         Task<Department> GetDepartmentByIdAsync(int id);
-        Task<Department> GetDepartmentKPIsAsync(int id);
+        Task<Department> GetDepartmentAndKPIsAsync(int id);
         Task<IEnumerable<Department>> GetDepartmentsByRoleIdAsync(int roleId);
         Task<Department> CreateDepartmentAsync(Department department);
         Task<Department> UpdateDepartmentAsync(int id, Department department);
@@ -25,9 +25,9 @@ namespace MODSI_SQLRestAPI.Company.Services
 
     public interface IKPIService
     {
-        Task<IEnumerable<KPIDTO>> GetAllKPIsAsync();
-        Task<KPIDTO> GetKPIByIdAsync(int id);
-        Task<IEnumerable<KPI>> GetKPIsByDepartmentIdAsync(int departmentId);
+        Task<IEnumerable<KPIDetailDTO>> GetAllKPIsAsync();
+        Task<KPIDetailDTO> GetKPIByIdAsync(int id);
+        Task<IEnumerable<KPIDTO>> GetKPIsByDepartmentIdAsync(int departmentId);
         Task<KPI> CreateKPIAsync(KPI kpi);
         Task<KPI> UpdateKPIAsync(int id, KPI kpi);
         Task DeleteKPIAsync(int id);

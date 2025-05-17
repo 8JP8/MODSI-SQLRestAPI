@@ -1,4 +1,5 @@
 ﻿using MODSI_SQLRestAPI.Company.Departments.Models;
+using MODSI_SQLRestAPI.Company.KPIs.DTOs;
 using MODSI_SQLRestAPI.Company.KPIs.Models;
 using MODSI_SQLRestAPI.Company.Repositories;
 using MODSI_SQLRestAPI.Company.Services;
@@ -7,11 +8,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Schema;
 
 namespace MODSI_SQLRestAPI.Company.Departments.Services
 {
     public class DepartmentService : IDepartmentService
     {
+        private readonly DTOMap _mapper = new DTOMap();
+
         private readonly IDepartmentRepository _departmentRepository;
 
         public DepartmentService(IDepartmentRepository departmentRepository)
@@ -22,19 +26,19 @@ namespace MODSI_SQLRestAPI.Company.Departments.Services
         public async Task<IEnumerable<Department>> GetAllDepartmentsAsync()
         {
             // Garante que as coleções de navegação são carregadas
-            return await _departmentRepository.GetDepartmentKPIsAsync();
+            return await _departmentRepository.GetAllAsync();
         }
 
         public async Task<Department> GetDepartmentByIdAsync(int id)
         {
             // Garante que as coleções de navegação são carregadas
-            return await _departmentRepository.GetDepartmentKPIsAsync(id);
+            return await _departmentRepository.GetByIdAsync(id);
         }
 
-        public async Task<Department> GetDepartmentKPIsAsync(int id)
+        public async Task<Department> GetDepartmentAndKPIsAsync(int id)
         {
             // Garante que as coleções de navegação são carregadas
-            return await _departmentRepository.GetDepartmentKPIsAsync(id);
+            return await _departmentRepository.GetDepartmentAndKPIsAsync(id);
         }
 
         public async Task<IEnumerable<Department>> GetDepartmentsByRoleIdAsync(int roleId)

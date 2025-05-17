@@ -64,21 +64,5 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Repositories
                 .Select(dk => dk.KPI)
                 .ToListAsync();
         }
-
-        public async Task<IEnumerable<KPI>> GetKPIsWithDepartmentsAsync()
-        {
-            return await _context.KPIs
-                .Include(k => k.DepartmentKPIs)
-                    .ThenInclude(dk => dk.Department)
-                .ToListAsync();
-        }
-
-        public async Task<KPI> GetKPIWithDepartmentsAsync(int id)
-        {
-            return await _context.KPIs
-                .Include(k => k.DepartmentKPIs)
-                    .ThenInclude(dk => dk.Department)
-                .FirstOrDefaultAsync(k => k.Id == id);
-        }
     }
 }

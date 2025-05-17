@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MODSI_SQLRestAPI.Company.KPIs.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
@@ -19,8 +20,8 @@ namespace MODSI_SQLRestAPI.Company.Repositories
 
     public interface IDepartmentRepository : IRepository<Departments.Models.Department>
     {
-        Task<IEnumerable<Departments.Models.Department>> GetDepartmentKPIsAsync();
-        Task<Departments.Models.Department> GetDepartmentKPIsAsync(int id);
+        Task<Departments.Models.Department> GetDepartmentAndKPIsAsync(int id);
+        Task<IEnumerable<Departments.Models.Department>> GetDepartmentAndKPIsAsync();
         Task<IEnumerable<Departments.Models.Department>> GetDepartmentsByRoleIdAsync(int roleId);
         Task AddKPIFromDepartmentAsync(int departmentId, int kpiId);
         Task RemoveKPIFromDepartmentAsync(int departmentId, int kpiId);
@@ -29,9 +30,7 @@ namespace MODSI_SQLRestAPI.Company.Repositories
 
     public interface IKPIRepository : IRepository<KPIs.Models.KPI>
     {
-        Task<IEnumerable<KPIs.Models.KPI>> GetKPIsByDepartmentIdAsync(int departmentId);
-        Task<IEnumerable<KPIs.Models.KPI>> GetKPIsWithDepartmentsAsync();
-        Task<KPIs.Models.KPI> GetKPIWithDepartmentsAsync(int id);
+        Task<IEnumerable<KPI>> GetKPIsByDepartmentIdAsync(int departmentId);
     }
 
     public interface IRoleRepository : IRepository<Role>

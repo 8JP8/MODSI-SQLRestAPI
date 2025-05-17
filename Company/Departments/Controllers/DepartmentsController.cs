@@ -16,6 +16,8 @@ using System.Linq;
 using MODSI_SQLRestAPI.Company.KPIs.DTO;
 using MODSI_SQLRestAPI.Company.DTOs;
 using MODSI_SQLRestAPI.Company.KPIs.Models;
+using MODSI_SQLRestAPI.Company.KPIs.DTOs;
+using MODSI_SQLRestAPI.Company.KPIs.Services;
 
 namespace MODSI_SQLRestAPI.Company.Departments.Controllers
 {
@@ -23,11 +25,13 @@ namespace MODSI_SQLRestAPI.Company.Departments.Controllers
     {
         private readonly ILogger<DepartmentFunctions> _logger;
         private readonly IDepartmentService _departmentService;
+        private readonly IKPIService _kpiService;
 
-        public DepartmentFunctions(ILogger<DepartmentFunctions> logger, IDepartmentService departmentService)
+        public DepartmentFunctions(ILogger<DepartmentFunctions> logger, IDepartmentService departmentService, IKPIService kpiService)
         {
             _logger = logger;
             _departmentService = departmentService;
+            _kpiService = kpiService;
         }
 
         [Function("GetAllDepartments")]
@@ -127,7 +131,38 @@ namespace MODSI_SQLRestAPI.Company.Departments.Controllers
 
             try
             {
-                var department = await _departmentService.GetDepartmentKPIsAsync(id);
+                var departmentKPIs = await _kpiService.GetKPIsByDepartmentIdAsync(id);
+
+                if (departmentKPIs == null)
+                {
+                    var notFoundResponse = req.CreateResponse(HttpStatusCode.NotFound);
+                    await notFoundResponse.WriteStringAsync($"Department with ID {id} not found.");
+                    return notFoundResponse;
+                }
+
+                var response = req.CreateResponse(HttpStatusCode.OK);
+                await response.WriteAsJsonAsync(departmentKPIs);
+                return response;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error getting department {id} with KPIs");
+                var response = req.CreateResponse(HttpStatusCode.InternalServerError);
+                await response.WriteStringAsync("An error occurred while processing your request.");
+                return response;
+            }
+        }
+
+        [Function("GetDepartmentAndKPIs")]
+        public async Task<HttpResponseData> GetDepartmentAndKPIs(
+          [HttpTrigger(AuthorizationLevel.Function, "get", Route = "DepartmentAndKPIs/{id}")] HttpRequestData req,
+          int id)
+        {
+            _logger.LogInformation($"GetDepartmentAndKPIs function processed a request for department {id}.");
+
+            try
+            {
+                var department = await _departmentService.GetDepartmentAndKPIsAsync(id);
 
                 if (department == null)
                 {

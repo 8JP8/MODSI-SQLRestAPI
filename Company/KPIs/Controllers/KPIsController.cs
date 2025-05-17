@@ -30,23 +30,9 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Controllers
             [HttpTrigger(AuthorizationLevel.Function, "get", Route = "kpis")] HttpRequestData req)
         {
             var kpis = await _kpiService.GetAllKPIsAsync();
-            var kpiDTOs = kpis.Select(kpi => new KPIDetailDTO
-            {
-                Id = kpi.Id,
-                Name = kpi.Name,
-                Description = kpi.Description,
-                Unit = kpi.Unit,
-                Value_1 = kpi.Value_1,
-                Value_2 = kpi.Value_2,
-                AvailableInDepartments = kpi.AvailableInDepartments?
-                    .Select(d => d.Name)
-                    .Where(name => !string.IsNullOrEmpty(name))
-                    .Distinct()
-                    .ToList() ?? new List<string>()
-        }).ToList();
 
             var response = req.CreateResponse(HttpStatusCode.OK);
-            await response.WriteAsJsonAsync(kpiDTOs);
+            await response.WriteAsJsonAsync(kpis);
             return response;
         }
 
@@ -60,25 +46,10 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Controllers
                 var notFoundResponse = req.CreateResponse(HttpStatusCode.NotFound);
                 await notFoundResponse.WriteStringAsync($"KPI with ID {id} not found.");
                 return notFoundResponse;
-            }
-
-            var kpiDTO = new KPIDetailDTO
-            {
-                Id = kpi.Id,
-                Name = kpi.Name,
-                Description = kpi.Description,
-                Unit = kpi.Unit,
-                Value_1 = kpi.Value_1,
-                Value_2 = kpi.Value_2,
-                AvailableInDepartments = kpi.AvailableInDepartments?
-                    .Select(d => d.Name)
-                    .Where(name => !string.IsNullOrEmpty(name))
-                    .Distinct()
-                    .ToList() ?? new List<string>()
             };
 
             var response = req.CreateResponse(HttpStatusCode.OK);
-            await response.WriteAsJsonAsync(kpiDTO);
+            await response.WriteAsJsonAsync(kpi);
             return response;
         }
 
