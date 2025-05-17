@@ -15,7 +15,7 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Services
     public class KPIService : IKPIService
     {
         private readonly DTOMap _mapper = new DTOMap();
-
+        
         private readonly IKPIRepository _kpiRepository;
 
         public KPIService(IKPIRepository kpiRepository)

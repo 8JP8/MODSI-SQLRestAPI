@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using MODSI_SQLRestAPI.Company.Departments.Models;
 using MODSI_SQLRestAPI.Company.KPIs.Models;
 using MODSI_SQLRestAPI.Company.Repositories;
 using MODSI_SQLRestAPI.Infrastructure.Data;
@@ -22,12 +23,18 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Repositories
 
         public async Task<IEnumerable<KPI>> GetAllAsync()
         {
-            return await _context.KPIs.ToListAsync();
+            return await _context.KPIs
+                .Include(k => k.DepartmentKPIs)
+                   .ThenInclude(dk => dk.Department)
+                .ToListAsync();
         }
 
         public async Task<KPI> GetByIdAsync(int id)
         {
-            return await _context.KPIs.FindAsync(id);
+            return await _context.KPIs
+                .Include(k => k.DepartmentKPIs)
+                    .ThenInclude(dk => dk.Department)
+                .FirstOrDefaultAsync(k => k.Id == id);
         }
 
         public async Task<IEnumerable<KPI>> FindAsync(Expression<Func<KPI, bool>> predicate)

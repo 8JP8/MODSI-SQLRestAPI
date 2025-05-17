@@ -5,6 +5,7 @@ using MODSI_SQLRestAPI.Company.DTOs;
 using MODSI_SQLRestAPI.Company.KPIs.DTO;
 using MODSI_SQLRestAPI.Company.KPIs.Models;
 using MODSI_SQLRestAPI.Company.Repositories;
+using MODSI_SQLRestAPI.Company.Roles.DTOs;
 using MODSI_SQLRestAPI.Infrastructure.Data;
 using System;
 using System.Collections.Generic;
@@ -25,12 +26,18 @@ namespace MODSI_SQLRestAPI.Company.Departments.Repositories
 
         public async Task<IEnumerable<Department>> GetAllAsync()
         {
-            return await _context.Departments.ToListAsync();
+            return await _context.Departments
+                .Include(d => d.RoleDepartmentPermissions)
+                    .ThenInclude(rdp => rdp.Role)
+                .ToListAsync();
         }
 
         public async Task<Department> GetByIdAsync(int id)
         {
-            return await _context.Departments.FindAsync(id);
+            return await _context.Departments
+                .Include(d => d.RoleDepartmentPermissions)
+                    .ThenInclude(rdp => rdp.Role)
+                .FirstOrDefaultAsync(d => d.Id == id);
         }
 
         public async Task<IEnumerable<Department>> FindAsync(Expression<Func<Department, bool>> predicate)

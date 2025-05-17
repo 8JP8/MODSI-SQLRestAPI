@@ -36,7 +36,7 @@ namespace MODSI_SQLRestAPI.Company.Departments.Controllers
 
         [Function("GetAllDepartments")]
         public async Task<HttpResponseData> GetAllDepartments(
-    [HttpTrigger(AuthorizationLevel.Function, "get", Route = "departments")] HttpRequestData req)
+            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "departments")] HttpRequestData req)
         {
             _logger.LogInformation("GetAllDepartments function processed a request.");
 
@@ -73,6 +73,7 @@ namespace MODSI_SQLRestAPI.Company.Departments.Controllers
                 return response;
             }
         }
+
 
         [Function("GetDepartmentById")]
         public async Task<HttpResponseData> GetDepartmentById(
