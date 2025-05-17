@@ -1,23 +1,18 @@
-﻿using System;
-using System.IO;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
-using Microsoft.Azure.Functions.Worker;
-using MODSI_SQLRestAPI.Company.Services;
+﻿using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
-using MODSI_SQLRestAPI.Company.Departments.Models;
-using System.Collections.Generic;
-using System.Net;
-using System.Text.Json.Serialization;
-using System.Text.Json;
+using Microsoft.Extensions.Logging;
 using MODSI_SQLRestAPI.Company.Departments.DTO;
-using System.Linq;
+using MODSI_SQLRestAPI.Company.Departments.Models;
 using MODSI_SQLRestAPI.Company.KPIs.DTO;
-using MODSI_SQLRestAPI.Company.DTOs;
 using MODSI_SQLRestAPI.Company.KPIs.Models;
-using MODSI_SQLRestAPI.Company.KPIs.DTOs;
-using MODSI_SQLRestAPI.Company.KPIs.Services;
+using MODSI_SQLRestAPI.Company.Services;
+using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Threading.Tasks;
 
 namespace MODSI_SQLRestAPI.Company.Departments.Controllers
 {

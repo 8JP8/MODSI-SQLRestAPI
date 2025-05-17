@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace MODSI_SQLRestAPI.Company.Departments.Models
+﻿namespace MODSI_SQLRestAPI.Company.Departments.Models
 {
     public class RoleDepartmentPermission
     {

@@ -1,7 +1,7 @@
-﻿using MODSI_SQLRestAPI.UserAuth.Models;
-using System.Collections.Generic;
+﻿using MODSI_SQLRestAPI.Company.Departments.Models;
+using MODSI_SQLRestAPI.UserAuth.Models;
 using System;
-using MODSI_SQLRestAPI.Company.Departments.Models;
+using System.Collections.Generic;
 
 public class Role
 {

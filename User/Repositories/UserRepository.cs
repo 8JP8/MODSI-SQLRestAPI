@@ -4,7 +4,6 @@ using MODSI_SQLRestAPI.UserAuth.Models;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
-using System.Data.Common;
 using System.Data.SqlClient;
 using System.Security.Cryptography;
 using System.Text;
@@ -75,7 +74,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Repositories
                         {
                             try
                             {
-                                users.Add( MapReaderToUserDTO(reader));
+                                users.Add(MapReaderToUserDTO(reader));
                             }
                             catch { }
                         }

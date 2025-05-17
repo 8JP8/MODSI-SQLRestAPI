@@ -7,7 +7,6 @@ using MODSI_SQLRestAPI.UserAuth.Services;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Security.Cryptography;
 using System.Text;
@@ -54,7 +53,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
                 var principal = retrieveToken.GetPrincipalFromRequest(req);
                 _logger.LogInformation("Retrieving all users.", retrieveToken);
 
-                try { _logger.LogInformation(principal.Identity.IsAuthenticated?"User successfully authenticated.":""); } catch (Exception ex) { _logger.LogInformation("Erro de Token: "+ex.Message); }
+                try { _logger.LogInformation(principal.Identity.IsAuthenticated ? "User successfully authenticated." : ""); } catch (Exception ex) { _logger.LogInformation("Erro de Token: " + ex.Message); }
 
                 if (principal == null || !principal.Identity.IsAuthenticated)
                 {
@@ -101,7 +100,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
                 await response.WriteStringAsync(JsonSerializer.Serialize(user));
                 return response;
             }
-            catch (HttpException ex) 
+            catch (HttpException ex)
             {
                 _logger.LogWarning(ex, ex.Message);
                 var response = req.CreateResponse(ex.StatusCode);
@@ -369,7 +368,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
                 }
 
                 _logger.LogInformation($"Checking if email exists: {email}");
-                var exists =  await _userService.EmailUserExists(email);
+                var exists = await _userService.EmailUserExists(email);
 
                 var response = req.CreateResponse(HttpStatusCode.OK);
                 response.Headers.Add("Content-Type", "application/json; charset=utf-8");
@@ -405,7 +404,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
 
                 _logger.LogInformation($"Retrieving user with email: {email}");
 
-                var user=  await _userService.GetUserByIdentifier(email);
+                var user = await _userService.GetUserByIdentifier(email);
 
                 if (user == null)
                 {

@@ -1,13 +1,11 @@
-﻿using MODSI_SQLRestAPI.Company.Departments.DTO;
+﻿using MODSI_SQLRestAPI.Company.DTOs;
 using MODSI_SQLRestAPI.Company.KPIs.DTO;
-using MODSI_SQLRestAPI.Company.KPIs.DTOs;
 using MODSI_SQLRestAPI.Company.KPIs.Models;
 using MODSI_SQLRestAPI.Company.Repositories;
 using MODSI_SQLRestAPI.Company.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace MODSI_SQLRestAPI.Company.KPIs.Services
@@ -15,7 +13,7 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Services
     public class KPIService : IKPIService
     {
         private readonly DTOMap _mapper = new DTOMap();
-        
+
         private readonly IKPIRepository _kpiRepository;
 
         public KPIService(IKPIRepository kpiRepository)

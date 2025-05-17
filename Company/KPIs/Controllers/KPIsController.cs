@@ -1,16 +1,13 @@
-﻿using Microsoft.Azure.Functions.Worker.Http;
-using Microsoft.Azure.Functions.Worker;
+﻿using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
 using MODSI_SQLRestAPI.Company.KPIs.Models;
 using MODSI_SQLRestAPI.Company.Services;
 using Newtonsoft.Json;
 using System;
 using System.IO;
-using System.Threading.Tasks;
 using System.Net;
-using MODSI_SQLRestAPI.Company.KPIs.DTO;
-using System.Collections.Generic;
-using System.Linq;
+using System.Threading.Tasks;
 
 namespace MODSI_SQLRestAPI.Company.KPIs.Controllers
 {
@@ -46,7 +43,8 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Controllers
                 var notFoundResponse = req.CreateResponse(HttpStatusCode.NotFound);
                 await notFoundResponse.WriteStringAsync($"KPI with ID {id} not found.");
                 return notFoundResponse;
-            };
+            }
+            ;
 
             var response = req.CreateResponse(HttpStatusCode.OK);
             await response.WriteAsJsonAsync(kpi);

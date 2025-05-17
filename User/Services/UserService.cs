@@ -3,9 +3,7 @@ using MODSI_SQLRestAPI.Infrastructure.Data;
 using MODSI_SQLRestAPI.UserAuth.DTO;
 using MODSI_SQLRestAPI.UserAuth.Models;
 using MODSI_SQLRestAPI.UserAuth.Repositories;
-using System;
 using System.Collections.Generic;
-using System.Data.Entity;
 using System.Data.SqlClient;
 using System.Threading.Tasks;
 
@@ -58,7 +56,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Services
             {
                 throw new BadRequestException($"Usuário com email {user.Email} já existe.");
             }
-            
+
             // Check if the username exists
             var existingUsername = await _databaseHandler.UsernameUserExistsAsync(user.Username);
             if (existingUsername == true)
@@ -82,7 +80,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Services
                 throw new NotFoundException($"Usuário com ID {id} não encontrado.");
             }
             await _databaseHandler.DeleteUserByIdAsync(id);
-            
+
         }
 
         internal async Task<UserDTO> UpdateUser(int id, User user)
@@ -107,7 +105,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Services
 
         }
 
-        internal async Task<User> GetUserByIdentifier(string identifier, bool return_salt= false)
+        internal async Task<User> GetUserByIdentifier(string identifier, bool return_salt = false)
         {
             var user = await _databaseHandler.GetUserByIdentifierAsync(identifier, return_salt);
             if (user == null)

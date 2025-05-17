@@ -1,16 +1,16 @@
 ﻿using Microsoft.Azure.Functions.Worker;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.EntityFrameworkCore;
+using MODSI_SQLRestAPI.Company.Departments.Repositories;
 using MODSI_SQLRestAPI.Company.Departments.Services;
+using MODSI_SQLRestAPI.Company.KPIs.Repositories;
 using MODSI_SQLRestAPI.Company.KPIs.Services;
+using MODSI_SQLRestAPI.Company.Repositories;
+using MODSI_SQLRestAPI.Company.Roles.Repositories;
 using MODSI_SQLRestAPI.Company.Roles.Services;
 using MODSI_SQLRestAPI.Company.Services;
 using MODSI_SQLRestAPI.Infrastructure.Data;
-using MODSI_SQLRestAPI.Company.Departments.Repositories;
-using MODSI_SQLRestAPI.Company.Repositories;
-using MODSI_SQLRestAPI.Company.KPIs.Repositories;
-using MODSI_SQLRestAPI.Company.Roles.Repositories;
 using MODSI_SQLRestAPI.UserAuth.Services;
 
 namespace MODSI_SQLRestAPI

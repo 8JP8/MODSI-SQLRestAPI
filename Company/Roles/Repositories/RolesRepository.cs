@@ -1,13 +1,11 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore;
+using MODSI_SQLRestAPI.Company.Repositories;
+using MODSI_SQLRestAPI.Infrastructure.Data;
+using System;
 using System.Collections.Generic;
-using System.Data.SqlClient;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-using MODSI_SQLRestAPI.Company.Repositories;
-using MODSI_SQLRestAPI.Infrastructure.Data;
-using MODSI_SQLRestAPI.UserAuth.Models;
 
 namespace MODSI_SQLRestAPI.Company.Roles.Repositories
 {

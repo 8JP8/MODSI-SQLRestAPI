@@ -1,13 +1,9 @@
-﻿using MODSI_SQLRestAPI.Company.Departments.DTO;
-using MODSI_SQLRestAPI.Company.KPIs.DTO;
+﻿using MODSI_SQLRestAPI.Company.KPIs.DTO;
 using MODSI_SQLRestAPI.Company.KPIs.Models;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace MODSI_SQLRestAPI.Company.KPIs.DTOs
+namespace MODSI_SQLRestAPI.Company.DTOs
 {
     internal class DTOMap
     {
