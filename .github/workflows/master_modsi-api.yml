@@ -1,43 +1,47 @@
-# Docs for the Azure Web Apps Deploy action: https://github.com/azure/functions-action
-# More GitHub Actions for Azure: https://github.com/Azure/actions
-
-name: Build and deploy dotnet core app to Azure Function App - modsi-api
+name: Deploy React App to GitHub Pages
 
 on:
   push:
-    branches:
-      - master
+    branches: [ main ]
   workflow_dispatch:
 
-env:
-  AZURE_FUNCTIONAPP_PACKAGE_PATH: '.' # set this to the path to your web app project, defaults to the repository root
-  DOTNET_VERSION: '8.0.x' # set this to the dotnet version to use
+permissions:
+  contents: write  # Alterado para "write" para permitir o commit do gh-pages
 
 jobs:
   build-and-deploy:
-    runs-on: windows-latest
-    
+    runs-on: ubuntu-latest
     steps:
-      - name: 'Checkout GitHub Action'
+      - name: 📥 Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup DotNet ${{ env.DOTNET_VERSION }} Environment
-        uses: actions/setup-dotnet@v1
+      - name: ⚙️ Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
+          node-version: '20.x'
+          cache: 'npm'
 
-      - name: 'Resolve Project Dependencies Using Dotnet'
-        shell: pwsh
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🔧 Configure base path for Vite
         run: |
-          pushd './${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}'
-          dotnet build --configuration Release --output ./output
-          popd
-      
-      - name: 'Run Azure Functions Action'
-        uses: Azure/functions-action@v1
-        id: fa
+          echo "VITE_BASE_PATH=/MODSI-VRConfigurator/" >> .env
+
+      - name: 🏗️ Build React app
+        run: npm run build
+        
+      # Fix para o problema de SPA com GitHub Pages
+      - name: 🛠️ Create 404.html
+        run: cp dist/index.html dist/404.html
+        
+      # Criar arquivo .nojekyll para evitar processamento pelo Jekyll
+      - name: 📄 Create .nojekyll file
+        run: touch dist/.nojekyll
+
+      - name: 🚀 Deploy to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4
         with:
-          app-name: 'modsi-api'
-          slot-name: 'Production'
-          package: '${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}/output'
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_6468D570C01F4014A6262710C3E4319F }}
+          branch: gh-pages
+          folder: dist
+          clean: true
