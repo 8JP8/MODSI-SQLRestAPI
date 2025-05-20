@@ -1,47 +1,43 @@
-name: Deploy React App to GitHub Pages
+# Docs for the Azure Web Apps Deploy action: https://github.com/azure/functions-action
+# More GitHub Actions for Azure: https://github.com/Azure/actions
+
+name: Build and deploy dotnet core app to Azure Function App - modsi-api
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - master
   workflow_dispatch:
 
-permissions:
-  contents: write  # Alterado para "write" para permitir o commit do gh-pages
+env:
+  AZURE_FUNCTIONAPP_PACKAGE_PATH: '.' # set this to the path to your web app project, defaults to the repository root
+  DOTNET_VERSION: '8.0.x' # set this to the dotnet version to use
 
 jobs:
   build-and-deploy:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
+    
     steps:
-      - name: 📥 Checkout repository
+      - name: 'Checkout GitHub Action'
         uses: actions/checkout@v4
 
-      - name: ⚙️ Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup DotNet ${{ env.DOTNET_VERSION }} Environment
+        uses: actions/setup-dotnet@v1
         with:
-          node-version: '20.x'
-          cache: 'npm'
+          dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      - name: 📦 Install dependencies
-        run: npm ci
-
-      - name: 🔧 Configure base path for Vite
+      - name: 'Resolve Project Dependencies Using Dotnet'
+        shell: pwsh
         run: |
-          echo "VITE_BASE_PATH=/MODSI-VRConfigurator/" >> .env
-
-      - name: 🏗️ Build React app
-        run: npm run build
-        
-      # Fix para o problema de SPA com GitHub Pages
-      - name: 🛠️ Create 404.html
-        run: cp dist/index.html dist/404.html
-        
-      # Criar arquivo .nojekyll para evitar processamento pelo Jekyll
-      - name: 📄 Create .nojekyll file
-        run: touch dist/.nojekyll
-
-      - name: 🚀 Deploy to GitHub Pages
-        uses: JamesIves/github-pages-deploy-action@v4
+          pushd './${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}'
+          dotnet build --configuration Release --output ./output
+          popd
+      
+      - name: 'Run Azure Functions Action'
+        uses: Azure/functions-action@v1
+        id: fa
         with:
-          branch: gh-pages
-          folder: dist
-          clean: true
+          app-name: 'modsi-api'
+          slot-name: 'Production'
+          package: '${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}/output'
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_6468D570C01F4014A6262710C3E4319F }}
