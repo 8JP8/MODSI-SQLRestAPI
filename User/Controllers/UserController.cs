@@ -42,7 +42,33 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
             await groupsRepository.EnsureGroupsExistAsync(predefinedGroups);
         }
 
-        // First Organized function as example
+        // Check if user exists by username
+
+        [Function("UserExistsByUsername")]
+        public async Task<HttpResponseData> UserExistsByUsername(
+            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "User/ExistsByUsername")] HttpRequestData req)
+        {
+            try
+            {
+                string username = req.Query["username"];
+                if (string.IsNullOrEmpty(username))
+                {
+                    return req.CreateResponse(HttpStatusCode.BadRequest);
+                }
+                _logger.LogInformation($"Checking if user exists by username: {username}");
+                var exists = await _userService.UserExistsByUsername(username);
+                var response = req.CreateResponse(HttpStatusCode.OK);
+                response.Headers.Add("Content-Type", "application/json; charset=utf-8");
+                await response.WriteStringAsync(JsonSerializer.Serialize(new { Exists = exists }));
+                return response;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while checking if user exists.");
+                return req.CreateResponse(HttpStatusCode.InternalServerError);
+            }
+        }
+
 
         [Function("GetAllUsers")]
         public async Task<HttpResponseData> GetAllUsers([HttpTrigger(AuthorizationLevel.Function, "get", Route = "User/GetAll")] HttpRequestData req)
@@ -86,6 +112,8 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
                 return req.CreateResponse(HttpStatusCode.InternalServerError);
             }
         }
+
+
 
         // Second organized function as example with exeption handling
         [Function("GetUserById")]

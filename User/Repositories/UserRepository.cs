@@ -59,6 +59,22 @@ namespace MODSI_SQLRestAPI.UserAuth.Repositories
             };
         }
 
+
+        internal async Task<bool> UserExistsByUsernameAsync(string username)
+        {
+            using (SqlConnection conn = new SqlConnection(ApplicationDbContext.ConnectionString))
+            {
+                await conn.OpenAsync();
+                var query = $"SELECT COUNT(*) FROM {_user_DB} WHERE Username = @Username";
+                using (SqlCommand cmd = new SqlCommand(query, conn))
+                {
+                    cmd.Parameters.AddWithValue("@Username", username);
+                    var count = (int)await cmd.ExecuteScalarAsync();
+                    return count > 0;
+                }
+            }
+        }
+
         internal async Task<List<UserDTO>> GetAllUsersAsync()
         {
             var users = new List<UserDTO>();

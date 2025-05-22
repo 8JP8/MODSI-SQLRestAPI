@@ -37,6 +37,13 @@ namespace MODSI_SQLRestAPI.UserAuth.Services
             return users;
         }
 
+
+        internal async Task<bool> UserExistsByUsername(string username)
+        {
+            var exists = await _databaseHandler.UserExistsByUsernameAsync(username);
+            return exists;
+        }
+
         internal async Task<UserDTO> GetUserById(int id)
         {
             var user = await _databaseHandler.GetUserByIdAsync(id);
