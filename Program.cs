@@ -37,6 +37,8 @@ namespace MODSI_SQLRestAPI
                     services.AddScoped<IDepartmentRepository, DepartmentRepository>();
                     services.AddScoped<IKPIRepository, KPIRepository>();
                     services.AddScoped<IRoleRepository, RoleRepository>();
+                    services.AddScoped<IValueHistoryRepository, ValueHistoryRepository>();
+                    services.AddScoped<IValueHistoryService, ValueHistoryService>();
                     services.AddScoped<MODSI_SQLRestAPI.Rooms.Services.RoomService>();
 
                 })

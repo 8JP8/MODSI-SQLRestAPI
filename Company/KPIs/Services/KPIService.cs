@@ -1,6 +1,7 @@
 ﻿using MODSI_SQLRestAPI.Company.DTOs;
 using MODSI_SQLRestAPI.Company.KPIs.DTO;
 using MODSI_SQLRestAPI.Company.KPIs.Models;
+using MODSI_SQLRestAPI.Company.KPIs.Repositories;
 using MODSI_SQLRestAPI.Company.Repositories;
 using MODSI_SQLRestAPI.Company.Services;
 using System;
@@ -16,10 +17,15 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Services
 
         private readonly IKPIRepository _kpiRepository;
 
-        public KPIService(IKPIRepository kpiRepository)
+        private readonly IValueHistoryRepository _valueHistoryRepository;
+
+
+        public KPIService(IKPIRepository kpiRepository, IValueHistoryRepository valueHistoryRepository)
         {
             _kpiRepository = kpiRepository ?? throw new ArgumentNullException(nameof(kpiRepository));
+            _valueHistoryRepository = valueHistoryRepository ?? throw new ArgumentNullException(nameof(valueHistoryRepository));
         }
+
 
         public async Task<IEnumerable<KPIDetailDTO>> GetAllKPIsAsync()
         {
@@ -50,7 +56,8 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Services
             return kpi;
         }
 
-        public async Task<KPI> UpdateKPIAsync(int id, KPI kpi)
+
+        public async Task<KPI> UpdateKPIAsync(int id, KPI kpi, int changedByUserId)
         {
             if (kpi == null)
                 throw new ArgumentNullException(nameof(kpi));
@@ -58,6 +65,20 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Services
             var existingKPI = await _kpiRepository.GetByIdAsync(id);
             if (existingKPI == null)
                 return null;
+
+            // Verifica alteração do Value_1 e registra histórico
+            if (existingKPI.Value_1 != kpi.Value_1)
+            {
+                var valueHistory = new ValueHistory
+                {
+                    KPIId = existingKPI.Id,
+                    ChangedByUserId = changedByUserId,
+                    OldValue = existingKPI.Value_1,
+                    NewValue = kpi.Value_1,
+                    ChangedAt = DateTime.UtcNow
+                };
+                await _valueHistoryRepository.AddAsync(valueHistory);
+            }
 
             existingKPI.Name = kpi.Name;
             existingKPI.Description = kpi.Description;

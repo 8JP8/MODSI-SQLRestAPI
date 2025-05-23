@@ -22,6 +22,9 @@ namespace MODSI_SQLRestAPI.Infrastructure.Data
         public DbSet<RoleDepartmentPermission> RoleDepartmentPermissions { get; set; }
         public DbSet<DepartmentKPI> DepartmentKPIs { get; set; }
 
+        public DbSet<ValueHistory> ValueHistories { get; set; }
+
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

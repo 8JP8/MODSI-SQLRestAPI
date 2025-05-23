@@ -26,7 +26,8 @@ namespace MODSI_SQLRestAPI.Company.Services
         Task<KPIDetailDTO> GetKPIByIdAsync(int id);
         Task<IEnumerable<KPIDTO>> GetKPIsByDepartmentIdAsync(int departmentId);
         Task<KPI> CreateKPIAsync(KPI kpi);
-        Task<KPI> UpdateKPIAsync(int id, KPI kpi);
+        Task<KPI> UpdateKPIAsync(int id, KPI kpi, int changedByUserId);
+
         Task DeleteKPIAsync(int id);
     }
 
@@ -37,5 +38,12 @@ namespace MODSI_SQLRestAPI.Company.Services
         Task<Role> CreateRoleAsync(Role role);
         Task<Role> UpdateRoleAsync(int id, Role role);
         Task DeleteRoleAsync(int id);
+    }
+    public interface IValueHistoryService
+    {
+
+        Task<IEnumerable<ValueHistoryDTO>> GetHistoryAsync(int? kpiId = null, int? userId = null);
+        Task AddHistoryAsync(ValueHistoryDTO dto);
+
     }
 }
