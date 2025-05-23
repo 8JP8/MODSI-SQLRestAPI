@@ -29,6 +29,8 @@ namespace MODSI_SQLRestAPI.Company.Services
         Task<KPI> UpdateKPIAsync(int id, KPI kpi, int changedByUserId);
 
         Task DeleteKPIAsync(int id);
+
+        Task<KPI> UpdateKPIFieldsAsync(int id, UpdateKPIDTO updateDto, int changedByUserId);
     }
 
     public interface IRoleService

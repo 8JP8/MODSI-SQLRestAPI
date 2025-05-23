@@ -73,8 +73,10 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Services
                 {
                     KPIId = existingKPI.Id,
                     ChangedByUserId = changedByUserId,
-                    OldValue = existingKPI.Value_1,
-                    NewValue = kpi.Value_1,
+                    OldValue_1 = existingKPI.Value_1,
+                    NewValue_1 = kpi.Value_1,
+                    OldValue_2 = existingKPI.Value_2,
+                    NewValue_2 = kpi.Value_2,
                     ChangedAt = DateTime.UtcNow
                 };
                 await _valueHistoryRepository.AddAsync(valueHistory);
@@ -89,6 +91,46 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Services
             await _kpiRepository.UpdateAsync(existingKPI);
             return existingKPI;
         }
+
+        public async Task<KPI> UpdateKPIFieldsAsync(int id, UpdateKPIDTO updateDto, int changedByUserId)
+        {
+            var existingKPI = await _kpiRepository.GetByIdAsync(id);
+            if (existingKPI == null)
+                return null;
+
+            // Guardar valores antigos para histórico
+            var oldValue1 = existingKPI.Value_1;
+            var oldValue2 = existingKPI.Value_2;
+
+            // Atualizar apenas os campos enviados
+            if (updateDto.Name != null) existingKPI.Name = updateDto.Name;
+            if (updateDto.Description != null) existingKPI.Description = updateDto.Description;
+            if (updateDto.Unit != null) existingKPI.Unit = updateDto.Unit;
+            if (updateDto.Value_1 != null) existingKPI.Value_1 = updateDto.Value_1;
+            if (updateDto.Value_2 != null) existingKPI.Value_2 = updateDto.Value_2;
+
+            // Só registra histórico se Value_1 ou Value_2 mudou
+            if ((updateDto.Value_1 != null && oldValue1 != updateDto.Value_1) ||
+                (updateDto.Value_2 != null && oldValue2 != updateDto.Value_2))
+            {
+                var valueHistory = new ValueHistory
+                {
+                    KPIId = existingKPI.Id,
+                    ChangedByUserId = changedByUserId,
+                    OldValue_1 = oldValue1,
+                    NewValue_1 = existingKPI.Value_1,
+                    OldValue_2 = oldValue2,
+                    NewValue_2 = existingKPI.Value_2,
+                    ChangedAt = DateTime.UtcNow
+                };
+                await _valueHistoryRepository.AddAsync(valueHistory);
+            }
+
+            await _kpiRepository.UpdateAsync(existingKPI);
+            return existingKPI;
+        }
+
+
 
         public async Task DeleteKPIAsync(int id)
         {

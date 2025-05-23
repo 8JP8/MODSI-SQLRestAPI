@@ -141,16 +141,16 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Controllers
                 }
 
                 string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-                var kpi = JsonConvert.DeserializeObject<KPI>(requestBody);
-
-                if (kpi == null)
+                var updateDto = JsonConvert.DeserializeObject<MODSI_SQLRestAPI.Company.KPIs.DTO.UpdateKPIDTO>(requestBody);
+                
+                if (updateDto == null)
                 {
                     var badRequestResponse = req.CreateResponse(HttpStatusCode.BadRequest);
                     await badRequestResponse.WriteStringAsync("Invalid KPI data.");
                     return badRequestResponse;
                 }
 
-                var updatedKPI = await _kpiService.UpdateKPIAsync(id, kpi, userId);
+                var updatedKPI = await _kpiService.UpdateKPIFieldsAsync(id, updateDto, userId);
                 if (updatedKPI == null)
                 {
                     var notFoundResponse = req.CreateResponse(HttpStatusCode.NotFound);
@@ -164,7 +164,6 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Controllers
                 var response = req.CreateResponse(HttpStatusCode.OK);
                 await response.WriteAsJsonAsync(updatedKPIDTO);
                 return response;
-
             }
             catch (Exception ex)
             {
@@ -174,6 +173,7 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Controllers
                 return response;
             }
         }
+
 
         [Function("DeleteKPI")]
         public async Task<HttpResponseData> DeleteKPI(

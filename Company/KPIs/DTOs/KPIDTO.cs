@@ -40,4 +40,6 @@ namespace MODSI_SQLRestAPI.Company.KPIs.DTO
         public string Value_1 { get; set; }
         public string Value_2 { get; set; }
     }
+
+
 }

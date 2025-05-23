@@ -27,10 +27,13 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Services
                 Id = h.Id,
                 KPIId = h.KPIId,
                 ChangedByUserId = h.ChangedByUserId,
-                OldValue = h.OldValue,
-                NewValue = h.NewValue,
+                OldValue_1 = h.OldValue_1,
+                NewValue_1 = h.NewValue_1,
+                OldValue_2 = h.OldValue_2,
+                NewValue_2 = h.NewValue_2,
                 ChangedAt = h.ChangedAt
             }).ToList();
+
         }
 
         public async Task AddHistoryAsync(ValueHistoryDTO dto)
@@ -39,11 +42,14 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Services
             {
                 KPIId = dto.KPIId,
                 ChangedByUserId = dto.ChangedByUserId,
-                OldValue = dto.OldValue,
-                NewValue = dto.NewValue,
+                OldValue_1 = dto.OldValue_1,
+                NewValue_1 = dto.NewValue_1,
+                OldValue_2 = dto.OldValue_2,
+                NewValue_2 = dto.NewValue_2,
                 ChangedAt = dto.ChangedAt
             };
             await _repository.AddAsync(entity);
+
         }
     }
 }
