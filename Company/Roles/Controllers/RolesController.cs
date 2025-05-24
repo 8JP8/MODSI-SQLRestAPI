@@ -1,6 +1,7 @@
 ﻿using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
+using MODSI_SQLRestAPI.Company.KPIs.Services;
 using MODSI_SQLRestAPI.Company.Roles.DTOs;
 using MODSI_SQLRestAPI.Company.Services;
 using Newtonsoft.Json;
@@ -17,10 +18,12 @@ namespace MODSI_SQLRestAPI.Company.Roles.Controllers
     {
         private readonly IRoleService _roleService;
         private readonly ILogger<RoleFunctions> _logger;
+        private readonly IKPIService _kpiService;
 
-        public RoleFunctions(IRoleService roleService, ILogger<RoleFunctions> logger)
+        public RoleFunctions(IRoleService roleService, IKPIService kpiService, ILogger<RoleFunctions> logger)
         {
             _roleService = roleService;
+            _kpiService = kpiService;
             _logger = logger;
         }
 
@@ -86,6 +89,107 @@ namespace MODSI_SQLRestAPI.Company.Roles.Controllers
             var response = req.CreateResponse(HttpStatusCode.OK);
             await response.WriteAsJsonAsync(roleDTO);
             return response;
+        }
+
+        [Function("GetRoleKPIs")]
+        public async Task<HttpResponseData> GetRoleKPIs(
+            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "roles/{roleId}/kpis")] HttpRequestData req,
+            int roleId)
+        {
+            _logger.LogInformation($"GetRoleKPIs function processed a request for role {roleId}.");
+
+            try
+            {
+                var role = await _roleService.GetRoleByIdAsync(roleId);
+                if (role == null)
+                {
+                    var notFoundResponse = req.CreateResponse(HttpStatusCode.NotFound);
+                    await notFoundResponse.WriteStringAsync($"Role with ID {roleId} not found.");
+                    return notFoundResponse;
+                }
+
+                var departmentIds = role.RoleDepartmentPermissions?
+                    .Where(rdp => rdp.Department != null && (rdp.CanRead || rdp.CanWrite))
+                    .Select(rdp => rdp.Department.Id)
+                    .Distinct()
+                    .ToList() ?? new List<int>();
+
+                var kpiSet = new HashSet<int>();
+                var kpiList = new List<object>();
+
+                foreach (var deptId in departmentIds)
+                {
+                    var kpis = await _kpiService.GetKPIsByDepartmentIdAsync(deptId);
+                    foreach (var kpi in kpis)
+                    {
+                        if (kpiSet.Add(kpi.Id))
+                        {
+                            kpiList.Add(new
+                            {
+                                Id = kpi.Id,
+                                Name = kpi.Name,
+                                Description = kpi.Description,
+                                Unit = kpi.Unit,
+                                Value_1 = kpi.Value_1,
+                                Value_2 = kpi.Value_2
+                            });
+                        }
+                    }
+                }
+
+                var response = req.CreateResponse(HttpStatusCode.OK);
+                await response.WriteAsJsonAsync(kpiList);
+                return response;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error getting KPIs for role {roleId}");
+                var response = req.CreateResponse(HttpStatusCode.InternalServerError);
+                await response.WriteStringAsync("An error occurred while processing your request.");
+                return response;
+            }
+        }
+
+        [Function("GetRoleDepartments")]
+        public async Task<HttpResponseData> GetRoleDepartments(
+            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "roles/{roleId}/departments")] HttpRequestData req,
+            int roleId)
+        {
+            _logger.LogInformation($"GetRoleDepartments function processed a request for role {roleId}.");
+
+            try
+            {
+                var role = await _roleService.GetRoleByIdAsync(roleId);
+                if (role == null)
+                {
+                    var notFoundResponse = req.CreateResponse(HttpStatusCode.NotFound);
+                    await notFoundResponse.WriteStringAsync($"Role with ID {roleId} not found.");
+                    return notFoundResponse;
+                }
+
+                var departments = role.RoleDepartmentPermissions?
+                    .Where(rdp => rdp.Department != null && (rdp.CanRead || rdp.CanWrite))
+                    .Select(rdp => new
+                    {
+                        Id = rdp.Department.Id,
+                        Name = rdp.Department.Name,
+                        CanRead = rdp.CanRead,
+                        CanWrite = rdp.CanWrite
+                    })
+                    .Distinct()
+                    .ToList();
+
+                var response = req.CreateResponse(HttpStatusCode.OK);
+                await response.WriteAsJsonAsync(departments);
+                return response;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error getting departments for role {roleId}");
+                var response = req.CreateResponse(HttpStatusCode.InternalServerError);
+                await response.WriteStringAsync("An error occurred while processing your request.");
+                return response;
+            }
         }
 
         [Function("CreateRole")]
