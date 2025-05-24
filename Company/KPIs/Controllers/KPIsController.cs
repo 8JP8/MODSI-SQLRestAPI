@@ -59,7 +59,7 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Controllers
 
         [Function("GetValueHistory")]
         public async Task<HttpResponseData> GetValueHistory(
-    [HttpTrigger(AuthorizationLevel.Function, "get", Route = "kpis/valuehistory")] HttpRequestData req)
+            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "kpis/valuehistory")] HttpRequestData req)
         {
             var query = System.Web.HttpUtility.ParseQueryString(req.Url.Query);
             int? kpiId = int.TryParse(query["kpiId"], out var kid) ? kid : (int?)null;

@@ -34,9 +34,9 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
             var groupsRepository = new GroupsRepository();
             var predefinedGroups = new List<Groups>
             {
-                new Groups(1, "Admin"),
-                new Groups(2, "User"),
-                new Groups(3, "Guest")
+                new Groups(1, "ADMIN"),
+                new Groups(2, "USER"),
+                new Groups(3, "GUEST")
             };
 
             await groupsRepository.EnsureGroupsExistAsync(predefinedGroups);
@@ -89,7 +89,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
                 }
 
 
-                if (!principal.IsInGroup("Admin"))
+                if (!principal.IsInGroup("ADMIN"))
                 {
                     var forbiddenResponse = req.CreateResponse(HttpStatusCode.Forbidden);
                     forbiddenResponse.WriteString("Forbidden");
@@ -209,7 +209,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
                 var principal = retrieveToken.GetPrincipalFromRequest(req);
 
 
-                if (principal == null || !principal.Identity.IsAuthenticated || !principal.IsInGroup("Admin"))
+                if (principal == null || !principal.Identity.IsAuthenticated || !principal.IsInGroup("ADMIN"))
                 {
                     var forbiddenResponse = req.CreateResponse(HttpStatusCode.Forbidden);
                     await forbiddenResponse.WriteStringAsync("Unauthorized or insufficient permissions.");
@@ -254,7 +254,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
                 var retriveToken = new RetrieveToken();
                 var principal = retriveToken.GetPrincipalFromRequest(req);
 
-                if (principal == null || !principal.Identity.IsAuthenticated || !principal.IsInGroup("Admin"))
+                if (principal == null || !principal.Identity.IsAuthenticated || !principal.IsInGroup("ADMIN"))
                 {
                     var forbiddenResponse = req.CreateResponse(HttpStatusCode.Forbidden);
                     await forbiddenResponse.WriteStringAsync("Unauthorized or insufficient permissions.");
@@ -322,7 +322,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
 
                 var retriveToken = new RetrieveToken();
                 var principal = retriveToken.GetPrincipalFromRequest(req);
-                bool isAdmin = principal != null && principal.Identity.IsAuthenticated && principal.IsInGroup("Admin");
+                bool isAdmin = principal != null && principal.Identity.IsAuthenticated && principal.IsInGroup("ADMIN");
 
                 var existingUser = await _userService.GetUserByIdentifier(email);
                 if (existingUser == null)

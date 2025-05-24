@@ -38,6 +38,6 @@ namespace MODSI_SQLRestAPI.Company.Repositories
     public interface IValueHistoryRepository : IRepository<ValueHistory>
     {
         Task<IEnumerable<ValueHistory>> GetAllAsync(int? kpiId = null, int? userId = null);
-        Task AddAsync(ValueHistory valueHistory);
+        new Task AddAsync(ValueHistory valueHistory);
     }
 }
