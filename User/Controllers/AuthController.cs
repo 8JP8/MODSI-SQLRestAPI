@@ -6,6 +6,7 @@ using MODSI_SQLRestAPI.UserAuth.Repositories;
 using MODSI_SQLRestAPI.UserAuth.Services;
 using System;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -69,6 +70,51 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
             {
                 _logger.LogError(ex, "An error occurred during login.");
                 return req.CreateResponse(HttpStatusCode.InternalServerError);
+            }
+        }
+
+        [Function("CheckToken")]
+        public async Task<HttpResponseData> CheckToken(
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "User/CheckToken")] HttpRequestData req)
+        {
+            try
+            {
+                // Extrai o token do header Authorization
+                if (!req.Headers.TryGetValues("Authorization", out var authHeaders))
+                {
+                    var forbidden = req.CreateResponse(HttpStatusCode.Forbidden);
+                    await forbidden.WriteStringAsync("Token is invalid");
+                    return forbidden;
+                }
+
+                var authHeader = authHeaders.FirstOrDefault();
+                if (string.IsNullOrEmpty(authHeader) || !authHeader.StartsWith("Bearer "))
+                {
+                    var forbidden = req.CreateResponse(HttpStatusCode.Forbidden);
+                    await forbidden.WriteStringAsync("Token is invalid");
+                    return forbidden;
+                }
+
+                var token = authHeader.Substring("Bearer ".Length);
+
+                // Valida o token
+                var principal = TokenService.ValidateToken(token);
+                if (principal == null || !principal.Identity.IsAuthenticated)
+                {
+                    var forbidden = req.CreateResponse(HttpStatusCode.Forbidden);
+                    await forbidden.WriteStringAsync("Token is invalid");
+                    return forbidden;
+                }
+
+                var ok = req.CreateResponse(HttpStatusCode.OK);
+                await ok.WriteStringAsync("Token is valid");
+                return ok;
+            }
+            catch
+            {
+                var forbidden = req.CreateResponse(HttpStatusCode.Forbidden);
+                await forbidden.WriteStringAsync("Token is invalid");
+                return forbidden;
             }
         }
     }
