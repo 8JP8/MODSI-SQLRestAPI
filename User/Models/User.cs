@@ -102,7 +102,6 @@ namespace MODSI_SQLRestAPI.UserAuth.Models
 
         }
 
-        // get methos
         public string GetName()
         {
             return Name;

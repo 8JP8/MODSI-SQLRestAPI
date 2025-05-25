@@ -3,6 +3,7 @@ using MODSI_SQLRestAPI.Infrastructure.Data;
 using MODSI_SQLRestAPI.UserAuth.DTO;
 using MODSI_SQLRestAPI.UserAuth.Models;
 using MODSI_SQLRestAPI.UserAuth.Repositories;
+using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Threading.Tasks;
@@ -13,11 +14,12 @@ using System.Threading.Tasks;
 // DTO retriever
 namespace MODSI_SQLRestAPI.UserAuth.Services
 {
-    class UserService
+    internal class UserService
     {
         private readonly ILogger _logger;
         private readonly UserRepository _databaseHandler;
         private readonly ApplicationDbContext _dbContext;
+
         public UserService(ILoggerFactory loggerFactory, ApplicationDbContext dbContext)
         {
             _logger = loggerFactory.CreateLogger<UserService>();
@@ -234,6 +236,50 @@ namespace MODSI_SQLRestAPI.UserAuth.Services
                     return result as string;
                 }
             }
+        }
+
+        private static readonly Dictionary<string, PasswordResetCodeEntry> PasswordResetCodes = new Dictionary<string, PasswordResetCodeEntry>();
+
+        public Task StorePasswordResetCode(int userId, string code, DateTime expiration)
+        {
+            lock (PasswordResetCodes)
+            {
+                PasswordResetCodes[code] = new PasswordResetCodeEntry
+                {
+                    UserId = userId,
+                    Code = code,
+                    Expiration = expiration
+                };
+            }
+            return Task.CompletedTask;
+        }
+
+        public Task<PasswordResetCodeEntry> GetPasswordResetCodeEntry(string code)
+        {
+            lock (PasswordResetCodes)
+            {
+                PasswordResetCodes.TryGetValue(code, out var entry);
+                return Task.FromResult(entry);
+            }
+        }
+
+        public async Task<bool> ChangePassword(string identifier, string currentPasswordHash, string newPasswordHash, string newSalt)
+        {
+            // Buscar usuário pelo identificador (email ou username)
+            var user = await _databaseHandler.GetUserByIdentifierAsync(identifier, true);
+            if (user == null)
+                return false;
+
+            // Verificar se o hash da senha atual confere
+            if (user.Password != currentPasswordHash)
+                return false;
+
+            // Atualizar senha e salt
+            user.Password = newPasswordHash;
+            user.Salt = newSalt;
+            await _databaseHandler.UpdateUserByIdAsync(user);
+
+            return true;
         }
 
     }

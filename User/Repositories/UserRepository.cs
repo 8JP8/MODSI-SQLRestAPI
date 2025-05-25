@@ -296,6 +296,27 @@ namespace MODSI_SQLRestAPI.UserAuth.Repositories
             return null;
         }
 
+        internal async Task<User> GetUserByIdEntityAsync(int id)
+        {
+            using (var conn = new SqlConnection(ApplicationDbContext.ConnectionString))
+            {
+                await conn.OpenAsync();
+                var query = "SELECT * FROM Users WHERE Id = @Id";
+                using (var cmd = new SqlCommand(query, conn))
+                {
+                    cmd.Parameters.AddWithValue("@Id", id);
+                    using (var reader = await cmd.ExecuteReaderAsync())
+                    {
+                        if (await reader.ReadAsync())
+                        {
+                            return MapReaderToUser(reader, true); // true para incluir senha e salt
+                        }
+                    }
+                }
+            }
+            return null;
+        }
+
         internal async Task<bool> ChangeUserRoleAsync(int userId, string role)
         {
             using (var conn = new SqlConnection(ApplicationDbContext.ConnectionString))
