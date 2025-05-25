@@ -281,7 +281,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
                     Username = user.Username,
                     Role = user.Role,
                     CreatedAt = user.CreatedAt,
-                    IsActive = user.IsActive,
+                    IsVerified = user.IsVerified,
                     Group = user.Group,
                     Tel = user.Tel, // Pode ser null
                     Photo = user.Photo // Pode ser null

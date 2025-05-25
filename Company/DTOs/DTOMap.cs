@@ -17,6 +17,7 @@ namespace MODSI_SQLRestAPI.Company.DTOs
                 Unit = kpi.Unit,
                 Value_1 = kpi.Value_1,
                 Value_2 = kpi.Value_2,
+                ByProduct = kpi.ByProduct
             };
         }
 
@@ -30,6 +31,7 @@ namespace MODSI_SQLRestAPI.Company.DTOs
                 Unit = kpi.Unit,
                 Value_1 = kpi.Value_1,
                 Value_2 = kpi.Value_2,
+                ByProduct = kpi.ByProduct,
                 AvailableInDepartments = kpi.DepartmentKPIs?
                     .Where(dk => dk.Department != null)
                     .Select(dk => dk.Department.Name)

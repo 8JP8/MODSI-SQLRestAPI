@@ -11,6 +11,7 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Models
         public string Unit { get; set; }
         public string Value_1 { get; set; }
         public string Value_2 { get; set; }
+        public bool ByProduct { get; set; }
 
         // Navigation properties
         public ICollection<DepartmentKPI> DepartmentKPIs { get; set; }

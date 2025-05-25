@@ -10,6 +10,7 @@ namespace MODSI_SQLRestAPI.Company.KPIs.DTO
         public string Unit { get; set; }
         public string Value_1 { get; set; }
         public string Value_2 { get; set; }
+        public bool ByProduct { get; set; }
     }
 
     public class KPIDetailDTO
@@ -20,6 +21,7 @@ namespace MODSI_SQLRestAPI.Company.KPIs.DTO
         public string Unit { get; set; }
         public string Value_1 { get; set; }
         public string Value_2 { get; set; }
+        public bool ByProduct { get; set; }
         public List<string> AvailableInDepartments { get; set; }
     }
 
@@ -30,6 +32,7 @@ namespace MODSI_SQLRestAPI.Company.KPIs.DTO
         public string Unit { get; set; }
         public string Value_1 { get; set; }
         public string Value_2 { get; set; }
+        public bool ByProduct { get; set; }
     }
 
     public class UpdateKPIDTO
@@ -39,6 +42,7 @@ namespace MODSI_SQLRestAPI.Company.KPIs.DTO
         public string Unit { get; set; }
         public string Value_1 { get; set; }
         public string Value_2 { get; set; }
+        public bool? ByProduct { get; set; }
     }
 
 

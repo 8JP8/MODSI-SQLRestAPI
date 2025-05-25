@@ -15,7 +15,7 @@ namespace MODSI_SQLRestAPI.UserAuth.DTO
         public string Username { get; set; }
         public string Role { get; set; }
         public DateTime CreatedAt { get; set; }
-        public bool IsActive { get; set; }
+        public bool IsVerified { get; set; }
         public string Group { get; set; }
         public string Photo { get; set; }
         public string Tel { get; set; }
@@ -24,7 +24,7 @@ namespace MODSI_SQLRestAPI.UserAuth.DTO
         public UserDTO()
         {
             CreatedAt = DateTime.UtcNow;
-            IsActive = true;
+            IsVerified = false;
         }
         public UserDTO(string name, string email, string username, string role, string group, string photo, string tel)
         {
@@ -33,7 +33,7 @@ namespace MODSI_SQLRestAPI.UserAuth.DTO
             Username = username;
             Role = role ?? "n.d.";
             CreatedAt = DateTime.UtcNow;
-            IsActive = true;
+            IsVerified = false;
             Group = group ?? "n.d.";
             Photo = photo;
             Tel = tel;
@@ -58,9 +58,9 @@ namespace MODSI_SQLRestAPI.UserAuth.DTO
         {
             return CreatedAt;
         }
-        public bool GetIsActive()
+        public bool GetIsVerified()
         {
-            return IsActive;
+            return IsVerified;
         }
         public string GetGroup()
         {
@@ -90,9 +90,9 @@ namespace MODSI_SQLRestAPI.UserAuth.DTO
         {
             CreatedAt = createdAt;
         }
-        public void SetIsActive(bool isActive)
+        public void SetIsVerified(bool isVerified)
         {
-            IsActive = isActive;
+            IsVerified = isVerified;
         }
         public void SetGroup(string group)
         {

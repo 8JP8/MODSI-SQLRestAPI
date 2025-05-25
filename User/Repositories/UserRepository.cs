@@ -33,7 +33,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Repositories
                 Username = reader.GetString(reader.GetOrdinal("Username")),
                 Role = !reader.IsDBNull(reader.GetOrdinal("Role")) ? reader.GetString(reader.GetOrdinal("Role")) : "n.d.",
                 CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
-                IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive")),
+                IsVerified = reader.GetBoolean(reader.GetOrdinal("IsVerified")),
                 Group = !reader.IsDBNull(reader.GetOrdinal("Group")) ? reader.GetString(reader.GetOrdinal("Group")) : null,
                 Tel = !reader.IsDBNull(reader.GetOrdinal("Tel")) ? reader.GetString(reader.GetOrdinal("Tel")) : null,
                 Photo = !reader.IsDBNull(reader.GetOrdinal("Photo")) ? (string)reader.GetValue(reader.GetOrdinal("Photo")) : null,
@@ -52,7 +52,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Repositories
                 Username = reader.GetString(reader.GetOrdinal("Username")),
                 Role = !reader.IsDBNull(reader.GetOrdinal("Role")) ? reader.GetString(reader.GetOrdinal("Role")) : "n.d.",
                 CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
-                IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive")),
+                IsVerified = reader.GetBoolean(reader.GetOrdinal("IsVerified")),
                 Group = !reader.IsDBNull(reader.GetOrdinal("Group")) ? reader.GetString(reader.GetOrdinal("Group")) : null,
                 Tel = !reader.IsDBNull(reader.GetOrdinal("Tel")) ? reader.GetString(reader.GetOrdinal("Tel")) : null,
                 Photo = !reader.IsDBNull(reader.GetOrdinal("Photo")) ? (string)reader.GetValue(reader.GetOrdinal("Photo")) : null
@@ -81,7 +81,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Repositories
             using (SqlConnection conn = new SqlConnection(ApplicationDbContext.ConnectionString))
             {
                 await conn.OpenAsync();
-                var query = $"SELECT Id, Name, Email, Password, Username, Role, CreatedAt, IsActive, [Group], Photo, Tel FROM {_user_DB}";
+                var query = $"SELECT Id, Name, Email, Password, Username, Role, CreatedAt, IsVerified, [Group], Photo, Tel FROM {_user_DB}";
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
                     using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
@@ -105,8 +105,8 @@ namespace MODSI_SQLRestAPI.UserAuth.Repositories
             using (var connection = new SqlConnection(ApplicationDbContext.ConnectionString))
             {
                 await connection.OpenAsync();
-                var query = $"INSERT INTO {_user_DB} (Name, Email, Password, Username, Role, CreatedAt, IsActive, [Group], Salt, Tel, Photo) " +
-                            "VALUES (@Name, @Email, @Password, @Username, @Role, @CreatedAt, @IsActive, @Group, @Salt, @Tel, @Photo)";
+                var query = $"INSERT INTO {_user_DB} (Name, Email, Password, Username, Role, CreatedAt, IsVerified, [Group], Salt, Tel, Photo) " +
+                            "VALUES (@Name, @Email, @Password, @Username, @Role, @CreatedAt, @IsVerified, @Group, @Salt, @Tel, @Photo)";
                 using (SqlCommand cmd = new SqlCommand(query, connection))
                 {
                     cmd.Parameters.AddWithValue("@Name", user.Name);
@@ -115,7 +115,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Repositories
                     cmd.Parameters.AddWithValue("@Username", user.Username);
                     cmd.Parameters.AddWithValue("@Role", DBNull.Value);
                     cmd.Parameters.AddWithValue("@CreatedAt", user.CreatedAt);
-                    cmd.Parameters.AddWithValue("@IsActive", user.IsActive);
+                    cmd.Parameters.AddWithValue("@IsVerified", user.IsVerified);
                     cmd.Parameters.AddWithValue("@Group", user.Group);
                     cmd.Parameters.AddWithValue("@Salt", user.Salt);
                     cmd.Parameters.AddWithValue("@Tel", (object)user.Tel ?? DBNull.Value);
@@ -133,7 +133,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Repositories
                 string identifier = username_or_email.Contains("@") ? "Email" : "Username";
 
                 await conn.OpenAsync();
-                var query = $"SELECT Id, Name, Email, Password, Username, Role, CreatedAt, IsActive, [Group], Salt, Tel, Photo FROM {_user_DB} WHERE {identifier} = @{identifier}";
+                var query = $"SELECT Id, Name, Email, Password, Username, Role, CreatedAt, IsVerified, [Group], Salt, Tel, Photo FROM {_user_DB} WHERE {identifier} = @{identifier}";
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
                     cmd.Parameters.AddWithValue($"@{identifier}", username_or_email);
@@ -183,7 +183,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Repositories
             using (SqlConnection conn = new SqlConnection(ApplicationDbContext.ConnectionString))
             {
                 await conn.OpenAsync();
-                var query = $"UPDATE {_user_DB} SET Name = @Name, Email = @Email, Password = @Password, Username = @Username, Role = @Role, CreatedAt = @CreatedAt, IsActive = @IsActive, [Group] = @Group, Salt = @Salt, Tel= @Tel , Photo=@Photo WHERE Id = @id";
+                var query = $"UPDATE {_user_DB} SET Name = @Name, Email = @Email, Password = @Password, Username = @Username, Role = @Role, CreatedAt = @CreatedAt, IsVerified = @IsVerified, [Group] = @Group, Salt = @Salt, Tel= @Tel , Photo=@Photo WHERE Id = @id";
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
                     cmd.Parameters.AddWithValue("@Id", user.Id);
@@ -193,7 +193,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Repositories
                     cmd.Parameters.AddWithValue("@Username", user.Username);
                     cmd.Parameters.AddWithValue("@Role", user.Role);
                     cmd.Parameters.AddWithValue("@CreatedAt", user.CreatedAt);
-                    cmd.Parameters.AddWithValue("@IsActive", user.IsActive);
+                    cmd.Parameters.AddWithValue("@IsVerified", user.IsVerified);
                     cmd.Parameters.AddWithValue("@Group", user.Group);
                     cmd.Parameters.AddWithValue("@Salt", user.Salt);
                     cmd.Parameters.AddWithValue("@Tel", (object)user.Tel ?? DBNull.Value);
@@ -210,7 +210,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Repositories
                 string column = identifier.Contains("@") ? "Email" : "Username";
 
                 await conn.OpenAsync();
-                var query = $"SELECT Id, Name, Email, Password, Username, Role, CreatedAt, IsActive, [Group], Salt, Tel, Photo FROM {_user_DB} WHERE {column} = @{column}";
+                var query = $"SELECT Id, Name, Email, Password, Username, Role, CreatedAt, IsVerified, [Group], Salt, Tel, Photo FROM {_user_DB} WHERE {column} = @{column}";
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
                     cmd.Parameters.AddWithValue($"@{column}", identifier);
@@ -280,7 +280,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Repositories
             using (SqlConnection conn = new SqlConnection(ApplicationDbContext.ConnectionString))
             {
                 await conn.OpenAsync();
-                var query = $"SELECT Id, Name, Email, Password, Username, Role, CreatedAt, IsActive, [Group], Salt, Tel, Photo FROM {_user_DB} WHERE Id = @Id";
+                var query = $"SELECT Id, Name, Email, Password, Username, Role, CreatedAt, IsVerified, [Group], Salt, Tel, Photo FROM {_user_DB} WHERE Id = @Id";
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
                     cmd.Parameters.AddWithValue("@Id", id);

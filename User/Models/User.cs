@@ -11,7 +11,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Models
         public string Username { get; set; }
         public string Role { get; set; }
         public DateTime CreatedAt { get; set; }
-        public bool IsActive { get; set; }
+        public bool IsVerified { get; set; }
         public string Group { get; set; }
         public string Salt { get; set; }
         public string Tel { get; set; }
@@ -20,7 +20,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Models
         public User()
         {
             CreatedAt = DateTime.UtcNow;
-            IsActive = true;
+            IsVerified = false;
         }
 
         public User(string name, string email, string password, string username, string role, string group, string salt, string tel, string photo)
@@ -56,7 +56,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Models
             Username = username;
             Role = role;
             CreatedAt = DateTime.UtcNow;
-            IsActive = true;
+            IsVerified = false;
             Group = group;
             Salt = salt;
             Tel = tel;
@@ -97,7 +97,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Models
             Username = username;
             Role = role;
             CreatedAt = DateTime.UtcNow;
-            IsActive = true;
+            IsVerified = false;
             Group = group;
 
         }
@@ -128,9 +128,9 @@ namespace MODSI_SQLRestAPI.UserAuth.Models
             return CreatedAt;
         }
 
-        public bool GetIsActive()
+        public bool GetIsVerified()
         {
-            return IsActive;
+            return IsVerified;
         }
 
         public string GetGroup()
@@ -184,9 +184,9 @@ namespace MODSI_SQLRestAPI.UserAuth.Models
             CreatedAt = createdAt;
         }
 
-        public void SetIsActive(bool isActive)
+        public void SetIsVerified(bool isActive)
         {
-            IsActive = isActive;
+            IsVerified = isActive;
         }
 
         public void SetGroup(string group)

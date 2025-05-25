@@ -87,6 +87,7 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Services
             existingKPI.Unit = kpi.Unit;
             existingKPI.Value_1 = kpi.Value_1;
             existingKPI.Value_2 = kpi.Value_2;
+            existingKPI.ByProduct = kpi.ByProduct;
 
             await _kpiRepository.UpdateAsync(existingKPI);
             return existingKPI;
