@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using MODSI_SQLRestAPI.Company.KPIs.Models;
+using System.Collections.Generic;
 
 namespace MODSI_SQLRestAPI.Company.KPIs.DTO
 {
@@ -45,5 +46,10 @@ namespace MODSI_SQLRestAPI.Company.KPIs.DTO
         public bool? ByProduct { get; set; }
     }
 
+    public class CreateKPIWithDepartmentsDTO
+    {
+        public KPI KPI { get; set; }
+        public List<string> AvailableInDepartments { get; set; }
+    }
 
 }

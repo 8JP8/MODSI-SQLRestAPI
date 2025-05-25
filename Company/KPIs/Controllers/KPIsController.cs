@@ -1,7 +1,9 @@
 ﻿using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
+using MODSI_SQLRestAPI.Company.Departments.Services;
 using MODSI_SQLRestAPI.Company.DTOs;
+using MODSI_SQLRestAPI.Company.KPIs.DTO;
 using MODSI_SQLRestAPI.Company.KPIs.Models;
 using MODSI_SQLRestAPI.Company.KPIs.Services;
 using MODSI_SQLRestAPI.Company.Services;
@@ -18,12 +20,14 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Controllers
     {
         private readonly IKPIService _kpiService;
         private readonly IValueHistoryService _valueHistoryService;
+        private readonly IDepartmentService _departmentService;
         private readonly ILogger<KPIFunctions> _logger;
 
-        public KPIFunctions(IKPIService kpiService, IValueHistoryService valueHistoryService, ILogger<KPIFunctions> logger)
+        public KPIFunctions(IKPIService kpiService, IValueHistoryService valueHistoryService, IDepartmentService departmentService, ILogger<KPIFunctions> logger)
         {
             _kpiService = kpiService;
             _valueHistoryService = valueHistoryService;
+            _departmentService = departmentService;
             _logger = logger;
         }
 
@@ -73,10 +77,106 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Controllers
         }
 
 
+        [Function("ChangeKPIAvailableDepartments")]
+        public async Task<HttpResponseData> ChangeKPIAvailableDepartments(
+            [HttpTrigger(AuthorizationLevel.Function, "put", Route = "kpis/{kpiId}/departments")] HttpRequestData req,
+            int kpiId)
+        {
+            _logger.LogInformation($"ChangeKPIAvailableDepartments function processed a request for KPI {kpiId}.");
+
+            try
+            {
+                string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+                var dto = JsonConvert.DeserializeObject<KPIAvailableDepartmentsDTO>(requestBody);
+
+                if (dto == null || dto.AvailableInDepartments == null)
+                {
+                    var badRequestResponse = req.CreateResponse(HttpStatusCode.BadRequest);
+                    await badRequestResponse.WriteStringAsync("Invalid departments data.");
+                    return badRequestResponse;
+                }
+
+                // Obtenha todos os departamentos
+                var allDepartments = await _departmentService.GetAllDepartmentsAsync();
+
+                // Remova o KPI de todos os departamentos
+                foreach (var department in allDepartments)
+                {
+                    await _departmentService.RemoveKPIFromDepartmentAsync(department.Id, kpiId);
+                }
+
+                // Adicione o KPI apenas aos departamentos informados
+                foreach (var departmentName in dto.AvailableInDepartments)
+                {
+                    var department = allDepartments.FirstOrDefault(d => d.Name == departmentName);
+                    if (department != null)
+                    {
+                        await _departmentService.AddKPIFromDepartmentAsync(department.Id, kpiId);
+                    }
+                }
+
+                var response = req.CreateResponse(HttpStatusCode.NoContent);
+                return response;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error changing available departments for KPI {kpiId}");
+                var response = req.CreateResponse(HttpStatusCode.InternalServerError);
+                await response.WriteStringAsync("An error occurred while processing your request.");
+                return response;
+            }
+        }
 
 
+        [Function("CreateKPIWithDepartments")]
+        public async Task<HttpResponseData> CreateKPIWithDepartments(
+            [HttpTrigger(AuthorizationLevel.Function, "post", Route = "kpis/withdepartments")] HttpRequestData req)
+        {
+            _logger.LogInformation("CreateKPIWithDepartments function processed a request.");
 
+            try
+            {
+                string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+                var dto = JsonConvert.DeserializeObject<CreateKPIWithDepartmentsDTO>(requestBody);
 
+                if (dto == null || dto.KPI == null || dto.AvailableInDepartments == null)
+                {
+                    var badRequestResponse = req.CreateResponse(HttpStatusCode.BadRequest);
+                    await badRequestResponse.WriteStringAsync("Invalid KPI or departments data.");
+                    return badRequestResponse;
+                }
+
+                // Cria o KPI
+                var createdKPI = await _kpiService.CreateKPIAsync(dto.KPI);
+
+                // Obtenha todos os departamentos
+                var allDepartments = await _departmentService.GetAllDepartmentsAsync();
+
+                // Adicione o KPI apenas aos departamentos informados
+                foreach (var departmentName in dto.AvailableInDepartments)
+                {
+                    var department = allDepartments.FirstOrDefault(d => d.Name == departmentName);
+                    if (department != null)
+                    {
+                        await _departmentService.AddKPIFromDepartmentAsync(department.Id, createdKPI.Id);
+                    }
+                }
+
+                // Mapeia para DTO para evitar ciclos de referência
+                var createdKPIDTO = new DTOMap().MapToKPIDetailDTO(createdKPI);
+
+                var response = req.CreateResponse(HttpStatusCode.Created);
+                await response.WriteAsJsonAsync(createdKPIDTO);
+                return response;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating KPI with departments");
+                var response = req.CreateResponse(HttpStatusCode.InternalServerError);
+                await response.WriteStringAsync("An error occurred while processing your request.");
+                return response;
+            }
+        }
 
 
         [Function("CreateKPI")]
