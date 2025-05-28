@@ -131,7 +131,8 @@ namespace MODSI_SQLRestAPI.Company.Roles.Controllers
                                 Description = kpi.Description,
                                 Unit = kpi.Unit,
                                 Value_1 = kpi.Value_1,
-                                Value_2 = kpi.Value_2
+                                Value_2 = kpi.Value_2,
+                                ByProduct = kpi.ByProduct
                             });
                         }
                     }
