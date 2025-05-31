@@ -7,6 +7,7 @@ using MODSI_SQLRestAPI.Company.KPIs.DTO;
 using MODSI_SQLRestAPI.Company.KPIs.Models;
 using MODSI_SQLRestAPI.Company.KPIs.Services;
 using MODSI_SQLRestAPI.Company.Services;
+using MODSI_SQLRestAPI.UserAuth.Services;
 using Newtonsoft.Json;
 using System;
 using System.IO;
@@ -35,8 +36,15 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Controllers
         public async Task<HttpResponseData> GetAllKPIs(
             [HttpTrigger(AuthorizationLevel.Function, "get", Route = "kpis")] HttpRequestData req)
         {
-            var kpis = await _kpiService.GetAllKPIsAsync();
+            var principal = new RetrieveToken().GetPrincipalFromRequest(req);
+            if (principal == null || !principal.Identity.IsAuthenticated)
+            {
+                var forbidden = req.CreateResponse(HttpStatusCode.Forbidden);
+                await forbidden.WriteStringAsync("Unauthorized.");
+                return forbidden;
+            }
 
+            var kpis = await _kpiService.GetAllKPIsAsync();
             var response = req.CreateResponse(HttpStatusCode.OK);
             await response.WriteAsJsonAsync(kpis);
             return response;
@@ -46,6 +54,14 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Controllers
         public async Task<HttpResponseData> GetKPIById(
             [HttpTrigger(AuthorizationLevel.Function, "get", Route = "kpis/byid/{id}")] HttpRequestData req, int id)
         {
+            var principal = new RetrieveToken().GetPrincipalFromRequest(req);
+            if (principal == null || !principal.Identity.IsAuthenticated)
+            {
+                var forbidden = req.CreateResponse(HttpStatusCode.Forbidden);
+                await forbidden.WriteStringAsync("Unauthorized.");
+                return forbidden;
+            }
+
             var kpi = await _kpiService.GetKPIByIdAsync(id);
             if (kpi == null)
             {
@@ -53,18 +69,24 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Controllers
                 await notFoundResponse.WriteStringAsync($"KPI with ID {id} not found.");
                 return notFoundResponse;
             }
-            ;
 
             var response = req.CreateResponse(HttpStatusCode.OK);
             await response.WriteAsJsonAsync(kpi);
             return response;
         }
 
-
         [Function("GetValueHistory")]
         public async Task<HttpResponseData> GetValueHistory(
             [HttpTrigger(AuthorizationLevel.Function, "get", Route = "kpis/valuehistory")] HttpRequestData req)
         {
+            var principal = new RetrieveToken().GetPrincipalFromRequest(req);
+            if (principal == null || !principal.Identity.IsAuthenticated)
+            {
+                var forbidden = req.CreateResponse(HttpStatusCode.Forbidden);
+                await forbidden.WriteStringAsync("Unauthorized.");
+                return forbidden;
+            }
+
             var query = System.Web.HttpUtility.ParseQueryString(req.Url.Query);
             int? kpiId = int.TryParse(query["kpiId"], out var kid) ? kid : (int?)null;
             int? userId = int.TryParse(query["userId"], out var uid) ? uid : (int?)null;
@@ -76,12 +98,19 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Controllers
             return response;
         }
 
-
         [Function("ChangeKPIAvailableDepartments")]
         public async Task<HttpResponseData> ChangeKPIAvailableDepartments(
             [HttpTrigger(AuthorizationLevel.Function, "put", Route = "kpis/{kpiId}/departments")] HttpRequestData req,
             int kpiId)
         {
+            var principal = new RetrieveToken().GetPrincipalFromRequest(req);
+            if (principal == null || !principal.Identity.IsAuthenticated || !principal.IsInGroup("ADMIN"))
+            {
+                var forbidden = req.CreateResponse(HttpStatusCode.Forbidden);
+                await forbidden.WriteStringAsync("Unauthorized: Only ADMIN can change KPI departments.");
+                return forbidden;
+            }
+
             _logger.LogInformation($"ChangeKPIAvailableDepartments function processed a request for KPI {kpiId}.");
 
             try
@@ -96,16 +125,13 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Controllers
                     return badRequestResponse;
                 }
 
-                // Obtenha todos os departamentos
                 var allDepartments = await _departmentService.GetAllDepartmentsAsync();
 
-                // Remova o KPI de todos os departamentos
                 foreach (var department in allDepartments)
                 {
                     await _departmentService.RemoveKPIFromDepartmentAsync(department.Id, kpiId);
                 }
 
-                // Adicione o KPI apenas aos departamentos informados
                 foreach (var departmentName in dto.AvailableInDepartments)
                 {
                     var department = allDepartments.FirstOrDefault(d => d.Name == departmentName);
@@ -127,11 +153,18 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Controllers
             }
         }
 
-
         [Function("CreateKPIWithDepartments")]
         public async Task<HttpResponseData> CreateKPIWithDepartments(
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = "kpis/withdepartments")] HttpRequestData req)
         {
+            var principal = new RetrieveToken().GetPrincipalFromRequest(req);
+            if (principal == null || !principal.Identity.IsAuthenticated || !principal.IsInGroup("ADMIN"))
+            {
+                var forbidden = req.CreateResponse(HttpStatusCode.Forbidden);
+                await forbidden.WriteStringAsync("Unauthorized: Only ADMIN can create KPIs.");
+                return forbidden;
+            }
+
             _logger.LogInformation("CreateKPIWithDepartments function processed a request.");
 
             try
@@ -146,13 +179,10 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Controllers
                     return badRequestResponse;
                 }
 
-                // Cria o KPI
                 var createdKPI = await _kpiService.CreateKPIAsync(dto.KPI);
 
-                // Obtenha todos os departamentos
                 var allDepartments = await _departmentService.GetAllDepartmentsAsync();
 
-                // Adicione o KPI apenas aos departamentos informados
                 foreach (var departmentName in dto.AvailableInDepartments)
                 {
                     var department = allDepartments.FirstOrDefault(d => d.Name == departmentName);
@@ -162,7 +192,6 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Controllers
                     }
                 }
 
-                // Mapeia para DTO para evitar ciclos de referência
                 var createdKPIDTO = new DTOMap().MapToKPIDetailDTO(createdKPI);
 
                 var response = req.CreateResponse(HttpStatusCode.Created);
@@ -178,11 +207,18 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Controllers
             }
         }
 
-
         [Function("CreateKPI")]
         public async Task<HttpResponseData> CreateKPI(
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = "kpis")] HttpRequestData req)
         {
+            var principal = new RetrieveToken().GetPrincipalFromRequest(req);
+            if (principal == null || !principal.Identity.IsAuthenticated || !principal.IsInGroup("ADMIN"))
+            {
+                var forbidden = req.CreateResponse(HttpStatusCode.Forbidden);
+                await forbidden.WriteStringAsync("Unauthorized: Only ADMIN can create KPIs.");
+                return forbidden;
+            }
+
             _logger.LogInformation("CreateKPI function processed a request.");
 
             try
@@ -216,33 +252,21 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Controllers
             [HttpTrigger(AuthorizationLevel.Function, "put", Route = "kpis/{id}")] HttpRequestData req,
             int id)
         {
+            var principal = new RetrieveToken().GetPrincipalFromRequest(req);
+            if (principal == null || !principal.Identity.IsAuthenticated || !principal.IsInGroup("ADMIN"))
+            {
+                var forbiddenResponse = req.CreateResponse(HttpStatusCode.Forbidden);
+                await forbiddenResponse.WriteStringAsync("Unauthorized: Only ADMIN can update KPIs.");
+                return forbiddenResponse;
+            }
+
             _logger.LogInformation($"UpdateKPI function processed a request for KPI {id}.");
 
             try
             {
-                // Obter o id do usuário autenticado do token JWT
-                var retrieveToken = new MODSI_SQLRestAPI.UserAuth.Services.RetrieveToken();
-                var principal = retrieveToken.GetPrincipalFromRequest(req);
-
-                if (principal == null || !principal.Identity.IsAuthenticated)
-                {
-                    var forbiddenResponse = req.CreateResponse(HttpStatusCode.Forbidden);
-                    await forbiddenResponse.WriteStringAsync("Unauthorized or invalid token.");
-                    return forbiddenResponse;
-                }
-
-                // O id do usuário está no claim "id"
-                var userIdClaim = principal.Claims.FirstOrDefault(c => c.Type == "id");
-                if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
-                {
-                    var forbiddenResponse = req.CreateResponse(HttpStatusCode.Forbidden);
-                    await forbiddenResponse.WriteStringAsync("User ID not found in token.");
-                    return forbiddenResponse;
-                }
-
                 string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-                var updateDto = JsonConvert.DeserializeObject<MODSI_SQLRestAPI.Company.KPIs.DTO.UpdateKPIDTO>(requestBody);
-                
+                var updateDto = JsonConvert.DeserializeObject<UpdateKPIDTO>(requestBody);
+
                 if (updateDto == null)
                 {
                     var badRequestResponse = req.CreateResponse(HttpStatusCode.BadRequest);
@@ -250,7 +274,7 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Controllers
                     return badRequestResponse;
                 }
 
-                var updatedKPI = await _kpiService.UpdateKPIFieldsAsync(id, updateDto, userId);
+                var updatedKPI = await _kpiService.UpdateKPIFieldsAsync(id, updateDto, 0); // userId não usado para admin
                 if (updatedKPI == null)
                 {
                     var notFoundResponse = req.CreateResponse(HttpStatusCode.NotFound);
@@ -258,7 +282,6 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Controllers
                     return notFoundResponse;
                 }
 
-                // Mapeie para DTO antes de retornar
                 var updatedKPIDTO = new DTOMap().MapToKPIDetailDTO(updatedKPI);
 
                 var response = req.CreateResponse(HttpStatusCode.OK);
@@ -274,12 +297,19 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Controllers
             }
         }
 
-
         [Function("DeleteKPI")]
         public async Task<HttpResponseData> DeleteKPI(
             [HttpTrigger(AuthorizationLevel.Function, "delete", Route = "kpis/{id}")] HttpRequestData req,
             int id)
         {
+            var principal = new RetrieveToken().GetPrincipalFromRequest(req);
+            if (principal == null || !principal.Identity.IsAuthenticated || !principal.IsInGroup("ADMIN"))
+            {
+                var forbidden = req.CreateResponse(HttpStatusCode.Forbidden);
+                await forbidden.WriteStringAsync("Unauthorized: Only ADMIN can delete KPIs.");
+                return forbidden;
+            }
+
             _logger.LogInformation($"DeleteKPI function processed a request for KPI {id}.");
 
             try

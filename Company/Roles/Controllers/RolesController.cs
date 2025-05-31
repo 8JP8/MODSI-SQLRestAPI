@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using MODSI_SQLRestAPI.Company.KPIs.Services;
 using MODSI_SQLRestAPI.Company.Roles.DTOs;
 using MODSI_SQLRestAPI.Company.Services;
+using MODSI_SQLRestAPI.UserAuth.Services;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -31,6 +32,14 @@ namespace MODSI_SQLRestAPI.Company.Roles.Controllers
         public async Task<HttpResponseData> GetAllRoles(
             [HttpTrigger(AuthorizationLevel.Function, "get", Route = "roles")] HttpRequestData req)
         {
+            var principal = new RetrieveToken().GetPrincipalFromRequest(req);
+            if (principal == null || !principal.Identity.IsAuthenticated)
+            {
+                var forbidden = req.CreateResponse(HttpStatusCode.Forbidden);
+                await forbidden.WriteStringAsync("Unauthorized.");
+                return forbidden;
+            }
+
             var roles = await _roleService.GetAllRolesAsync();
             var roleDTOs = roles.Select(role => new RoleDTO
             {
@@ -60,6 +69,14 @@ namespace MODSI_SQLRestAPI.Company.Roles.Controllers
             [HttpTrigger(AuthorizationLevel.Function, "get", Route = "roles/{id}")] HttpRequestData req,
             int id)
         {
+            var principal = new RetrieveToken().GetPrincipalFromRequest(req);
+            if (principal == null || !principal.Identity.IsAuthenticated)
+            {
+                var forbidden = req.CreateResponse(HttpStatusCode.Forbidden);
+                await forbidden.WriteStringAsync("Unauthorized.");
+                return forbidden;
+            }
+
             var role = await _roleService.GetRoleByIdAsync(id);
             if (role == null)
             {
@@ -96,6 +113,14 @@ namespace MODSI_SQLRestAPI.Company.Roles.Controllers
             [HttpTrigger(AuthorizationLevel.Function, "get", Route = "roles/{roleId}/kpis")] HttpRequestData req,
             int roleId)
         {
+            var principal = new RetrieveToken().GetPrincipalFromRequest(req);
+            if (principal == null || !principal.Identity.IsAuthenticated)
+            {
+                var forbidden = req.CreateResponse(HttpStatusCode.Forbidden);
+                await forbidden.WriteStringAsync("Unauthorized.");
+                return forbidden;
+            }
+
             _logger.LogInformation($"GetRoleKPIs function processed a request for role {roleId}.");
 
             try
@@ -155,6 +180,14 @@ namespace MODSI_SQLRestAPI.Company.Roles.Controllers
             [HttpTrigger(AuthorizationLevel.Function, "get", Route = "roles/{roleId}/departments")] HttpRequestData req,
             int roleId)
         {
+            var principal = new RetrieveToken().GetPrincipalFromRequest(req);
+            if (principal == null || !principal.Identity.IsAuthenticated)
+            {
+                var forbidden = req.CreateResponse(HttpStatusCode.Forbidden);
+                await forbidden.WriteStringAsync("Unauthorized.");
+                return forbidden;
+            }
+
             _logger.LogInformation($"GetRoleDepartments function processed a request for role {roleId}.");
 
             try
@@ -196,6 +229,14 @@ namespace MODSI_SQLRestAPI.Company.Roles.Controllers
         public async Task<HttpResponseData> CreateRole(
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = "roles")] HttpRequestData req)
         {
+            var principal = new RetrieveToken().GetPrincipalFromRequest(req);
+            if (principal == null || !principal.Identity.IsAuthenticated || !principal.IsInGroup("ADMIN"))
+            {
+                var forbidden = req.CreateResponse(HttpStatusCode.Forbidden);
+                await forbidden.WriteStringAsync("Unauthorized: Only ADMIN can create roles.");
+                return forbidden;
+            }
+
             _logger.LogInformation("CreateRole function processed a request.");
 
             try
@@ -229,6 +270,14 @@ namespace MODSI_SQLRestAPI.Company.Roles.Controllers
             [HttpTrigger(AuthorizationLevel.Function, "put", Route = "roles/{id}")] HttpRequestData req,
             int id)
         {
+            var principal = new RetrieveToken().GetPrincipalFromRequest(req);
+            if (principal == null || !principal.Identity.IsAuthenticated || !principal.IsInGroup("ADMIN"))
+            {
+                var forbidden = req.CreateResponse(HttpStatusCode.Forbidden);
+                await forbidden.WriteStringAsync("Unauthorized: Only ADMIN can update roles.");
+                return forbidden;
+            }
+
             _logger.LogInformation($"UpdateRole function processed a request for role {id}.");
 
             try
@@ -269,6 +318,14 @@ namespace MODSI_SQLRestAPI.Company.Roles.Controllers
             [HttpTrigger(AuthorizationLevel.Function, "delete", Route = "roles/{id}")] HttpRequestData req,
             int id)
         {
+            var principal = new RetrieveToken().GetPrincipalFromRequest(req);
+            if (principal == null || !principal.Identity.IsAuthenticated || !principal.IsInGroup("ADMIN"))
+            {
+                var forbidden = req.CreateResponse(HttpStatusCode.Forbidden);
+                await forbidden.WriteStringAsync("Unauthorized: Only ADMIN can delete roles.");
+                return forbidden;
+            }
+
             _logger.LogInformation($"DeleteRole function processed a request for role {id}.");
 
             try

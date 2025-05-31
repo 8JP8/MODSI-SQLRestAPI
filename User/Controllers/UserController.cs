@@ -7,6 +7,7 @@ using MODSI_SQLRestAPI.UserAuth.Services;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Security.Cryptography;
 using System.Text;
@@ -28,6 +29,8 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
             _userService = userService;
             Task.Run(() => InitializeGroupsAsync()).Wait();
         }
+        private static readonly Dictionary<string, DateTime> AddUserCooldown = new Dictionary<string, DateTime>();
+        private static readonly TimeSpan AddUserCooldownWindow = TimeSpan.FromSeconds(15);
 
         public async Task InitializeGroupsAsync()
         {
@@ -42,14 +45,20 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
             await groupsRepository.EnsureGroupsExistAsync(predefinedGroups);
         }
 
-        // Check if user exists by username
-
         [Function("UserExistsByUsername")]
         public async Task<HttpResponseData> UserExistsByUsername(
             [HttpTrigger(AuthorizationLevel.Function, "get", Route = "User/ExistsByUsername")] HttpRequestData req)
         {
             try
             {
+                var principal = new RetrieveToken().GetPrincipalFromRequest(req);
+                if (principal == null || !principal.Identity.IsAuthenticated)
+                {
+                    var forbidden = req.CreateResponse(HttpStatusCode.Forbidden);
+                    await forbidden.WriteStringAsync("Unauthorized.");
+                    return forbidden;
+                }
+
                 string username = req.Query["username"];
                 if (string.IsNullOrEmpty(username))
                 {
@@ -75,32 +84,15 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
         {
             try
             {
-                var retrieveToken = new RetrieveToken();
-                var principal = retrieveToken.GetPrincipalFromRequest(req);
-                _logger.LogInformation("Retrieving all users.", retrieveToken);
-
-                try { _logger.LogInformation(principal.Identity.IsAuthenticated ? "User successfully authenticated." : ""); } catch (Exception ex) { _logger.LogInformation("Erro de Token: " + ex.Message); }
-
-                if (principal == null || !principal.Identity.IsAuthenticated)
+                var principal = new RetrieveToken().GetPrincipalFromRequest(req);
+                if (principal == null || !principal.Identity.IsAuthenticated || !principal.IsInGroup("ADMIN"))
                 {
-                    var unauthorizedResponse = req.CreateResponse(HttpStatusCode.Forbidden);
-                    unauthorizedResponse.WriteString("Unauthorized: Invalid auth token.");
-                    return unauthorizedResponse;
-                }
-
-
-                if (!principal.IsInGroup("ADMIN"))
-                {
-                    var forbiddenResponse = req.CreateResponse(HttpStatusCode.Forbidden);
-                    forbiddenResponse.WriteString("Forbidden");
-                    return forbiddenResponse;
+                    var forbidden = req.CreateResponse(HttpStatusCode.Forbidden);
+                    await forbidden.WriteStringAsync("Unauthorized: Only ADMIN can access.");
+                    return forbidden;
                 }
 
                 var users = await _userService.GetAllUsers();
-
-
-
-                _logger.LogInformation($"Retrieved users: {JsonSerializer.Serialize(users)}");
                 var response = req.CreateResponse(HttpStatusCode.OK);
                 response.Headers.Add("Content-Type", "application/json; charset=utf-8");
                 await response.WriteStringAsync(JsonSerializer.Serialize(users));
@@ -113,15 +105,26 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
             }
         }
 
-
-
-        // Second organized function as example with exeption handling
         [Function("GetUserById")]
         public async Task<HttpResponseData> GetUserById(
             [HttpTrigger(AuthorizationLevel.Function, "get", Route = "User/Get/{id:int}")] HttpRequestData req, int id)
         {
             try
             {
+                var principal = new RetrieveToken().GetPrincipalFromRequest(req);
+                bool isAdmin = principal != null && principal.Identity.IsAuthenticated && principal.IsInGroup("ADMIN");
+                bool isSelf = false;
+                var userIdClaim = principal?.Claims.FirstOrDefault(c => c.Type == "id");
+                if (userIdClaim != null && int.TryParse(userIdClaim.Value, out int userIdFromToken))
+                    isSelf = userIdFromToken == id;
+
+                if (!isAdmin && !isSelf)
+                {
+                    var forbidden = req.CreateResponse(HttpStatusCode.Forbidden);
+                    await forbidden.WriteStringAsync("Unauthorized to access this user.");
+                    return forbidden;
+                }
+
                 var user = await _userService.GetUserById(id);
                 var response = req.CreateResponse(HttpStatusCode.OK);
                 response.Headers.Add("Content-Type", "application/json; charset=utf-8");
@@ -138,15 +141,44 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
             }
         }
 
-
-
-        //Kinda organized put more exceptions
-
         [Function("AddUser")]
         public async Task<HttpResponseData> AddUser([HttpTrigger(AuthorizationLevel.Function, "post", Route = "User/Add")] HttpRequestData req)
         {
             try
             {
+                // Cooldown por IP
+                string ip = null;
+                if (req.Headers.TryGetValues("X-Forwarded-For", out var values))
+                {
+                    ip = values.FirstOrDefault();
+                }
+                else if (req.Headers.TryGetValues("REMOTE_ADDR", out var remoteAddrValues))
+                {
+                    ip = remoteAddrValues.FirstOrDefault();
+                }
+                if (string.IsNullOrEmpty(ip)) ip = "unknown";
+
+                bool isRateLimited = false;
+                lock (AddUserCooldown)
+                {
+                    if (AddUserCooldown.TryGetValue(ip, out var lastRequest) && DateTime.UtcNow - lastRequest < AddUserCooldownWindow)
+                    {
+                        isRateLimited = true;
+                    }
+                    else
+                    {
+                        AddUserCooldown[ip] = DateTime.UtcNow;
+                    }
+                }
+                if (isRateLimited)
+                {
+                    var rateLimited = req.CreateResponse((HttpStatusCode)429);
+                    rateLimited.Headers.Add("Retry-After", AddUserCooldownWindow.TotalSeconds.ToString());
+                    rateLimited.Headers.Add("Content-Type", "text/plain; charset=utf-8");
+                    await rateLimited.WriteStringAsync("RATE LIMITED");
+                    return rateLimited;
+                }
+
                 _logger.LogInformation("Adding new user.");
                 var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
                 var user = JsonSerializer.Deserialize<User>(requestBody);
@@ -169,8 +201,6 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
                     passwordHash = user.Password;
                 }
 
-                // Map
-                // to MODSI_SQLRestAPI.DatabaseHandler.User
                 var dbUser = new User(
                     name: user.Name,
                     email: user.Email,
@@ -205,15 +235,12 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
         {
             try
             {
-                var retrieveToken = new RetrieveToken();
-                var principal = retrieveToken.GetPrincipalFromRequest(req);
-
-
+                var principal = new RetrieveToken().GetPrincipalFromRequest(req);
                 if (principal == null || !principal.Identity.IsAuthenticated || !principal.IsInGroup("ADMIN"))
                 {
-                    var forbiddenResponse = req.CreateResponse(HttpStatusCode.Forbidden);
-                    await forbiddenResponse.WriteStringAsync("Unauthorized or insufficient permissions.");
-                    return forbiddenResponse;
+                    var forbidden = req.CreateResponse(HttpStatusCode.Forbidden);
+                    await forbidden.WriteStringAsync("Unauthorized or insufficient permissions.");
+                    return forbidden;
                 }
 
                 _logger.LogInformation($"Deleting user with Id: {id}");
@@ -233,15 +260,12 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
             }
         }
 
-
         [Function("UpdateUserById")]
         public async Task<HttpResponseData> UpdateUserById([HttpTrigger(AuthorizationLevel.Function, "put", Route = "User/UpdateById/{id:int}")] HttpRequestData req, int id)
         {
             try
             {
-
                 var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-
                 var user = JsonSerializer.Deserialize<User>(requestBody);
                 if (user == null)
                 {
@@ -250,15 +274,18 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
                     return badRequest;
                 }
 
-                // Verifica se está autenticado e se tem permissões de admin
-                var retriveToken = new RetrieveToken();
-                var principal = retriveToken.GetPrincipalFromRequest(req);
+                var principal = new RetrieveToken().GetPrincipalFromRequest(req);
+                bool isAdmin = principal != null && principal.Identity.IsAuthenticated && principal.IsInGroup("ADMIN");
+                bool isSelf = false;
+                var userIdClaim = principal?.Claims.FirstOrDefault(c => c.Type == "id");
+                if (userIdClaim != null && int.TryParse(userIdClaim.Value, out int userIdFromToken))
+                    isSelf = userIdFromToken == id;
 
-                if (principal == null || !principal.Identity.IsAuthenticated || !principal.IsInGroup("ADMIN"))
+                if (!isAdmin && !isSelf)
                 {
-                    var forbiddenResponse = req.CreateResponse(HttpStatusCode.Forbidden);
-                    await forbiddenResponse.WriteStringAsync("Unauthorized or insufficient permissions.");
-                    return forbiddenResponse;
+                    var forbidden = req.CreateResponse(HttpStatusCode.Forbidden);
+                    await forbidden.WriteStringAsync("Unauthorized to update this user.");
+                    return forbidden;
                 }
 
                 var existingUser = await _userService.GetUserById(id);
@@ -271,7 +298,6 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
 
                 user.Id = id;
 
-                // Map MODSI_SQLRestAPI.User to MODSI_SQLRestAPI.DatabaseHandler.User
                 var dbUser = new User
                 {
                     Id = user.Id,
@@ -283,8 +309,8 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
                     CreatedAt = user.CreatedAt,
                     IsVerified = user.IsVerified,
                     Group = user.Group,
-                    Tel = user.Tel, // Pode ser null
-                    Photo = user.Photo // Pode ser null
+                    Tel = user.Tel,
+                    Photo = user.Photo
                 };
 
                 await _userService.UpdateUser(id, dbUser);
@@ -304,10 +330,9 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
             }
         }
 
-
         [Function("UpdateUserByEmail")]
         public async Task<HttpResponseData> UpdateUserByEmail(
-        [HttpTrigger(AuthorizationLevel.Function, "put", Route = "User/Update/{email}")] HttpRequestData req, string email)
+           [HttpTrigger(AuthorizationLevel.Function, "put", Route = "User/Update/{email}")] HttpRequestData req, string email)
         {
             try
             {
@@ -320,9 +345,17 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
                     return badRequest;
                 }
 
-                var retriveToken = new RetrieveToken();
-                var principal = retriveToken.GetPrincipalFromRequest(req);
+                var principal = new RetrieveToken().GetPrincipalFromRequest(req);
                 bool isAdmin = principal != null && principal.Identity.IsAuthenticated && principal.IsInGroup("ADMIN");
+                bool isSelf = principal != null && principal.Identity.IsAuthenticated &&
+                    string.Equals(principal.Claims.FirstOrDefault(c => c.Type == "email")?.Value, email, StringComparison.OrdinalIgnoreCase);
+
+                if (!isAdmin && !isSelf)
+                {
+                    var forbidden = req.CreateResponse(HttpStatusCode.Forbidden);
+                    await forbidden.WriteStringAsync("Unauthorized to update this user.");
+                    return forbidden;
+                }
 
                 var existingUser = await _userService.GetUserByIdentifier(email);
                 if (existingUser == null)
@@ -334,7 +367,6 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
 
                 if (isAdmin)
                 {
-                    // Admin can update everything
                     existingUser.Role = string.IsNullOrWhiteSpace(user.Role) ? existingUser.Role : user.Role;
                     existingUser.Group = string.IsNullOrWhiteSpace(user.Group) ? existingUser.Group : user.Group;
 
@@ -347,12 +379,10 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
                     }
                 }
 
-                // Everyone can update these fields
                 existingUser.Name = string.IsNullOrWhiteSpace(user.Name) ? existingUser.Name : user.Name;
                 existingUser.Tel = string.IsNullOrWhiteSpace(user.Tel) ? existingUser.Tel : user.Tel;
                 existingUser.Photo = user.Photo ?? existingUser.Photo;
 
-                // If not admin and trying to update restricted fields, deny
                 if (!isAdmin && (!string.IsNullOrWhiteSpace(user.Role) || !string.IsNullOrWhiteSpace(user.Group) || !string.IsNullOrWhiteSpace(user.Password)))
                 {
                     var forbiddenResponse = req.CreateResponse(HttpStatusCode.Forbidden);
@@ -377,19 +407,21 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
             }
         }
 
-
-
-
-
         [Function("EmailUserExists")]
         public async Task<HttpResponseData> EmailUserExists(
-        [HttpTrigger(AuthorizationLevel.Function, "get", Route = "User/EmailExists")] HttpRequestData req)
+            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "User/EmailExists")] HttpRequestData req)
         {
             try
             {
-                // Extract email from query string
-                string email = req.Query["email"];
+                var principal = new RetrieveToken().GetPrincipalFromRequest(req);
+                if (principal == null || !principal.Identity.IsAuthenticated)
+                {
+                    var forbidden = req.CreateResponse(HttpStatusCode.Forbidden);
+                    await forbidden.WriteStringAsync("Unauthorized.");
+                    return forbidden;
+                }
 
+                string email = req.Query["email"];
                 if (string.IsNullOrEmpty(email))
                 {
                     return req.CreateResponse(HttpStatusCode.BadRequest);
@@ -413,17 +445,24 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
             }
         }
 
-
-
-
         [Function("GetUserByEmail")]
         public async Task<HttpResponseData> GetUserByEmail(
-        [HttpTrigger(AuthorizationLevel.Function, "get", Route = "User/GetByEmail")] HttpRequestData req)
+            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "User/GetByEmail")] HttpRequestData req)
         {
             try
             {
-                // Extract email from query string
+                var principal = new RetrieveToken().GetPrincipalFromRequest(req);
+                bool isAdmin = principal != null && principal.Identity.IsAuthenticated && principal.IsInGroup("ADMIN");
                 string email = req.Query["email"];
+                bool isSelf = principal != null && principal.Identity.IsAuthenticated &&
+                    string.Equals(principal.Claims.FirstOrDefault(c => c.Type == "email")?.Value, email, StringComparison.OrdinalIgnoreCase);
+
+                if (!isAdmin && !isSelf)
+                {
+                    var forbidden = req.CreateResponse(HttpStatusCode.Forbidden);
+                    await forbidden.WriteStringAsync("Unauthorized to access this user.");
+                    return forbidden;
+                }
 
                 if (string.IsNullOrEmpty(email))
                 {
@@ -454,16 +493,24 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
             }
         }
 
-
-
         [Function("GetUserByUsername")]
         public async Task<HttpResponseData> GetUserByUsername(
-        [HttpTrigger(AuthorizationLevel.Function, "get", Route = "User/GetByUsername")] HttpRequestData req)
+            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "User/GetByUsername")] HttpRequestData req)
         {
             try
             {
-                // Extract email from query string
+                var principal = new RetrieveToken().GetPrincipalFromRequest(req);
+                bool isAdmin = principal != null && principal.Identity.IsAuthenticated && principal.IsInGroup("ADMIN");
                 string username = req.Query["username"];
+                bool isSelf = principal != null && principal.Identity.IsAuthenticated &&
+                    string.Equals(principal.Claims.FirstOrDefault(c => c.Type == "username")?.Value, username, StringComparison.OrdinalIgnoreCase);
+
+                if (!isAdmin && !isSelf)
+                {
+                    var forbidden = req.CreateResponse(HttpStatusCode.Forbidden);
+                    await forbidden.WriteStringAsync("Unauthorized to access this user.");
+                    return forbidden;
+                }
 
                 if (string.IsNullOrEmpty(username))
                 {
@@ -493,16 +540,12 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
             }
         }
 
-
-
-
         [Function("GetUserSalt")]
         public async Task<HttpResponseData> GetUserSalt(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "User/GetUserSalt")] HttpRequestData req)
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "User/GetUserSalt")] HttpRequestData req)
         {
             try
             {
-                // Extrair username ou email da query string
                 var queryParams = Utils.ParseQueryString(req.Url.Query);
                 string identifier = !string.IsNullOrWhiteSpace(queryParams["identifier"]) ? queryParams["identifier"] : queryParams["Identifier"];
 
@@ -515,7 +558,6 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
 
                 _logger.LogInformation($"Retrieving salt for identifier: {identifier}");
 
-                // Buscar o usuário no banco de dados
                 var user = await _userService.GetUserByIdentifier(identifier, true);
 
                 if (user == null)
@@ -525,7 +567,6 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
                     return notFoundResponse;
                 }
 
-                // Retornar o salt
                 var response = req.CreateResponse(HttpStatusCode.OK);
                 response.Headers.Add("Content-Type", "application/json; charset=utf-8");
                 await response.WriteStringAsync(JsonSerializer.Serialize(new { user.Salt }));
@@ -543,10 +584,18 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
 
         [Function("ChangeUserRole")]
         public async Task<HttpResponseData> ChangeUserRole(
-        [HttpTrigger(AuthorizationLevel.Function, "put", Route = "User/ChangeRole/{userId:int}")] HttpRequestData req, int userId)
+            [HttpTrigger(AuthorizationLevel.Function, "put", Route = "User/ChangeRole/{userId:int}")] HttpRequestData req, int userId)
         {
             try
             {
+                var principal = new RetrieveToken().GetPrincipalFromRequest(req);
+                if (principal == null || !principal.Identity.IsAuthenticated || !principal.IsInGroup("ADMIN"))
+                {
+                    var forbidden = req.CreateResponse(HttpStatusCode.Forbidden);
+                    await forbidden.WriteStringAsync("Unauthorized: Only ADMIN can change roles.");
+                    return forbidden;
+                }
+
                 var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
                 var data = JsonSerializer.Deserialize<Dictionary<string, string>>(requestBody);
                 if (data == null || !data.ContainsKey("role"))
@@ -574,10 +623,18 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
 
         [Function("ChangeUserGroup")]
         public async Task<HttpResponseData> UpdateUserGroup(
-        [HttpTrigger(AuthorizationLevel.Function, "put", Route = "User/ChangeGroup/{userId:int}")] HttpRequestData req, int userId)
+            [HttpTrigger(AuthorizationLevel.Function, "put", Route = "User/ChangeGroup/{userId:int}")] HttpRequestData req, int userId)
         {
             try
             {
+                var principal = new RetrieveToken().GetPrincipalFromRequest(req);
+                if (principal == null || !principal.Identity.IsAuthenticated || !principal.IsInGroup("ADMIN"))
+                {
+                    var forbidden = req.CreateResponse(HttpStatusCode.Forbidden);
+                    await forbidden.WriteStringAsync("Unauthorized: Only ADMIN can change groups.");
+                    return forbidden;
+                }
+
                 var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
                 var data = JsonSerializer.Deserialize<Dictionary<string, string>>(requestBody);
                 if (data == null || !data.ContainsKey("group"))
@@ -605,17 +662,11 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
 
         internal static class Utils
         {
-            /// <summary>
-            /// Gera um salt aleatório em Base64.
-            /// </summary>
             public static string GenerateSalt()
             {
                 return Convert.ToBase64String(Guid.NewGuid().ToByteArray());
             }
 
-            /// <summary>
-            /// Faz o hash da password combinada com o salt, usando SHA256.
-            /// </summary>
             public static string HashPassword(string password, string salt)
             {
                 using (var sha256 = SHA256.Create())

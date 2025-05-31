@@ -6,6 +6,7 @@ using MODSI_SQLRestAPI.Company.Departments.Models;
 using MODSI_SQLRestAPI.Company.KPIs.DTO;
 using MODSI_SQLRestAPI.Company.KPIs.Models;
 using MODSI_SQLRestAPI.Company.Services;
+using MODSI_SQLRestAPI.UserAuth.Services;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -33,6 +34,14 @@ namespace MODSI_SQLRestAPI.Company.Departments.Controllers
         public async Task<HttpResponseData> GetAllDepartments(
             [HttpTrigger(AuthorizationLevel.Function, "get", Route = "departments")] HttpRequestData req)
         {
+            var principal = new RetrieveToken().GetPrincipalFromRequest(req);
+            if (principal == null || !principal.Identity.IsAuthenticated)
+            {
+                var forbidden = req.CreateResponse(HttpStatusCode.Forbidden);
+                await forbidden.WriteStringAsync("Unauthorized.");
+                return forbidden;
+            }
+
             _logger.LogInformation("GetAllDepartments function processed a request.");
 
             try
@@ -69,12 +78,19 @@ namespace MODSI_SQLRestAPI.Company.Departments.Controllers
             }
         }
 
-
         [Function("GetDepartmentById")]
         public async Task<HttpResponseData> GetDepartmentById(
             [HttpTrigger(AuthorizationLevel.Function, "get", Route = "departments/{id}")] HttpRequestData req,
             int id)
         {
+            var principal = new RetrieveToken().GetPrincipalFromRequest(req);
+            if (principal == null || !principal.Identity.IsAuthenticated)
+            {
+                var forbidden = req.CreateResponse(HttpStatusCode.Forbidden);
+                await forbidden.WriteStringAsync("Unauthorized.");
+                return forbidden;
+            }
+
             _logger.LogInformation($"GetDepartmentById function processed a request for department {id}.");
 
             try
@@ -123,6 +139,14 @@ namespace MODSI_SQLRestAPI.Company.Departments.Controllers
           [HttpTrigger(AuthorizationLevel.Function, "get", Route = "departments/{id}/kpis")] HttpRequestData req,
           int id)
         {
+            var principal = new RetrieveToken().GetPrincipalFromRequest(req);
+            if (principal == null || !principal.Identity.IsAuthenticated)
+            {
+                var forbidden = req.CreateResponse(HttpStatusCode.Forbidden);
+                await forbidden.WriteStringAsync("Unauthorized.");
+                return forbidden;
+            }
+
             _logger.LogInformation($"GetDepartmentKPIs function processed a request for department {id}.");
 
             try
@@ -154,6 +178,14 @@ namespace MODSI_SQLRestAPI.Company.Departments.Controllers
           [HttpTrigger(AuthorizationLevel.Function, "get", Route = "DepartmentAndKPIs/{id}")] HttpRequestData req,
           int id)
         {
+            var principal = new RetrieveToken().GetPrincipalFromRequest(req);
+            if (principal == null || !principal.Identity.IsAuthenticated)
+            {
+                var forbidden = req.CreateResponse(HttpStatusCode.Forbidden);
+                await forbidden.WriteStringAsync("Unauthorized.");
+                return forbidden;
+            }
+
             _logger.LogInformation($"GetDepartmentAndKPIs function processed a request for department {id}.");
 
             try
@@ -214,6 +246,14 @@ namespace MODSI_SQLRestAPI.Company.Departments.Controllers
         public async Task<HttpResponseData> CreateDepartment(
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = "departments")] HttpRequestData req)
         {
+            var principal = new RetrieveToken().GetPrincipalFromRequest(req);
+            if (principal == null || !principal.Identity.IsAuthenticated || !principal.IsInGroup("ADMIN"))
+            {
+                var forbidden = req.CreateResponse(HttpStatusCode.Forbidden);
+                await forbidden.WriteStringAsync("Unauthorized: Only ADMIN can create departments.");
+                return forbidden;
+            }
+
             _logger.LogInformation("CreateDepartment function processed a request.");
 
             try
@@ -247,6 +287,14 @@ namespace MODSI_SQLRestAPI.Company.Departments.Controllers
             [HttpTrigger(AuthorizationLevel.Function, "put", Route = "departments/{id}")] HttpRequestData req,
             int id)
         {
+            var principal = new RetrieveToken().GetPrincipalFromRequest(req);
+            if (principal == null || !principal.Identity.IsAuthenticated || !principal.IsInGroup("ADMIN"))
+            {
+                var forbidden = req.CreateResponse(HttpStatusCode.Forbidden);
+                await forbidden.WriteStringAsync("Unauthorized: Only ADMIN can update departments.");
+                return forbidden;
+            }
+
             _logger.LogInformation($"UpdateDepartment function processed a request for department {id}.");
 
             try
@@ -287,6 +335,14 @@ namespace MODSI_SQLRestAPI.Company.Departments.Controllers
             [HttpTrigger(AuthorizationLevel.Function, "delete", Route = "departments/{id}")] HttpRequestData req,
             int id)
         {
+            var principal = new RetrieveToken().GetPrincipalFromRequest(req);
+            if (principal == null || !principal.Identity.IsAuthenticated || !principal.IsInGroup("ADMIN"))
+            {
+                var forbidden = req.CreateResponse(HttpStatusCode.Forbidden);
+                await forbidden.WriteStringAsync("Unauthorized: Only ADMIN can delete departments.");
+                return forbidden;
+            }
+
             _logger.LogInformation($"DeleteDepartment function processed a request for department {id}.");
 
             try
@@ -310,6 +366,14 @@ namespace MODSI_SQLRestAPI.Company.Departments.Controllers
             int departmentId,
             int kpiId)
         {
+            var principal = new RetrieveToken().GetPrincipalFromRequest(req);
+            if (principal == null || !principal.Identity.IsAuthenticated || !principal.IsInGroup("ADMIN"))
+            {
+                var forbidden = req.CreateResponse(HttpStatusCode.Forbidden);
+                await forbidden.WriteStringAsync("Unauthorized: Only ADMIN can add KPIs to departments.");
+                return forbidden;
+            }
+
             _logger.LogInformation($"AddKPIFromDepartment function processed a request for department {departmentId} and KPI {kpiId}.");
 
             try
@@ -333,6 +397,14 @@ namespace MODSI_SQLRestAPI.Company.Departments.Controllers
             int departmentId,
             int kpiId)
         {
+            var principal = new RetrieveToken().GetPrincipalFromRequest(req);
+            if (principal == null || !principal.Identity.IsAuthenticated || !principal.IsInGroup("ADMIN"))
+            {
+                var forbidden = req.CreateResponse(HttpStatusCode.Forbidden);
+                await forbidden.WriteStringAsync("Unauthorized: Only ADMIN can remove KPIs from departments.");
+                return forbidden;
+            }
+
             _logger.LogInformation($"RemoveKPIFromDepartment function processed a request for department {departmentId} and KPI {kpiId}.");
 
             try
@@ -356,6 +428,14 @@ namespace MODSI_SQLRestAPI.Company.Departments.Controllers
             int roleId,
             int departmentId)
         {
+            var principal = new RetrieveToken().GetPrincipalFromRequest(req);
+            if (principal == null || !principal.Identity.IsAuthenticated || !principal.IsInGroup("ADMIN"))
+            {
+                var forbidden = req.CreateResponse(HttpStatusCode.Forbidden);
+                await forbidden.WriteStringAsync("Unauthorized: Only ADMIN can update permissions.");
+                return forbidden;
+            }
+
             _logger.LogInformation($"UpdatePermissions function processed a request for role {roleId} and department {departmentId}.");
 
             try

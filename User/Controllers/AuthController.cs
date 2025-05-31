@@ -40,11 +40,9 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
             {
                 _logger.LogInformation("User login attempt.");
 
-                // Ler o corpo da requisição
                 var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
                 var loginRequest = JsonSerializer.Deserialize<LoginRequest>(requestBody);
 
-                // Validar credenciais do usuário por email ou username
                 User user = null;
                 if (!string.IsNullOrEmpty(loginRequest.Email))
                 {
@@ -57,7 +55,6 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
                     user = await _userRepository.AuthenticateUserAsync(loginRequest.Username, loginRequest.Password);
                 }
 
-                // Verificar se o usuário foi encontrado e a senha é válida
                 if (user == null)
                 {
                     _logger.LogWarning("Invalid login attempt.");
@@ -66,10 +63,8 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
                     return result;
                 }
 
-                // Gerar o token JWT
                 var token = TokenService.GenerateToken(user);
 
-                // Retornar o token ao cliente
                 var response = req.CreateResponse(HttpStatusCode.OK);
                 response.Headers.Add("Content-Type", "application/json; charset=utf-8");
                 await response.WriteStringAsync(JsonSerializer.Serialize(new { Token = token }));
@@ -88,7 +83,6 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
         {
             try
             {
-                // Extrai o token do header Authorization
                 if (!req.Headers.TryGetValues("Authorization", out var authHeaders))
                 {
                     var forbidden = req.CreateResponse(HttpStatusCode.Forbidden);
@@ -106,7 +100,6 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
 
                 var token = authHeader.Substring("Bearer ".Length);
 
-                // Valida o token
                 var principal = TokenService.ValidateToken(token);
                 if (principal == null || !principal.Identity.IsAuthenticated)
                 {
@@ -132,7 +125,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
             [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "User/RequestPasswordReset")] HttpRequestData req)
         {
             var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            var dto = JsonSerializer.Deserialize<PasswordResetRequestDTO>(requestBody);
+            var dto = JsonSerializer.Deserialize<PasswordResetRequestDTO>(requestBody.Replace("email", "Email"));
 
             if (dto == null || string.IsNullOrWhiteSpace(dto.Email))
             {
@@ -185,13 +178,10 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
 
             // Generate secure code
             var code = Convert.ToBase64String(Guid.NewGuid().ToByteArray()).Replace("=", "").Replace("+", "").Replace("/", "");
-            // Saves the code and userId in a temporary table (PasswordResetCode), with expiration (ex: 15min)
             await _userService.StorePasswordResetCode(user.Id, code, DateTime.UtcNow.AddMinutes(15));
 
-            // Link to redirect
             var link = ConfigurationManager.AppSettings["PasswordResetPageLink"] + code;
 
-            // Send email via Resend API
             var apiKey = ConfigurationManager.AppSettings["Resend_APIKey"];
             var emailBody = $"Olá, clique no link para resetar sua senha: <a href=\"{link}\">{link}</a><br><br>Código: {code}";
             var emailSent = await SendEmailWithResendApi(apiKey, user.Email, "Password Reset", emailBody);
@@ -231,7 +221,6 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
         public async Task<HttpResponseData> SetPasswordByResetCode(
             [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "User/SetPasswordByResetCode")] HttpRequestData req)
         {
-            // Lê o corpo da requisição
             var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
             var data = JsonSerializer.Deserialize<Dictionary<string, string>>(requestBody);
 
@@ -250,7 +239,6 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
 
             string code = data["code"];
 
-            // Busca o código na base temporária
             var resetEntry = await _userService.GetPasswordResetCodeEntry(code);
             if (resetEntry == null || resetEntry.Expiration < DateTime.UtcNow)
             {
@@ -270,14 +258,12 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
             string newPassword = data["password"];
             string newSalt = data.ContainsKey("salt") ? data["salt"] : null;
 
-            // Se não foi enviado salt, gera um novo e faz o hash da senha
             if (string.IsNullOrWhiteSpace(newSalt))
             {
                 newSalt = UserRepository.PasswordUtils.GenerateSalt();
                 newPassword = UserRepository.PasswordUtils.HashPassword(newPassword, newSalt);
             }
 
-            // Atualiza a senha e o salt do usuário
             user.Password = newPassword;
             user.Salt = newSalt;
             await _userRepository.UpdateUserByIdAsync(user);
