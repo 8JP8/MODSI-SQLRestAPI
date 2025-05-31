@@ -51,14 +51,6 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
         {
             try
             {
-                var principal = new RetrieveToken().GetPrincipalFromRequest(req);
-                if (principal == null || !principal.Identity.IsAuthenticated)
-                {
-                    var forbidden = req.CreateResponse(HttpStatusCode.Forbidden);
-                    await forbidden.WriteStringAsync("Unauthorized.");
-                    return forbidden;
-                }
-
                 string username = req.Query["username"];
                 if (string.IsNullOrEmpty(username))
                 {
@@ -413,14 +405,6 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
         {
             try
             {
-                var principal = new RetrieveToken().GetPrincipalFromRequest(req);
-                if (principal == null || !principal.Identity.IsAuthenticated)
-                {
-                    var forbidden = req.CreateResponse(HttpStatusCode.Forbidden);
-                    await forbidden.WriteStringAsync("Unauthorized.");
-                    return forbidden;
-                }
-
                 string email = req.Query["email"];
                 if (string.IsNullOrEmpty(email))
                 {
