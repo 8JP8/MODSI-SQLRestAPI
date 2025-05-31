@@ -7,6 +7,11 @@ namespace MODSI_SQLRestAPI.UserAuth.DTO
         public string Email { get; set; }
     }
 
+    public class EmailVerificationDTO
+    {
+        public string Email { get; set; }
+    }
+
     public class PasswordResetCodeEntry
     {
         public int UserId { get; set; }

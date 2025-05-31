@@ -239,6 +239,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Services
         }
 
         private static readonly Dictionary<string, PasswordResetCodeEntry> PasswordResetCodes = new Dictionary<string, PasswordResetCodeEntry>();
+        private static readonly Dictionary<string, PasswordResetCodeEntry> VerificationCodes = new Dictionary<string, PasswordResetCodeEntry>();
 
         public Task StorePasswordResetCode(int userId, string code, DateTime expiration)
         {
@@ -259,6 +260,29 @@ namespace MODSI_SQLRestAPI.UserAuth.Services
             lock (PasswordResetCodes)
             {
                 PasswordResetCodes.TryGetValue(code, out var entry);
+                return Task.FromResult(entry);
+            }
+        }
+
+        public Task StoreVerificationCode(int userId, string code, DateTime expiration)
+        {
+            lock (VerificationCodes)
+            {
+                VerificationCodes[code] = new PasswordResetCodeEntry
+                {
+                    UserId = userId,
+                    Code = code,
+                    Expiration = expiration
+                };
+            }
+            return Task.CompletedTask;
+        }
+
+        public Task<PasswordResetCodeEntry> GetVerificationCodeEntry(string code)
+        {
+            lock (VerificationCodes)
+            {
+                VerificationCodes.TryGetValue(code, out var entry);
                 return Task.FromResult(entry);
             }
         }

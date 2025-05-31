@@ -303,5 +303,93 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
             return response;
         }
 
+        [Function("RequestUserVerification")]
+        public async Task<HttpResponseData> RequestUserVerification(
+            [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "User/RequestUserVerification")] HttpRequestData req)
+        {
+            var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+            var dto = JsonSerializer.Deserialize<PasswordResetRequestDTO>(requestBody);
+
+            if (dto == null || string.IsNullOrWhiteSpace(dto.Email))
+            {
+                var badRequest = req.CreateResponse(HttpStatusCode.BadRequest);
+                await badRequest.WriteStringAsync("Email is required.");
+                return badRequest;
+            }
+
+            // Verifica se o utilizador existe
+            var user = await _userService.GetUserByIdentifier(dto.Email);
+            if (user == null)
+            {
+                var notFound = req.CreateResponse(HttpStatusCode.NotFound);
+                await notFound.WriteStringAsync("User not found.");
+                return notFound;
+            }
+
+            // Gera código seguro
+            var code = Convert.ToBase64String(Guid.NewGuid().ToByteArray()).Replace("=", "").Replace("+", "").Replace("/", "");
+            await _userService.StoreVerificationCode(user.Id, code, DateTime.UtcNow.AddMinutes(30));
+
+            // Link de verificação
+            var link = ConfigurationManager.AppSettings["UserVerificationPageLink"] + code;
+
+            // Envia email
+            var apiKey = ConfigurationManager.AppSettings["Resend_APIKey"];
+            var emailBody = MODSI_SQLRestAPI.UserAuth.Email.EmailTemplates.VerificationEmail(link, code);
+            var emailSent = await SendEmailWithResendApi(apiKey, user.Email, "Verificação de Conta", emailBody);
+
+            if (!emailSent)
+            {
+                var error = req.CreateResponse(HttpStatusCode.InternalServerError);
+                await error.WriteStringAsync("Failed to send verification email.");
+                return error;
+            }
+
+            var response = req.CreateResponse(HttpStatusCode.OK);
+            await response.WriteStringAsync("Verification email sent.");
+            return response;
+        }
+
+        [Function("VerifyUserByCode")]
+        public async Task<HttpResponseData> VerifyUserByCode(
+            [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "User/VerifyUser")] HttpRequestData req)
+        {
+            var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+            var data = JsonSerializer.Deserialize<Dictionary<string, string>>(requestBody);
+
+            if (data == null || !data.ContainsKey("verificationCode") || string.IsNullOrWhiteSpace(data["verificationCode"]))
+            {
+                var badRequest = req.CreateResponse(HttpStatusCode.BadRequest);
+                await badRequest.WriteStringAsync("Verification code is required.");
+                return badRequest;
+            }
+
+            string code = data["verificationCode"];
+
+            // Busca o código na base temporária
+            var verificationEntry = await _userService.GetVerificationCodeEntry(code);
+            if (verificationEntry == null || verificationEntry.Expiration < DateTime.UtcNow)
+            {
+                var notFound = req.CreateResponse(HttpStatusCode.NotFound);
+                await notFound.WriteStringAsync("Invalid or expired verification code.");
+                return notFound;
+            }
+
+            var user = await _userRepository.GetUserByIdEntityAsync(verificationEntry.UserId);
+            if (user == null)
+            {
+                var notFound = req.CreateResponse(HttpStatusCode.NotFound);
+                await notFound.WriteStringAsync("User not found.");
+                return notFound;
+            }
+
+            // Atualiza o utilizador para verificado
+            user.IsVerified = true;
+            await _userRepository.UpdateUserByIdAsync(user);
+
+            var response = req.CreateResponse(HttpStatusCode.OK);
+            await response.WriteStringAsync("User verified successfully.");
+            return response;
+        }
     }
 }
