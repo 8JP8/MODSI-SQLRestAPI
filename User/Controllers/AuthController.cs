@@ -125,7 +125,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
             [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "User/RequestPasswordReset")] HttpRequestData req)
         {
             var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            var dto = JsonSerializer.Deserialize<PasswordResetRequestDTO>(requestBody.Replace("email", "Email"));
+            var dto = JsonSerializer.Deserialize<PasswordResetRequestDTO>(requestBody);
 
             if (dto == null || string.IsNullOrWhiteSpace(dto.Email))
             {
@@ -167,7 +167,6 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
                 return rateLimited;
             }
 
-            // Check if user exists
             var user = await _userService.GetUserByIdentifier(dto.Email);
             if (user == null)
             {
@@ -176,7 +175,6 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
                 return notFound;
             }
 
-            // Generate secure code
             var code = Convert.ToBase64String(Guid.NewGuid().ToByteArray()).Replace("=", "").Replace("+", "").Replace("/", "");
             await _userService.StorePasswordResetCode(user.Id, code, DateTime.UtcNow.AddMinutes(15));
 
@@ -198,7 +196,6 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
             return response;
         }
 
-        // Auxiliar function to send the email
         internal async Task<bool> SendEmailWithResendApi(string apiKey, string to, string subject, string html)
         {
             using (var client = new HttpClient())
@@ -317,7 +314,6 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
                 return badRequest;
             }
 
-            // Verifica se o utilizador existe
             var user = await _userService.GetUserByIdentifier(dto.Email);
             if (user == null)
             {
@@ -326,14 +322,11 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
                 return notFound;
             }
 
-            // Gera código seguro
             var code = Convert.ToBase64String(Guid.NewGuid().ToByteArray()).Replace("=", "").Replace("+", "").Replace("/", "");
             await _userService.StoreVerificationCode(user.Id, code, DateTime.UtcNow.AddMinutes(30));
 
-            // Link de verificação
             var link = ConfigurationManager.AppSettings["UserVerificationPageLink"] + code;
 
-            // Envia email
             var apiKey = ConfigurationManager.AppSettings["Resend_APIKey"];
             var emailBody = MODSI_SQLRestAPI.UserAuth.Email.EmailTemplates.VerificationEmail(link, code);
             var emailSent = await SendEmailWithResendApi(apiKey, user.Email, "Verificação de Conta", emailBody);
@@ -366,7 +359,6 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
 
             string code = data["verificationCode"];
 
-            // Busca o código na base temporária
             var verificationEntry = await _userService.GetVerificationCodeEntry(code);
             if (verificationEntry == null || verificationEntry.Expiration < DateTime.UtcNow)
             {
@@ -383,7 +375,6 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
                 return notFound;
             }
 
-            // Atualiza o utilizador para verificado
             user.IsVerified = true;
             await _userRepository.UpdateUserByIdAsync(user);
 
