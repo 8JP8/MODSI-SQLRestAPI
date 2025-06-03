@@ -21,7 +21,6 @@ namespace MODSI_SQLRestAPI.Company.Roles.Controllers
         private readonly IRoleService _roleService;
         private readonly ILogger<RoleFunctions> _logger;
         private readonly IKPIService _kpiService;
-        private readonly IKPIService _departmentService;
 
         public RoleFunctions(IRoleService roleService, IKPIService kpiService, ILogger<RoleFunctions> logger)
         {
@@ -153,13 +152,13 @@ namespace MODSI_SQLRestAPI.Company.Roles.Controllers
                         {
                             kpiList.Add(new
                             {
-                                Id = kpi.Id,
-                                Name = kpi.Name,
-                                Description = kpi.Description,
-                                Unit = kpi.Unit,
-                                Value_1 = kpi.Value_1,
-                                Value_2 = kpi.Value_2,
-                                ByProduct = kpi.ByProduct
+                                kpi.Id,
+                                kpi.Name,
+                                kpi.Description,
+                                kpi.Unit,
+                                kpi.Value_1,
+                                kpi.Value_2,
+                                kpi.ByProduct
                             });
                         }
                     }
@@ -207,10 +206,10 @@ namespace MODSI_SQLRestAPI.Company.Roles.Controllers
                     .Where(rdp => rdp.Department != null && (rdp.CanRead || rdp.CanWrite))
                     .Select(rdp => new
                     {
-                        Id = rdp.Department.Id,
-                        Name = rdp.Department.Name,
-                        CanRead = rdp.CanRead,
-                        CanWrite = rdp.CanWrite
+                        rdp.Department.Id,
+                        rdp.Department.Name,
+                        rdp.CanRead,
+                        rdp.CanWrite
                     })
                     .Distinct()
                     .ToList();

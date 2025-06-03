@@ -204,9 +204,9 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
                 var content = new StringContent(JsonSerializer.Serialize(new
                 {
                     from = "no-reply@modsivr.pt",
-                    to = to,
-                    subject = subject,
-                    html = html
+                    to,
+                    subject,
+                    html
                 }), Encoding.UTF8, "application/json");
 
                 var result = await client.PostAsync("https://api.resend.com/emails", content);

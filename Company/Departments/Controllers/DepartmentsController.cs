@@ -53,13 +53,13 @@ namespace MODSI_SQLRestAPI.Company.Departments.Controllers
                     Name = department.Name,
                     RolesWithReadAccess = (department.RoleDepartmentPermissions ?? new List<RoleDepartmentPermission>())
                         .Where(rdp => rdp.CanRead)
-                        .Select(rdp => rdp.Role != null ? rdp.Role.Name : null)
+                        .Select(rdp => rdp.Role?.Name)
                         .Where(name => !string.IsNullOrEmpty(name))
                         .Distinct()
                         .ToList(),
                     RolesWithWriteAccess = (department.RoleDepartmentPermissions ?? new List<RoleDepartmentPermission>())
                         .Where(rdp => rdp.CanWrite)
-                        .Select(rdp => rdp.Role != null ? rdp.Role.Name : null)
+                        .Select(rdp => rdp.Role?.Name)
                         .Where(name => !string.IsNullOrEmpty(name))
                         .Distinct()
                         .ToList()
@@ -109,13 +109,13 @@ namespace MODSI_SQLRestAPI.Company.Departments.Controllers
                     Name = department.Name,
                     RolesWithReadAccess = (department.RoleDepartmentPermissions ?? new List<RoleDepartmentPermission>())
                         .Where(rdp => rdp.CanRead)
-                        .Select(rdp => rdp.Role != null ? rdp.Role.Name : null)
+                        .Select(rdp => rdp.Role?.Name)
                         .Where(name => !string.IsNullOrEmpty(name))
                         .Distinct()
                         .ToList(),
                     RolesWithWriteAccess = (department.RoleDepartmentPermissions ?? new List<RoleDepartmentPermission>())
                         .Where(rdp => rdp.CanWrite)
-                        .Select(rdp => rdp.Role != null ? rdp.Role.Name : null)
+                        .Select(rdp => rdp.Role?.Name)
                         .Where(name => !string.IsNullOrEmpty(name))
                         .Distinct()
                         .ToList()
@@ -205,13 +205,13 @@ namespace MODSI_SQLRestAPI.Company.Departments.Controllers
                     Name = department.Name,
                     RolesWithReadAccess = (department.RoleDepartmentPermissions ?? new List<RoleDepartmentPermission>())
                         .Where(rdp => rdp.CanRead)
-                        .Select(rdp => rdp.Role != null ? rdp.Role.Name : null)
+                        .Select(rdp => rdp.Role?.Name)
                         .Where(name => !string.IsNullOrEmpty(name))
                         .Distinct()
                         .ToList(),
                     RolesWithWriteAccess = (department.RoleDepartmentPermissions ?? new List<RoleDepartmentPermission>())
                         .Where(rdp => rdp.CanWrite)
-                        .Select(rdp => rdp.Role != null ? rdp.Role.Name : null)
+                        .Select(rdp => rdp.Role?.Name)
                         .Where(name => !string.IsNullOrEmpty(name))
                         .Distinct()
                         .ToList(),

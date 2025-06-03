@@ -48,11 +48,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Services
 
         internal async Task<UserDTO> GetUserById(int id)
         {
-            var user = await _databaseHandler.GetUserByIdAsync(id);
-            if (user == null)
-            {
-                throw new NotFoundException($"Usuário com ID {id} não encontrado.");
-            }
+            var user = await _databaseHandler.GetUserByIdAsync(id) ?? throw new NotFoundException($"Usuário com ID {id} não encontrado.");
             return user;
         }
 
@@ -83,23 +79,14 @@ namespace MODSI_SQLRestAPI.UserAuth.Services
 
         internal async Task DeleteUser(int id)
         {
-            var user = await _databaseHandler.GetUserByIdAsync(id);
-            if (user == null)
-            {
-                throw new NotFoundException($"Usuário com ID {id} não encontrado.");
-            }
+            //UserDTO user = await _databaseHandler.GetUserByIdAsync(id) ?? throw new NotFoundException($"Usuário com ID {id} não encontrado.");
             await _databaseHandler.DeleteUserByIdAsync(id);
 
         }
 
-        internal async Task<UserDTO> UpdateUser(int id, User user)
+        internal async Task<UserDTO> UpdateUser(User user)
         {
-            var existingUser = await _databaseHandler.GetUserByIdAsync(id);
-            if (existingUser == null)
-            {
-                throw new NotFoundException($"Usuário com ID {id} não encontrado.");
-            }
-
+            //UserDTO existingUser = await _databaseHandler.GetUserByIdAsync(id) ?? throw new NotFoundException($"Usuário com ID {id} não encontrado.");
             await _databaseHandler.UpdateUserByIdAsync(user);
 
             return new UserDTO(user.Name, user.Email, user.Username, user.Role, user.Group, user.Photo, user.Tel);
@@ -117,20 +104,13 @@ namespace MODSI_SQLRestAPI.UserAuth.Services
         internal async Task<User> GetUserByIdentifier(string identifier, bool return_salt = false)
         {
             var user = await _databaseHandler.GetUserByIdentifierAsync(identifier, return_salt);
-            if (user == null)
-            {
-                throw new NotFoundException($"Usuário com username/email {identifier} não encontrado.");
-            }
-            return user;
+            return user ?? throw new NotFoundException($"Usuário com username/email {identifier} não encontrado.");
         }
 
         internal async Task<UserDTO> ChangeUserRole(int userId, string roleNameOrId)
         {
             // Verifica se o usuário existe
-            var user = await _databaseHandler.GetUserByIdAsync(userId);
-            if (user == null)
-                throw new NotFoundException($"Usuário com ID {userId} não encontrado.");
-
+            //var user = await _databaseHandler.GetUserByIdAsync(userId) ?? throw new NotFoundException($"Usuário com ID {userId} não encontrado.");
             string roleName = roleNameOrId;
 
             // Se for um número, trata como ID
@@ -169,10 +149,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Services
         internal async Task<UserDTO> ChangeUserGroup(int userId, string groupNameOrId)
         {
             // Verifica se o usuário existe
-            var user = await _databaseHandler.GetUserByIdAsync(userId);
-            if (user == null)
-                throw new NotFoundException($"Usuário com ID {userId} não encontrado.");
-
+            //UserDTO user = await _databaseHandler.GetUserByIdAsync(userId) ?? throw new NotFoundException($"Usuário com ID {userId} não encontrado.");
             string groupName = groupNameOrId;
 
             // Se for um número, trata como ID

@@ -305,7 +305,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
                     Photo = user.Photo
                 };
 
-                await _userService.UpdateUser(id, dbUser);
+                await _userService.UpdateUser(dbUser);
 
                 var response = req.CreateResponse(HttpStatusCode.OK);
                 response.Headers.Add("Content-Type", "text/plain; charset=utf-8");
@@ -382,7 +382,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
                     return forbiddenResponse;
                 }
 
-                var userDTO = await _userService.UpdateUser(existingUser.Id, existingUser);
+                var userDTO = await _userService.UpdateUser(existingUser);
 
                 var response = req.CreateResponse(HttpStatusCode.OK);
                 response.Headers.Add("Content-Type", "application/json; charset=utf-8");

@@ -100,8 +100,7 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Controllers
             int? kpiId = null;
             if (!string.IsNullOrEmpty(kpiIdStr))
             {
-                int parsed;
-                if (!int.TryParse(kpiIdStr, out parsed))
+                if (!int.TryParse(kpiIdStr, out int parsed))
                 {
                     var badRequest = req.CreateResponse(HttpStatusCode.BadRequest);
                     await badRequest.WriteStringAsync("O parâmetro 'kpiId' deve ser um número inteiro.");
@@ -303,7 +302,7 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Controllers
                 return forbiddenResponse;
             }
 
-            var (canRead, canWrite) = await GetUserKPIAccess(id, principal);
+            (_, bool canWrite) = await GetUserKPIAccess(id, principal);
             if (!canWrite && !principal.IsInGroup("ADMIN"))
             {
                 var forbiddenResponse = req.CreateResponse(HttpStatusCode.Forbidden);
@@ -362,7 +361,7 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Controllers
                 return forbidden;
             }
 
-            var (canRead, canWrite) = await GetUserKPIAccess(id, principal);
+            var (_, canWrite) = await GetUserKPIAccess(id, principal);
             if (!canWrite && !principal.IsInGroup("ADMIN"))
             {
                 var forbidden = req.CreateResponse(HttpStatusCode.Forbidden);
