@@ -14,11 +14,9 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-// Apenas resposável por fazer o CRUD de Users e verificar se autenticação é válida (token) para o pedido efetuado
-
 namespace MODSI_SQLRestAPI.UserAuth.Controllers
 {
-    class UserController
+    internal class UserController
     {
 
         private readonly ILogger _logger;

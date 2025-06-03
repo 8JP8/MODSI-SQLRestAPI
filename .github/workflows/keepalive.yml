@@ -1,0 +1,28 @@
+name: Keep MODSI API Alive
+
+on:
+  schedule:
+    - cron: '*/2 * * * *'  # Every 10 minutes
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  keepalive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping MODSI API
+        run: |
+          response=$(curl -s -w "\n%{http_code}" -X GET \
+            "https://modsi-api-ffhhfgecfdehhscv.spaincentral-01.azurewebsites.net/api/CheckAPI?code=z4tKbNFdaaXzHZ4ayn9pRQokNWYgRkbVkCjOxTxP-8ChAzFuMigGCw==")
+          
+          http_code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | head -n -1)
+          
+          echo "Response: $body"
+          echo "HTTP Code: $http_code"
+          
+          if [ "$http_code" -eq 200 ]; then
+            echo "✅ API is healthy"
+          else
+            echo "❌ API returned code: $http_code"
+            exit 1
+          fi

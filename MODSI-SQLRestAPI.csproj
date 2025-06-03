@@ -16,10 +16,16 @@
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.3.0" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker" Version="2.0.0" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http" Version="3.3.0" />
+    <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.ServiceBus" Version="5.22.2" />
+    <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Storage" Version="6.7.0" />
+    <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Timer" Version="4.3.1" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk" Version="2.0.2" />
     <PackageReference Include="Microsoft.Azure.WebJobs.Extensions" Version="5.0.0" />
+    <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.ServiceBus" Version="5.16.6" />
+    <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.Storage" Version="5.3.4" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="3.1.32" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="3.1.32" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.5" />
     <PackageReference Include="Microsoft.OpenApi" Version="1.6.24" />
     <PackageReference Include="Microsoft.Owin" Version="4.2.2" />
     <PackageReference Include="Microsoft.Owin.Cors" Version="4.2.2" />

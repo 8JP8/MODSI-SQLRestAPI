@@ -1,4 +1,5 @@
 ﻿using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -13,10 +14,7 @@ using MODSI_SQLRestAPI.Company.Roles.Services;
 using MODSI_SQLRestAPI.Company.Services;
 using MODSI_SQLRestAPI.Infrastructure.Data;
 using MODSI_SQLRestAPI.UserAuth.Services;
-using System.Net.Http;
-using System.Threading.Tasks;
-using System;
-using Microsoft.Azure.WebJobs;
+using System.Net;
 
 namespace MODSI_SQLRestAPI
 {
@@ -46,6 +44,7 @@ namespace MODSI_SQLRestAPI
                     services.AddScoped<IValueHistoryService, ValueHistoryService>();
                     services.AddScoped<Rooms.Services.RoomService>();
 
+                    services.AddHttpClient();
                 })
                 .Build();
 
@@ -53,40 +52,23 @@ namespace MODSI_SQLRestAPI
         }
     }
 
-    public class KeepWarmFunction
+    public class APICheck
     {
-        private static readonly HttpClient _httpClient = new HttpClient();
+        private readonly ILogger<APICheck> _logger;
 
-        [Function("KeepWarm")]
-        public async Task Run(FunctionContext context)
+        public APICheck(ILogger<APICheck> logger)
         {
-            var logger = context.GetLogger("KeepWarm");
-            logger.LogInformation($"KeepWarm function executed at: {DateTime.UtcNow}");
-
-            try
-            {
-                var url = Environment.GetEnvironmentVariable("KEEPWARM_URL") ?? "https://<SEU-URL-DA-API>/api/health";
-                var response = await _httpClient.GetAsync(url);
-                logger.LogInformation($"KeepWarm ping status: {response.StatusCode}");
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning($"KeepWarm ping failed: {ex.Message}");
-            }
+            _logger = logger;
         }
-    }
 
-    // Classe auxiliar para o TimerTrigger (pode ser vazia)
-    public class MyInfo
-    {
-        public MyScheduleStatus ScheduleStatus { get; set; }
-        public bool IsPastDue { get; set; }
-    }
-
-    public class MyScheduleStatus
-    {
-        public DateTime Last { get; set; }
-        public DateTime Next { get; set; }
-        public DateTime LastUpdated { get; set; }
+        [Function("CheckAPI")]
+        public HttpResponseData CheckApi([HttpTrigger(AuthorizationLevel.Function, "get")] HttpRequestData req)
+        {
+            _logger.LogInformation("CheckApi function executed at: {time}", System.DateTime.Now);
+            var response = req.CreateResponse(HttpStatusCode.OK);
+            response.Headers.Add("Content-Type", "application/json");
+            response.WriteString("{\"Status\": \"Healthy\", \"timestamp\": \"" + System.DateTime.UtcNow + "\"}");
+            return response;
+        }
     }
 }
