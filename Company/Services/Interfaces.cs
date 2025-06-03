@@ -18,6 +18,8 @@ namespace MODSI_SQLRestAPI.Company.Services
         Task AddKPIFromDepartmentAsync(int departmentId, int kpiId);
         Task RemoveKPIFromDepartmentAsync(int departmentId, int kpiId);
         Task UpdatePermissionsAsync(int roleId, int departmentId, bool canRead, bool canWrite);
+        Task<IEnumerable<Department>> GetDepartmentsByKPIIdAsync(int kpiId);
+        Task<IEnumerable<RoleDepartmentPermission>> GetRoleDepartmentPermissionsByPrincipalAsync(System.Security.Claims.ClaimsPrincipal principal);
     }
 
     public interface IKPIService

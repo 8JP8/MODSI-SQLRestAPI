@@ -1,4 +1,5 @@
-﻿using MODSI_SQLRestAPI.Company.KPIs.Models;
+﻿using MODSI_SQLRestAPI.Company.Departments.Models;
+using MODSI_SQLRestAPI.Company.KPIs.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
@@ -18,12 +19,14 @@ namespace MODSI_SQLRestAPI.Company.Repositories
 
     public interface IDepartmentRepository : IRepository<Departments.Models.Department>
     {
-        Task<Departments.Models.Department> GetDepartmentAndKPIsAsync(int id);
-        Task<IEnumerable<Departments.Models.Department>> GetDepartmentAndKPIsAsync();
-        Task<IEnumerable<Departments.Models.Department>> GetDepartmentsByRoleIdAsync(int roleId);
+        Task<Department> GetDepartmentAndKPIsAsync(int id);
+        Task<IEnumerable<Department>> GetDepartmentAndKPIsAsync();
+        Task<IEnumerable<Department>> GetDepartmentsByRoleIdAsync(int roleId);
+        Task<IEnumerable<Department>> GetDepartmentsByKPIIdAsync(int kpiId);
         Task AddKPIFromDepartmentAsync(int departmentId, int kpiId);
         Task RemoveKPIFromDepartmentAsync(int departmentId, int kpiId);
         Task UpdatePermissionsAsync(int roleId, int departmentId, bool canRead, bool canWrite);
+        Task<IEnumerable<RoleDepartmentPermission>> GetRoleDepartmentPermissionsByRoleIdAsync(int roleId);
     }
 
     public interface IKPIRepository : IRepository<KPIs.Models.KPI>

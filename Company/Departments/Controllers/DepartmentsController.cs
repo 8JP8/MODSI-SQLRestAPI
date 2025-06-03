@@ -446,7 +446,7 @@ namespace MODSI_SQLRestAPI.Company.Departments.Controllers
                 if (permissions == null || !permissions.TryGetValue("canRead", out bool canRead) || !permissions.TryGetValue("canWrite", out bool canWrite))
                 {
                     var badRequestResponse = req.CreateResponse(HttpStatusCode.BadRequest);
-                    await badRequestResponse.WriteStringAsync("Invalid permissions data. Required fields: canRead, canWrite");
+                    await badRequestResponse.WriteStringAsync("Invali permissions data. Required fields: canRead, canWrite");
                     return badRequestResponse;
                 }
 

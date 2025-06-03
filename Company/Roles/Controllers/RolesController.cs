@@ -1,6 +1,7 @@
 ﻿using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
+using MODSI_SQLRestAPI.Company.Departments.Services;
 using MODSI_SQLRestAPI.Company.KPIs.Services;
 using MODSI_SQLRestAPI.Company.Roles.DTOs;
 using MODSI_SQLRestAPI.Company.Services;
@@ -20,6 +21,7 @@ namespace MODSI_SQLRestAPI.Company.Roles.Controllers
         private readonly IRoleService _roleService;
         private readonly ILogger<RoleFunctions> _logger;
         private readonly IKPIService _kpiService;
+        private readonly IKPIService _departmentService;
 
         public RoleFunctions(IRoleService roleService, IKPIService kpiService, ILogger<RoleFunctions> logger)
         {

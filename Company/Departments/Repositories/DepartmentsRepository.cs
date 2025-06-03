@@ -89,6 +89,20 @@ namespace MODSI_SQLRestAPI.Company.Departments.Repositories
                 .ToListAsync();
         }
 
+        public async Task<IEnumerable<Department>> GetDepartmentsByKPIIdAsync(int kpiId)
+        {
+            return await _context.Departments
+                .Where(d => d.DepartmentKPIs.Any(dk => dk.KPIId == kpiId))
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<RoleDepartmentPermission>> GetRoleDepartmentPermissionsByRoleIdAsync(int roleId)
+        {
+            return await _context.RoleDepartmentPermissions
+                .Include(rdp => rdp.Department)
+                .Where(rdp => rdp.RoleId == roleId)
+                .ToListAsync();
+        }
 
         public async Task AddKPIFromDepartmentAsync(int departmentId, int kpiId)
         {

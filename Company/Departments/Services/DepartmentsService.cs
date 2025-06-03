@@ -3,13 +3,14 @@ using MODSI_SQLRestAPI.Company.DTOs;
 using MODSI_SQLRestAPI.Company.Repositories;
 using MODSI_SQLRestAPI.Company.Services;
 using System.Collections.Generic;
+using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace MODSI_SQLRestAPI.Company.Departments.Services
 {
     public class DepartmentService : IDepartmentService
     {
-        private readonly DTOMap _mapper = new DTOMap();
 
         private readonly IDepartmentRepository _departmentRepository;
 
@@ -39,6 +40,30 @@ namespace MODSI_SQLRestAPI.Company.Departments.Services
         public async Task<IEnumerable<Department>> GetDepartmentsByRoleIdAsync(int roleId)
         {
             return await _departmentRepository.GetDepartmentsByRoleIdAsync(roleId);
+        }
+
+        public async Task<IEnumerable<Department>> GetDepartmentsByKPIIdAsync(int kpiId)
+        {
+            return await _departmentRepository.GetDepartmentsByKPIIdAsync(kpiId);
+        }
+
+        public async Task<IEnumerable<RoleDepartmentPermission>> GetRoleDepartmentPermissionsByPrincipalAsync(ClaimsPrincipal principal)
+        {
+            var roleIds = principal.Claims
+                .Where(c => c.Type == "role" || c.Type == ClaimTypes.Role)
+                .Select(c => int.TryParse(c.Value, out var id) ? id : (int?)null)
+                .Where(id => id.HasValue)
+                .Select(id => id.Value)
+                .ToList();
+
+            var permissions = new List<RoleDepartmentPermission>();
+            foreach (var roleId in roleIds)
+            {
+                // Supondo que você tenha um método para buscar as permissões por roleId
+                var perms = await _departmentRepository.GetRoleDepartmentPermissionsByRoleIdAsync(roleId);
+                permissions.AddRange(perms);
+            }
+            return permissions;
         }
 
         public async Task<Department> CreateDepartmentAsync(Department department)

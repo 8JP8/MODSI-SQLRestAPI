@@ -37,7 +37,7 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Controllers
             [HttpTrigger(AuthorizationLevel.Function, "get", Route = "kpis")] HttpRequestData req)
         {
             var principal = new RetrieveToken().GetPrincipalFromRequest(req);
-            if (principal == null || !principal.Identity.IsAuthenticated)
+            if (principal == null || !principal.Identity.IsAuthenticated || !principal.IsInGroup("ADMIN"))
             {
                 var forbidden = req.CreateResponse(HttpStatusCode.Forbidden);
                 await forbidden.WriteStringAsync("Unauthorized.");
@@ -59,6 +59,14 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Controllers
             {
                 var forbidden = req.CreateResponse(HttpStatusCode.Forbidden);
                 await forbidden.WriteStringAsync("Unauthorized.");
+                return forbidden;
+            }
+
+            var (canRead, _) = await GetUserKPIAccess(id, principal);
+            if (!canRead && !principal.IsInGroup("ADMIN"))
+            {
+                var forbidden = req.CreateResponse(HttpStatusCode.Forbidden);
+                await forbidden.WriteStringAsync("Unauthorized: You do not have read access to this KPI.");
                 return forbidden;
             }
 
@@ -88,8 +96,43 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Controllers
             }
 
             var query = System.Web.HttpUtility.ParseQueryString(req.Url.Query);
-            int? kpiId = int.TryParse(query["kpiId"], out var kid) ? kid : (int?)null;
+            string kpiIdStr = query["kpiId"];
+            int? kpiId = null;
+            if (!string.IsNullOrEmpty(kpiIdStr))
+            {
+                int parsed;
+                if (!int.TryParse(kpiIdStr, out parsed))
+                {
+                    var badRequest = req.CreateResponse(HttpStatusCode.BadRequest);
+                    await badRequest.WriteStringAsync("O parâmetro 'kpiId' deve ser um número inteiro.");
+                    return badRequest;
+                }
+                kpiId = parsed;
+            }
+
             int? userId = int.TryParse(query["userId"], out var uid) ? uid : (int?)null;
+
+            // Se não foi passado kpiId, só ADMIN pode acessar
+            if (!kpiId.HasValue)
+            {
+                if (!principal.IsInGroup("ADMIN"))
+                {
+                    var forbidden = req.CreateResponse(HttpStatusCode.Forbidden);
+                    await forbidden.WriteStringAsync("Unauthorized: Only ADMIN can access all value history.");
+                    return forbidden;
+                }
+            }
+            else
+            {
+                // Se foi passado kpiId, ADMIN ou quem tem read access pode acessar
+                var (canRead, _) = await GetUserKPIAccess(kpiId.Value, principal);
+                if (!canRead && !principal.IsInGroup("ADMIN"))
+                {
+                    var forbidden = req.CreateResponse(HttpStatusCode.Forbidden);
+                    await forbidden.WriteStringAsync("Unauthorized: You do not have read access to this KPI.");
+                    return forbidden;
+                }
+            }
 
             var history = await _valueHistoryService.GetHistoryAsync(kpiId, userId);
 
@@ -249,14 +292,22 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Controllers
 
         [Function("UpdateKPI")]
         public async Task<HttpResponseData> UpdateKPI(
-            [HttpTrigger(AuthorizationLevel.Function, "put", Route = "kpis/{id}")] HttpRequestData req,
-            int id)
+             [HttpTrigger(AuthorizationLevel.Function, "put", Route = "kpis/{id}")] HttpRequestData req,
+             int id)
         {
             var principal = new RetrieveToken().GetPrincipalFromRequest(req);
-            if (principal == null || !principal.Identity.IsAuthenticated || !principal.IsInGroup("ADMIN"))
+            if (principal == null || !principal.Identity.IsAuthenticated)
             {
                 var forbiddenResponse = req.CreateResponse(HttpStatusCode.Forbidden);
-                await forbiddenResponse.WriteStringAsync("Unauthorized: Only ADMIN can update KPIs.");
+                await forbiddenResponse.WriteStringAsync("Unauthorized.");
+                return forbiddenResponse;
+            }
+
+            var (canRead, canWrite) = await GetUserKPIAccess(id, principal);
+            if (!canWrite && !principal.IsInGroup("ADMIN"))
+            {
+                var forbiddenResponse = req.CreateResponse(HttpStatusCode.Forbidden);
+                await forbiddenResponse.WriteStringAsync("Unauthorized: You do not have write access to this KPI.");
                 return forbiddenResponse;
             }
 
@@ -297,16 +348,25 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Controllers
             }
         }
 
+
         [Function("DeleteKPI")]
         public async Task<HttpResponseData> DeleteKPI(
             [HttpTrigger(AuthorizationLevel.Function, "delete", Route = "kpis/{id}")] HttpRequestData req,
             int id)
         {
             var principal = new RetrieveToken().GetPrincipalFromRequest(req);
-            if (principal == null || !principal.Identity.IsAuthenticated || !principal.IsInGroup("ADMIN"))
+            if (principal == null || !principal.Identity.IsAuthenticated)
             {
                 var forbidden = req.CreateResponse(HttpStatusCode.Forbidden);
-                await forbidden.WriteStringAsync("Unauthorized: Only ADMIN can delete KPIs.");
+                await forbidden.WriteStringAsync("Unauthorized.");
+                return forbidden;
+            }
+
+            var (canRead, canWrite) = await GetUserKPIAccess(id, principal);
+            if (!canWrite && !principal.IsInGroup("ADMIN"))
+            {
+                var forbidden = req.CreateResponse(HttpStatusCode.Forbidden);
+                await forbidden.WriteStringAsync("Unauthorized: You do not have write access to this KPI.");
                 return forbidden;
             }
 
@@ -326,5 +386,28 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Controllers
                 return response;
             }
         }
+
+        #region Auxiliary Methods
+        private async Task<(bool canRead, bool canWrite)> GetUserKPIAccess(int kpiId, System.Security.Claims.ClaimsPrincipal principal)
+        {
+            var userPermissions = await _departmentService.GetRoleDepartmentPermissionsByPrincipalAsync(principal);
+            var kpiDepartments = await _departmentService.GetDepartmentsByKPIIdAsync(kpiId);
+
+            bool canRead = false;
+            bool canWrite = false;
+
+            foreach (var kpiDept in kpiDepartments)
+            {
+                var permission = userPermissions.FirstOrDefault(p => p.DepartmentId == kpiDept.Id);
+                if (permission != null)
+                {
+                    canRead |= permission.CanRead;
+                    canWrite |= permission.CanWrite;
+                }
+            }
+
+            return (canRead, canWrite);
+        }
+        #endregion
     }
 }
