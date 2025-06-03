@@ -16,7 +16,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Email
         public static string PasswordResetEmail(string link, string code)
         {
             return $@"
-                <p>Clique no link para resetar a sua senha:</p>
+                <p>Clique no link para alterar a sua password:</p>
                 Código: {code}
                 <br><br>
                 <a href=""{link}"">{link}</a>

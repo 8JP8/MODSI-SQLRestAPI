@@ -29,9 +29,7 @@ namespace MODSI_SQLRestAPI.Company.Services
         Task<IEnumerable<KPIDTO>> GetKPIsByDepartmentIdAsync(int departmentId);
         Task<KPI> CreateKPIAsync(KPI kpi);
         Task<KPI> UpdateKPIAsync(int id, KPI kpi, int changedByUserId);
-
         Task DeleteKPIAsync(int id);
-
         Task<KPI> UpdateKPIFieldsAsync(int id, UpdateKPIDTO updateDto, int changedByUserId);
     }
 

@@ -21,7 +21,7 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Models
             DepartmentKPIs = new List<DepartmentKPI>();
         }
 
-        public KPI(int id, string name, string description, string unit, string value1, string value2)
+        public KPI(int id, string name, string description, string unit, string value1, string value2, bool byproduct = true)
         {
             if (string.IsNullOrEmpty(name))
                 throw new ArgumentException("KPI name cannot be null or empty.");
@@ -31,6 +31,7 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Models
             Unit = unit;
             Value_1 = value1;
             Value_2 = value2;
+            ByProduct = byproduct;
             DepartmentKPIs = new List<DepartmentKPI>();
         }
 
