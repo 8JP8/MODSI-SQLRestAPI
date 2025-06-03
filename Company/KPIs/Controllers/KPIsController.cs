@@ -291,7 +291,7 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Controllers
 
         [Function("UpdateKPI")]
         public async Task<HttpResponseData> UpdateKPI(
-             [HttpTrigger(AuthorizationLevel.Function, "put", Route = "kpis/{id}")] HttpRequestData req,
+             [HttpTrigger(AuthorizationLevel.Function, "put", Route = "kpis/byid/{id}")] HttpRequestData req,
              int id)
         {
             var principal = new RetrieveToken().GetPrincipalFromRequest(req);
