@@ -103,5 +103,26 @@ namespace MODSI_SQLRestAPI.Company.Departments.Services
         {
             await _departmentRepository.UpdatePermissionsAsync(roleId, departmentId, canRead, canWrite);
         }
+
+        public async Task<(bool canRead, bool canWrite)> GetUserKPIAccess(int kpiId, System.Security.Claims.ClaimsPrincipal principal)
+        {
+            var userPermissions = await GetRoleDepartmentPermissionsByPrincipalAsync(principal);
+            var kpiDepartments = await GetDepartmentsByKPIIdAsync(kpiId);
+
+            bool canRead = false;
+            bool canWrite = false;
+
+            foreach (var kpiDept in kpiDepartments)
+            {
+                var permission = userPermissions.FirstOrDefault(p => p.DepartmentId == kpiDept.Id);
+                if (permission != null)
+                {
+                    canRead |= permission.CanRead;
+                    canWrite |= permission.CanWrite;
+                }
+            }
+
+            return (canRead, canWrite);
+        }
     }
 }
