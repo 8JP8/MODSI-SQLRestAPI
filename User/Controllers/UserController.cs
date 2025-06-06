@@ -13,6 +13,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.ListView;
 
 namespace MODSI_SQLRestAPI.UserAuth.Controllers
 {
@@ -75,7 +76,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
             try
             {
                 var principal = new RetrieveToken().GetPrincipalFromRequest(req);
-                if (principal == null || !principal.Identity.IsAuthenticated || !principal.IsInGroup("ADMIN"))
+                if (principal == null || !principal.Identity.IsAuthenticated || !(principal.IsInGroup("ADMIN") || principal.IsInRole("HR Manager")))
                 {
                     var forbidden = req.CreateResponse(HttpStatusCode.Forbidden);
                     await forbidden.WriteStringAsync("Unauthorized: Only ADMIN can access.");
@@ -265,11 +266,9 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
                 }
 
                 var principal = new RetrieveToken().GetPrincipalFromRequest(req);
-                bool isAdmin = principal != null && principal.Identity.IsAuthenticated && principal.IsInGroup("ADMIN");
-                bool isSelf = false;
-                var userIdClaim = principal?.Claims.FirstOrDefault(c => c.Type == "id");
-                if (userIdClaim != null && int.TryParse(userIdClaim.Value, out int userIdFromToken))
-                    isSelf = userIdFromToken == id;
+                bool isAdmin = principal != null && principal.Identity.IsAuthenticated && (principal.IsInGroup("ADMIN") || principal.IsInRole("HR Manager"));
+                bool isSelf = principal != null && principal.Identity.IsAuthenticated &&
+                    string.Equals(principal.Claims.FirstOrDefault(c => c.Type == "id")?.Value, id.ToString(), StringComparison.OrdinalIgnoreCase);
 
                 if (!isAdmin && !isSelf)
                 {
@@ -286,28 +285,36 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
                     return notFoundResponse;
                 }
 
-                user.Id = id;
-
-                var dbUser = new User
+                if (isAdmin)
                 {
-                    Id = user.Id,
-                    Name = user.Name,
-                    Email = user.Email,
-                    Password = user.Password,
-                    Username = user.Username,
-                    Role = user.Role,
-                    CreatedAt = user.CreatedAt,
-                    IsVerified = user.IsVerified,
-                    Group = user.Group,
-                    Tel = user.Tel,
-                    Photo = user.Photo
-                };
+                    existingUser.Role = string.IsNullOrWhiteSpace(user.Role) ? existingUser.Role : user.Role;
+                    existingUser.Group = string.IsNullOrWhiteSpace(user.Group) ? existingUser.Group : user.Group;
 
-                await _userService.UpdateUser(dbUser);
+                    if (!string.IsNullOrWhiteSpace(user.Password))
+                    {
+                        string newSalt = Utils.GenerateSalt();
+                        string hashedPassword = Utils.HashPassword(user.Password, newSalt);
+                        existingUser.Password = hashedPassword;
+                        existingUser.Salt = newSalt;
+                    }
+                }
+
+                existingUser.Name = string.IsNullOrWhiteSpace(user.Name) ? existingUser.Name : user.Name;
+                existingUser.Tel = string.IsNullOrWhiteSpace(user.Tel) ? existingUser.Tel : user.Tel;
+                existingUser.Photo = user.Photo ?? existingUser.Photo;
+
+                if (!isAdmin && (!string.IsNullOrWhiteSpace(user.Role) || !string.IsNullOrWhiteSpace(user.Group) || !string.IsNullOrWhiteSpace(user.Password)))
+                {
+                    var forbiddenResponse = req.CreateResponse(HttpStatusCode.Forbidden);
+                    await forbiddenResponse.WriteStringAsync("Unauthorized to update certain fields.");
+                    return forbiddenResponse;
+                }
+
+                var userDTO = await _userService.UpdateUser(existingUser);
 
                 var response = req.CreateResponse(HttpStatusCode.OK);
-                response.Headers.Add("Content-Type", "text/plain; charset=utf-8");
-                await response.WriteStringAsync($"User with Id {id} updated successfully.");
+                response.Headers.Add("Content-Type", "application/json; charset=utf-8");
+                await response.WriteStringAsync(JsonSerializer.Serialize(userDTO, new JsonSerializerOptions { WriteIndented = true }));
                 return response;
             }
             catch (HttpException ex)
@@ -336,7 +343,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
                 }
 
                 var principal = new RetrieveToken().GetPrincipalFromRequest(req);
-                bool isAdmin = principal != null && principal.Identity.IsAuthenticated && principal.IsInGroup("ADMIN");
+                bool isAdmin = principal != null && principal.Identity.IsAuthenticated && (principal.IsInGroup("ADMIN") || principal.IsInRole("HR Manager"));
                 bool isSelf = principal != null && principal.Identity.IsAuthenticated &&
                     string.Equals(principal.Claims.FirstOrDefault(c => c.Type == "email")?.Value, email, StringComparison.OrdinalIgnoreCase);
 

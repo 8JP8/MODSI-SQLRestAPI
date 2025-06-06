@@ -46,10 +46,10 @@ namespace MODSI_SQLRestAPI.UserAuth.Services
             return exists;
         }
 
-        internal async Task<UserDTO> GetUserById(int id)
+        internal async Task<User> GetUserById(int id)
         {
             var user = await _databaseHandler.GetUserByIdAsync(id) ?? throw new NotFoundException($"Usuário com ID {id} não encontrado.");
-            return user;
+            return (User)user;
         }
 
         internal async Task<UserDTO> CreateUser(User user)
@@ -142,8 +142,8 @@ namespace MODSI_SQLRestAPI.UserAuth.Services
                 throw new System.Exception("Falha ao atualizar o papel do usuário.");
 
             // Retorna o usuário atualizado
-            var updatedUser = await _databaseHandler.GetUserByIdAsync(userId);
-            return updatedUser;
+            var updatedUser = await _databaseHandler.GetUserByIdAsync(userId, true);
+            return (UserDTO)updatedUser;
         }
 
         internal async Task<UserDTO> ChangeUserGroup(int userId, string groupNameOrId)
@@ -181,8 +181,8 @@ namespace MODSI_SQLRestAPI.UserAuth.Services
                 throw new System.Exception("Falha ao atualizar o grupo do usuário.");
 
             // Retorna o usuário atualizado
-            var updatedUser = await _databaseHandler.GetUserByIdAsync(userId);
-            return updatedUser;
+            var updatedUser = await _databaseHandler.GetUserByIdAsync(userId, true);
+            return (UserDTO)updatedUser;
         }
 
         private async Task<string> GetRoleNameByIdAsync(int roleId)

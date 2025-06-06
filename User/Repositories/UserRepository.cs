@@ -275,20 +275,23 @@ namespace MODSI_SQLRestAPI.UserAuth.Repositories
             }
         }
 
-        internal async Task<UserDTO> GetUserByIdAsync(int id)
+        internal async Task<object> GetUserByIdAsync(int id, bool asDto = false)
         {
-            using (SqlConnection conn = new SqlConnection(ApplicationDbContext.ConnectionString))
+            using (var conn = new SqlConnection(ApplicationDbContext.ConnectionString))
             {
                 await conn.OpenAsync();
-                var query = $"SELECT Id, Name, Email, Password, Username, Role, CreatedAt, IsVerified, [Group], Salt, Tel, Photo FROM {_user_DB} WHERE Id = @Id";
-                using (SqlCommand cmd = new SqlCommand(query, conn))
+                var query = $"SELECT * FROM {_user_DB} WHERE Id = @Id";
+                using (var cmd = new SqlCommand(query, conn))
                 {
                     cmd.Parameters.AddWithValue("@Id", id);
-                    using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
+                    using (var reader = await cmd.ExecuteReaderAsync())
                     {
                         if (await reader.ReadAsync())
                         {
-                            return MapReaderToUserDTO(reader);
+                            if (asDto)
+                                return MapReaderToUserDTO(reader);
+                            else
+                                return MapReaderToUser(reader, true);
                         }
                     }
                 }
