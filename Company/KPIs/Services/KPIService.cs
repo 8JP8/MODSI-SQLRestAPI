@@ -1,4 +1,5 @@
-﻿using MODSI_SQLRestAPI.Company.DTOs;
+﻿using MODSI_SQLRestAPI.Company.Departments.Services;
+using MODSI_SQLRestAPI.Company.DTOs;
 using MODSI_SQLRestAPI.Company.KPIs.DTO;
 using MODSI_SQLRestAPI.Company.KPIs.Models;
 using MODSI_SQLRestAPI.Company.KPIs.Repositories;
@@ -130,8 +131,6 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Services
             await _kpiRepository.UpdateAsync(existingKPI);
             return existingKPI;
         }
-
-
 
         public async Task DeleteKPIAsync(int id)
         {

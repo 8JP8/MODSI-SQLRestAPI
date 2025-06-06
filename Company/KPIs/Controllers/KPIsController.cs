@@ -62,7 +62,7 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Controllers
                 return forbidden;
             }
 
-            var (canRead, _) = await GetUserKPIAccess(id, principal);
+            var (canRead, _) = await _departmentService.GetUserKPIAccess(id, principal);
             if (!canRead && !principal.IsInGroup("ADMIN"))
             {
                 var forbidden = req.CreateResponse(HttpStatusCode.Forbidden);
@@ -124,7 +124,7 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Controllers
             else
             {
                 // Se foi passado kpiId, ADMIN ou quem tem read access pode acessar
-                var (canRead, _) = await GetUserKPIAccess(kpiId.Value, principal);
+                var (canRead, _) = await _departmentService.GetUserKPIAccess(kpiId.Value, principal);
                 if (!canRead && !principal.IsInGroup("ADMIN"))
                 {
                     var forbidden = req.CreateResponse(HttpStatusCode.Forbidden);
@@ -291,8 +291,8 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Controllers
 
         [Function("UpdateKPI")]
         public async Task<HttpResponseData> UpdateKPI(
-             [HttpTrigger(AuthorizationLevel.Function, "put", Route = "kpis/byid/{id}")] HttpRequestData req,
-             int id)
+             [HttpTrigger(AuthorizationLevel.Function, "put", Route = "kpis/{kpiid}")] HttpRequestData req,
+             int kpiid)
         {
             var principal = new RetrieveToken().GetPrincipalFromRequest(req);
             if (principal == null || !principal.Identity.IsAuthenticated)
@@ -302,7 +302,7 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Controllers
                 return forbiddenResponse;
             }
 
-            (_, bool canWrite) = await GetUserKPIAccess(id, principal);
+            (_, bool canWrite) = await _departmentService.GetUserKPIAccess(kpiid, principal);
             if (!canWrite && !principal.IsInGroup("ADMIN"))
             {
                 var forbiddenResponse = req.CreateResponse(HttpStatusCode.Forbidden);
@@ -310,7 +310,7 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Controllers
                 return forbiddenResponse;
             }
 
-            _logger.LogInformation($"UpdateKPI function processed a request for KPI {id}.");
+            _logger.LogInformation($"UpdateKPI function processed a request for KPI {kpiid}.");
 
             try
             {
@@ -324,11 +324,11 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Controllers
                     return badRequestResponse;
                 }
 
-                var updatedKPI = await _kpiService.UpdateKPIFieldsAsync(id, updateDto, 0); // userId não usado para admin
+                var updatedKPI = await _kpiService.UpdateKPIFieldsAsync(kpiid, updateDto, 0); // userId não usado para admin
                 if (updatedKPI == null)
                 {
                     var notFoundResponse = req.CreateResponse(HttpStatusCode.NotFound);
-                    await notFoundResponse.WriteStringAsync($"KPI with ID {id} not found.");
+                    await notFoundResponse.WriteStringAsync($"KPI with ID {kpiid} not found.");
                     return notFoundResponse;
                 }
 
@@ -340,13 +340,12 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error updating KPI {id}");
+                _logger.LogError(ex, $"Error updating KPI {kpiid}");
                 var response = req.CreateResponse(HttpStatusCode.InternalServerError);
                 await response.WriteStringAsync("An error occurred while processing your request.");
                 return response;
             }
         }
-
 
         [Function("DeleteKPI")]
         public async Task<HttpResponseData> DeleteKPI(
@@ -361,7 +360,7 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Controllers
                 return forbidden;
             }
 
-            var (_, canWrite) = await GetUserKPIAccess(id, principal);
+            var (_, canWrite) = await _departmentService.GetUserKPIAccess(id, principal);
             if (!canWrite && !principal.IsInGroup("ADMIN"))
             {
                 var forbidden = req.CreateResponse(HttpStatusCode.Forbidden);
@@ -385,28 +384,5 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Controllers
                 return response;
             }
         }
-
-        #region Auxiliary Methods
-        private async Task<(bool canRead, bool canWrite)> GetUserKPIAccess(int kpiId, System.Security.Claims.ClaimsPrincipal principal)
-        {
-            var userPermissions = await _departmentService.GetRoleDepartmentPermissionsByPrincipalAsync(principal);
-            var kpiDepartments = await _departmentService.GetDepartmentsByKPIIdAsync(kpiId);
-
-            bool canRead = false;
-            bool canWrite = false;
-
-            foreach (var kpiDept in kpiDepartments)
-            {
-                var permission = userPermissions.FirstOrDefault(p => p.DepartmentId == kpiDept.Id);
-                if (permission != null)
-                {
-                    canRead |= permission.CanRead;
-                    canWrite |= permission.CanWrite;
-                }
-            }
-
-            return (canRead, canWrite);
-        }
-        #endregion
     }
 }

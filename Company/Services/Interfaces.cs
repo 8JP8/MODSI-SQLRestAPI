@@ -20,6 +20,7 @@ namespace MODSI_SQLRestAPI.Company.Services
         Task UpdatePermissionsAsync(int roleId, int departmentId, bool canRead, bool canWrite);
         Task<IEnumerable<Department>> GetDepartmentsByKPIIdAsync(int kpiId);
         Task<IEnumerable<RoleDepartmentPermission>> GetRoleDepartmentPermissionsByPrincipalAsync(System.Security.Claims.ClaimsPrincipal principal);
+        Task<(bool canRead, bool canWrite)> GetUserKPIAccess(int kpiId, System.Security.Claims.ClaimsPrincipal principal);
     }
 
     public interface IKPIService
@@ -29,9 +30,7 @@ namespace MODSI_SQLRestAPI.Company.Services
         Task<IEnumerable<KPIDTO>> GetKPIsByDepartmentIdAsync(int departmentId);
         Task<KPI> CreateKPIAsync(KPI kpi);
         Task<KPI> UpdateKPIAsync(int id, KPI kpi, int changedByUserId);
-
         Task DeleteKPIAsync(int id);
-
         Task<KPI> UpdateKPIFieldsAsync(int id, UpdateKPIDTO updateDto, int changedByUserId);
     }
 
