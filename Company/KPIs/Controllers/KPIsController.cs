@@ -7,6 +7,7 @@ using MODSI_SQLRestAPI.Company.KPIs.DTO;
 using MODSI_SQLRestAPI.Company.KPIs.Models;
 using MODSI_SQLRestAPI.Company.KPIs.Services;
 using MODSI_SQLRestAPI.Company.Services;
+using MODSI_SQLRestAPI.UserAuth.Models;
 using MODSI_SQLRestAPI.UserAuth.Services;
 using Newtonsoft.Json;
 using System;
@@ -324,7 +325,14 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Controllers
                     return badRequestResponse;
                 }
 
-                var updatedKPI = await _kpiService.UpdateKPIFieldsAsync(kpiid, updateDto, 0); // userId não usado para admin
+                int userId = 0;
+                var userIdClaim = principal?.Claims.FirstOrDefault(c => c.Type == "id");
+                if (userIdClaim != null && int.TryParse(userIdClaim.Value, out int parsedUserId))
+                {
+                    userId = parsedUserId;
+                }
+
+                var updatedKPI = await _kpiService.UpdateKPIFieldsAsync(kpiid, updateDto, userId);
                 if (updatedKPI == null)
                 {
                     var notFoundResponse = req.CreateResponse(HttpStatusCode.NotFound);
