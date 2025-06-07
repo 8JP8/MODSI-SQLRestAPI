@@ -31,7 +31,8 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Services
                 NewValue_1 = h.NewValue_1,
                 OldValue_2 = h.OldValue_2,
                 NewValue_2 = h.NewValue_2,
-                ChangedAt = h.ChangedAt
+                ChangedAt = h.ChangedAt,
+                Unit = h.Unit
             }).ToList();
 
         }
@@ -46,7 +47,8 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Services
                 NewValue_1 = dto.NewValue_1,
                 OldValue_2 = dto.OldValue_2,
                 NewValue_2 = dto.NewValue_2,
-                ChangedAt = dto.ChangedAt
+                ChangedAt = dto.ChangedAt,
+                Unit = dto.Unit
             };
             await _repository.AddAsync(entity);
 

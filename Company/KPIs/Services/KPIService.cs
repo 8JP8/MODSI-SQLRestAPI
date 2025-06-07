@@ -78,7 +78,8 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Services
                     NewValue_1 = kpi.Value_1,
                     OldValue_2 = existingKPI.Value_2,
                     NewValue_2 = kpi.Value_2,
-                    ChangedAt = DateTime.UtcNow
+                    ChangedAt = DateTime.UtcNow,
+                    Unit = kpi.Unit
                 };
                 await _valueHistoryRepository.AddAsync(valueHistory);
             }
@@ -123,7 +124,8 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Services
                     NewValue_1 = existingKPI.Value_1,
                     OldValue_2 = oldValue2,
                     NewValue_2 = existingKPI.Value_2,
-                    ChangedAt = DateTime.UtcNow
+                    ChangedAt = DateTime.UtcNow,
+                    Unit = existingKPI.Unit
                 };
                 await _valueHistoryRepository.AddAsync(valueHistory);
             }

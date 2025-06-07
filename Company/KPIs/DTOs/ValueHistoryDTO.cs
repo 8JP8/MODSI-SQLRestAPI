@@ -13,5 +13,6 @@ namespace MODSI_SQLRestAPI.Company.KPIs.DTO
         public string OldValue_2 { get; set; }
         public string NewValue_2 { get; set; }
         public DateTime ChangedAt { get; set; }
+        public string Unit {  get; set; }
     }
 }
