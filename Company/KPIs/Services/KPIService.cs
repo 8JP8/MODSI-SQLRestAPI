@@ -79,7 +79,8 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Services
                     OldValue_2 = existingKPI.Value_2,
                     NewValue_2 = kpi.Value_2,
                     ChangedAt = DateTime.UtcNow,
-                    Unit = kpi.Unit
+                    Unit = kpi.Unit,
+                    ByProduct = kpi.ByProduct
                 };
                 await _valueHistoryRepository.AddAsync(valueHistory);
             }
@@ -111,6 +112,7 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Services
             if (updateDto.Unit != null) existingKPI.Unit = updateDto.Unit;
             if (updateDto.Value_1 != null) existingKPI.Value_1 = updateDto.Value_1;
             if (updateDto.Value_2 != null) existingKPI.Value_2 = updateDto.Value_2;
+            if (updateDto.ByProduct != null) existingKPI.ByProduct = (bool)updateDto.ByProduct;
 
             // Só registra histórico se Value_1 ou Value_2 mudou
             if ((updateDto.Value_1 != null && oldValue1 != updateDto.Value_1) ||
@@ -125,7 +127,8 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Services
                     OldValue_2 = oldValue2,
                     NewValue_2 = existingKPI.Value_2,
                     ChangedAt = DateTime.UtcNow,
-                    Unit = existingKPI.Unit
+                    Unit = existingKPI.Unit,
+                    ByProduct = existingKPI.ByProduct
                 };
                 await _valueHistoryRepository.AddAsync(valueHistory);
             }

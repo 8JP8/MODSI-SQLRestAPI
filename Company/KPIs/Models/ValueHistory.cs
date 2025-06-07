@@ -17,6 +17,6 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Models
         public string NewValue_2 { get; set; }
         public DateTime ChangedAt { get; set; }
         public string Unit { get; set; }
-
+        public bool ByProduct { get; set; }
     }
 }
