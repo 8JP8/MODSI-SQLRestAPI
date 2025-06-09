@@ -130,7 +130,3 @@ Our project is structured based on the Domain-Driven Design (DDD) approach, and 
 - **Controllers**: Contains the API controllers that handle incoming requests and responses.
 - **Services**: Contains the business logic and service classes that interact with the database.
 - **Models**: Contains the data models and DTOs (Data Transfer Objects) used in the application.
-
-## We do not use:
-- **WebSocket** - Socket connections are not used in this project, so it DOESN'T provide a persistent connection to the client (real time chats,etc)
-- **Message-Oriented Middleware (MOM)** - We don’t use MOM in this project (monolithic system), so no asynchronous magic here — big load, big boom 💥!
