@@ -83,8 +83,6 @@ This repository contains an Azure Functions REST API designed to interact with a
     -   Body: `{"Name": "", "Tel": "", "Photo": ""}`
 -   **`GET` /api/User/CheckToken**
 
----
-
 ### Company Management
 
 #### Departments:
@@ -118,15 +116,11 @@ This repository contains an Azure Functions REST API designed to interact with a
 -   **`PUT` /api/roles/{roleId}/departments/{departmentId}/permissions**
     -   Body: `{"canRead": "", "canWrite": ""}`
 
----
-
 ### Room Management
 
 -   **`POST` /api/Room/Add**
     -   Body: `{"Id": "", "JsonData": ""}`
 -   **`GET` /api/Room/Get/{id}**
-
----
 
 For more details, please refer to the [API_Tests.json](API_Tests.json) file.
 
