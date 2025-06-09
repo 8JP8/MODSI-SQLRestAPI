@@ -126,7 +126,7 @@ namespace MODSI_SQLRestAPI.Company.KPIs.Controllers
             {
                 // Se foi passado kpiId, ADMIN ou quem tem read access pode acessar
                 var (canRead, _) = await _departmentService.GetUserKPIAccess(kpiId.Value, principal);
-                if (!canRead)
+                if (!canRead && !principal.IsInGroup("ADMIN"))
                 {
                     var forbidden = req.CreateResponse(HttpStatusCode.Forbidden);
                     await forbidden.WriteStringAsync("Unauthorized: You do not have read access to this KPI.");

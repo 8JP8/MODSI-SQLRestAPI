@@ -2,6 +2,7 @@
 using MODSI_SQLRestAPI.Company.DTOs;
 using MODSI_SQLRestAPI.Company.Repositories;
 using MODSI_SQLRestAPI.Company.Services;
+using MODSI_SQLRestAPI.Infrastructure.Data;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
@@ -13,10 +14,12 @@ namespace MODSI_SQLRestAPI.Company.Departments.Services
     {
 
         private readonly IDepartmentRepository _departmentRepository;
+        private readonly ApplicationDbContext _dbContext;
 
-        public DepartmentService(IDepartmentRepository departmentRepository)
+        public DepartmentService(IDepartmentRepository departmentRepository, ApplicationDbContext dbContext)
         {
             _departmentRepository = departmentRepository;
+            _dbContext = dbContext;
         }
 
         public async Task<IEnumerable<Department>> GetAllDepartmentsAsync()
@@ -49,17 +52,22 @@ namespace MODSI_SQLRestAPI.Company.Departments.Services
 
         public async Task<IEnumerable<RoleDepartmentPermission>> GetRoleDepartmentPermissionsByPrincipalAsync(ClaimsPrincipal principal)
         {
-            var roleIds = principal.Claims
+            // Extract the role names from the token claims
+            var roleNames = principal.Claims
                 .Where(c => c.Type == "role" || c.Type == ClaimTypes.Role)
-                .Select(c => int.TryParse(c.Value, out var id) ? id : (int?)null)
-                .Where(id => id.HasValue)
-                .Select(id => id.Value)
+                .Select(c => c.Value)
+                .Distinct()
                 .ToList();
+
+            // Get the RoleId from the database
+            var roleIds = _dbContext.Roles
+                 .Where(r => roleNames.Contains(r.Name))
+                 .Select(r => r.Id)
+                 .ToList();
 
             var permissions = new List<RoleDepartmentPermission>();
             foreach (var roleId in roleIds)
             {
-                // Supondo que você tenha um método para buscar as permissões por roleId
                 var perms = await _departmentRepository.GetRoleDepartmentPermissionsByRoleIdAsync(roleId);
                 permissions.AddRange(perms);
             }
@@ -105,7 +113,7 @@ namespace MODSI_SQLRestAPI.Company.Departments.Services
         }
 
         public async Task<(bool canRead, bool canWrite)> GetUserKPIAccess(int kpiId, System.Security.Claims.ClaimsPrincipal principal)
-        {
+         {
             var userPermissions = await GetRoleDepartmentPermissionsByPrincipalAsync(principal);
             var kpiDepartments = await GetDepartmentsByKPIIdAsync(kpiId);
 
