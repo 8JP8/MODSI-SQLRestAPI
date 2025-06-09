@@ -21,7 +21,7 @@ This repository contains an Azure Functions REST API designed to interact with a
 
 ### Setup ⚙️
 1. Setup a Azure MS SQL Database
-   You can use the [DB Structure](/Database/DB_Structure.sql) SQL file to set it up correctly.
+   - You can use the [DB Structure](/Database/DB_Structure.sql) SQL file to set it up correctly.
 2. Clone the repository:
    ```bash
    git clone https://github.com/yourusername/azure-functions-kpi-api.git
