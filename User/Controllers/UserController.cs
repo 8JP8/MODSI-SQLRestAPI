@@ -345,7 +345,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
                 var principal = new RetrieveToken().GetPrincipalFromRequest(req);
                 bool isAdmin = principal != null && principal.Identity.IsAuthenticated && (principal.IsInGroup("ADMIN") || principal.IsInRole("HR Manager"));
                 bool isSelf = principal != null && principal.Identity.IsAuthenticated &&
-                    string.Equals(principal.Claims.FirstOrDefault(c => c.Type == "email")?.Value, email, StringComparison.OrdinalIgnoreCase);
+                    string.Equals(principal.Claims.FirstOrDefault(c => c.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress")?.Value, email, StringComparison.OrdinalIgnoreCase);
 
                 if (!isAdmin && !isSelf)
                 {
@@ -444,7 +444,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
                 bool isAdmin = principal != null && principal.Identity.IsAuthenticated && principal.IsInGroup("ADMIN");
                 string email = req.Query["email"];
                 bool isSelf = principal != null && principal.Identity.IsAuthenticated &&
-                    string.Equals(principal.Claims.FirstOrDefault(c => c.Type == "email")?.Value, email, StringComparison.OrdinalIgnoreCase);
+                    string.Equals(principal.Claims.FirstOrDefault(c => c.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress")?.Value, email, StringComparison.OrdinalIgnoreCase);
 
                 if (!isAdmin && !isSelf)
                 {
@@ -492,7 +492,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
                 bool isAdmin = principal != null && principal.Identity.IsAuthenticated && principal.IsInGroup("ADMIN");
                 string username = req.Query["username"];
                 bool isSelf = principal != null && principal.Identity.IsAuthenticated &&
-                    string.Equals(principal.Claims.FirstOrDefault(c => c.Type == "username")?.Value, username, StringComparison.OrdinalIgnoreCase);
+                    string.Equals(principal.Claims.FirstOrDefault(c => c.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")?.Value, username, StringComparison.OrdinalIgnoreCase);
 
                 if (!isAdmin && !isSelf)
                 {

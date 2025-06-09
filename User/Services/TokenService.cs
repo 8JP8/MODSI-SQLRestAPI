@@ -24,11 +24,10 @@ namespace MODSI_SQLRestAPI.UserAuth.Services
             var claims = new[]
             {
                 new Claim(JwtRegisteredClaimNames.Sub, user.Username),
-                new Claim(JwtRegisteredClaimNames.Email, user.Email),
+                new Claim("email", user.Email),
                 new Claim("role", user.Role ?? "user"),
                 new Claim("group", user.Group ?? "USER"),
                 new Claim("id", user.Id.ToString()),
-                new Claim("email", user.Email.ToString()),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 
