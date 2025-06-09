@@ -76,7 +76,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Controllers
             try
             {
                 var principal = new RetrieveToken().GetPrincipalFromRequest(req);
-                if (principal == null || !principal.Identity.IsAuthenticated || !(principal.IsInGroup("ADMIN") || principal.IsInRole("HR Manager")))
+                if (principal == null || !principal.Identity.IsAuthenticated) //|| !(principal.IsInGroup("ADMIN") || principal.IsInRole("HR Manager")))
                 {
                     var forbidden = req.CreateResponse(HttpStatusCode.Forbidden);
                     await forbidden.WriteStringAsync("Unauthorized: Only ADMIN can access.");
