@@ -1,17 +1,17 @@
-# Azure Functions REST API for Business KPIs ✨
+# Azure Functions REST API for Business KPIs
 
-## Overview 🌟
+## Overview
 This repository contains an Azure Functions REST API designed to interact with a SQL database. The API serves as a data provider for a dashboard, enabling users to manipulate and visualize various business KPIs. Additionally, the system supports the creation of VR visualizations from these KPIs.
 
-## Features 📂
+## Features
 - **SQL Database Integration**: Securely fetch, update, and delete KPI data.
 - **RESTful Endpoints**: A set of endpoints for managing and retrieving business KPIs.
 - **Dashboard Support**: Provides data endpoints tailored for dashboard visualizations.
 - **VR Visualizations**: Exposes data in formats suitable for VR visualization tools.
 
-## Getting Started 🚀
+## Getting Started
 
-### Prerequisites 🛠️
+### Prerequisites
 1. **Azure Account**: Ensure you have an active Azure subscription.
 2. **SQL Database**: A pre-configured SQL database with necessary tables and data.
 3. **Tools**:
@@ -19,7 +19,7 @@ This repository contains an Azure Functions REST API designed to interact with a
    - [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli) for deployment.
    - [.NET SDK](https://dotnet.microsoft.com/download) for Azure Functions development.
 
-### Setup ⚙️
+### Setup
 1. Setup a Azure MS SQL Database
    - You can use the [DB Structure](/Database/DB_Structure.sql) SQL file to set it up correctly.
 2. Clone the repository:
@@ -51,7 +51,7 @@ This repository contains an Azure Functions REST API designed to interact with a
    func start
    ```
 
-### Deployment 🚀
+### Deployment
 1. Login to Azure CLI:
    ```bash
    az login
@@ -67,61 +67,86 @@ This repository contains an Azure Functions REST API designed to interact with a
    func azure functionapp publish <AppName>
    ```
 
-## Endpoints 📡
+## Endpoints
 
-### Pie Chart Management 🥧
-- **POST** `/api/PieChart/Add`
-  - Add a new pie chart.
-- **DELETE** `/api/PieChart/Delete/{id:int}`
-  - Delete a pie chart by ID.
-- **GET** `/api/PieChart/GetAll`
-  - Fetch all pie charts.
-- **GET** `/api/PieChart/Get/{id:int}`
-  - Retrieve a specific pie chart by ID.
-- **PUT** `/api/PieChart/Replace/{id:int}`
-  - Replace a pie chart by ID.
-- **POST** `/api/PieChart/SendRandom`
-  - Send random pie charts.
+---
 
-### 3D Points Management 🎯
-- **POST** `/api/3DPoints/Add`
-  - Add a new 3D point.
-- **DELETE** `/api/3DPoints/Delete/{id:int}`
-  - Delete a 3D point by ID.
-- **GET** `/api/3DPoints/GetAll`
-  - Fetch all 3D points.
-- **GET** `/api/3DPoints/Get/{id:int}`
-  - Retrieve a specific 3D point by ID.
-- **PUT** `/api/3DPoints/Replace/{id:int}`
-  - Replace a 3D point by ID.
-- **POST** `/api/3DPoints/SendRandom`
-  - Send random 3D points.
+### User Management
 
-### User Management 👤
-- **POST** `/api/User/Add`
-  - Add a new user.
-- **DELETE** `/api/User/Delete/{id:int}`
-  - Delete a user by ID.
-- **GET** `/api/User/GetAll`
-  - Retrieve all users.
-- **GET** `/api/User/GetByEmail`
-  - Retrieve a user by email.
-- **GET** `/api/User/Get/{id:int}`
-  - Retrieve a user by ID.
-- **GET** `/api/User/EmailExists`
-  - Check if an email exists.
-- **PUT** `/api/User/Update/{id:int}`
-  - Update user details by ID.
+-   **`POST` /api/User/Login**
+    -   Body: `{"Email": "", "Password": ""}`
+-   **`POST` /api/User/Add**
+    -   Body: `{"Name": "", "Email": "", "Password": "", "Username": "", "Salt": ""}`
+-   **`GET` /api/User/GetAll**
+-   **`GET` /api/User/Get/{id}**
+-   **`GET` /api/User/GetByEmail** (requires `email` query parameter)
+-   **`DELETE` /api/User/Delete/{id}**
+-   **`PUT` /api/User/UpdateById/{id}**
+    -   Body: `{"Name": "", "Tel": "", "Photo": ""}`
+-   **`GET` /api/User/CheckToken**
 
-## License 📜
+---
+
+### Company Management
+
+#### Departments
+-   **`POST` /api/departments**
+    -   Body: `{"name": "", "description": "", "managerId": ""}`
+-   **`GET` /api/departments**
+-   **`GET` /api/departments/{id}**
+-   **`PUT` /api/departments/{id}**
+    -   Body: `{"name": "", "description": "", "managerId": ""}`
+-   **`DELETE` /api/departments/{id}**
+-   **`POST` /api/departments/{departmentId}/kpis/{kpiId}**
+-   **`DELETE` /api/departments/{departmentId}/kpis/{kpiId}**
+
+#### KPIs
+-   **`POST` /api/kpis**
+    -   Body: `{"name": "", "description": "", "target": "", "unit": "", "frequency": ""}`
+-   **`GET` /api/kpis**
+-   **`GET` /api/kpis/{id}**
+-   **`PUT` /api/kpis/{id}**
+    -   Body: `{"Value_1": "", "Value_2": ""}`
+-   **`DELETE` /api/kpis/{id}**
+
+#### Roles & Permissions
+-   **`POST` /api/roles**
+    -   Body: `{"name": "", "description": ""}`
+-   **`GET` /api/roles**
+-   **`GET` /api/roles/{id}**
+-   **`PUT` /api/roles/{id}**
+    -   Body: `{"name": "", "description": ""}`
+-   **`DELETE` /api/roles/{id}**
+-   **`PUT` /api/roles/{roleId}/departments/{departmentId}/permissions**
+    -   Body: `{"canRead": "", "canWrite": ""}`
+
+---
+
+### Room Management
+
+-   **`POST` /api/Room/Add**
+    -   Body: `{"Id": "", "JsonData": ""}`
+-   **`GET` /api/Room/Get/{id}**
+
+---
+
+### API Health Check
+
+-   **`GET` /api/CheckAPI**
+
+---
+
+For more details, please refer to the [API_Tests.json](API_Tests.json) file.
+
+## License
 This project is licensed under the MIT License. See the `LICENSE` file for details.
 
-## Estructured Data 📊
+## Estructured Data
 Our project is structured based on the Domain-Driven Design (DDD) approach, and the code is organized into the following folders:
 - **Controllers**: Contains the API controllers that handle incoming requests and responses.
 - **Services**: Contains the business logic and service classes that interact with the database.
 - **Models**: Contains the data models and DTOs (Data Transfer Objects) used in the application.
 
-## We do not use ⚠:
+## We do not use:
 - **WebSocket** - Socket connections are not used in this project, so it DOESN'T provide a persistent connection to the client (real time chats,etc)
 - **Message-Oriented Middleware (MOM)** - We don’t use MOM in this project (monolithic system), so no asynchronous magic here — big load, big boom 💥!
