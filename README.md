@@ -20,18 +20,20 @@ This repository contains an Azure Functions REST API designed to interact with a
    - [.NET SDK](https://dotnet.microsoft.com/download) for Azure Functions development.
 
 ### Setup ⚙️
-1. Clone the repository:
+1. Setup a Azure MS SQL Database
+   You can use the [DB Structure](/Database/DB_Structure.sql) SQL file to set it up correctly.
+2. Clone the repository:
    ```bash
    git clone https://github.com/yourusername/azure-functions-kpi-api.git
    cd azure-functions-kpi-api
    ```
 
-2. Install dependencies:
+3. Install dependencies:
    ```bash
    dotnet restore
    ```
 
-3. Configure your local settings:
+4. Configure your local settings:
    - Edit `local.settings.json`:
      ```json
      {
@@ -44,7 +46,7 @@ This repository contains an Azure Functions REST API designed to interact with a
      }
      ```
 
-4. Run the functions locally:
+5. Run the functions locally:
    ```bash
    func start
    ```
