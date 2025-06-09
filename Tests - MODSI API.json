@@ -1,0 +1,1875 @@
+{
+	"info": {
+		"_postman_id": "4778f4f3-7a07-4189-874d-42de58d441f6",
+		"name": "Tests - MODSI API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "44243808",
+		"_collection_link": "https://planetary-zodiac-6724157.postman.co/workspace/Jo%C3%A3o's-Workspace~3ae2193e-a3bd-4a68-8d4d-860441fdf238/collection/44243808-4778f4f3-7a07-4189-874d-42de58d441f6?action=share&source=collection_link&creator=44243808"
+	},
+	"item": [
+		{
+			"name": "Users",
+			"item": [
+				{
+					"name": "AddUser",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"Name\": \"26f4\",\r\n  \"Email\": \"s3f6s3f4s4@issep.ipp.pt\",\r\n  \"Password\": \"pU4+r/2WKWLCFNgbUJsvgitJKTRob4HIhoO4YTqTPR8=\",\r\n  \"Username\": \"s344ffs6s3\",\r\n  \"Salt\": \"WhwyjrbK5lOytpdvnpWZUg==\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{endpoint}}/api/User/Add?code={{azure_accesscode}}",
+							"host": [
+								"{{endpoint}}"
+							],
+							"path": [
+								"api",
+								"User",
+								"Add"
+							],
+							"query": [
+								{
+									"key": "code",
+									"value": "{{azure_accesscode}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Fixed JSON parsing error\r",
+									"var jsonData = pm.response.json();\r",
+									"pm.environment.set(\"jwt_token\", jsonData.Token);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"Email\": \"1240369@isep.ipp.pt\",\r\n  \"Password\": \"d+dVi/CEbSxiIFonfv0Gs7yWx7qjZMBHtGzm7ybJ5PE=\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{endpoint}}/api/User/Login?code={{azure_accesscode}}",
+							"host": [
+								"{{endpoint}}"
+							],
+							"path": [
+								"api",
+								"User",
+								"Login"
+							],
+							"query": [
+								{
+									"key": "code",
+									"value": "{{azure_accesscode}}"
+								}
+							]
+						},
+						"description": "### User Login\n\nThis endpoint is used to authenticate a user and obtain a token for accessing protected resources.\n\n#### Request Body\n\n- `Email` (text): The email address of the user.\n    \n- `Password` (text): The hashed password of the user.\n    \n\n#### Response\n\nThe response is in JSON format and includes the following fields:\n\n- `Token` (string): The authentication token for accessing protected resources.\n    \n\n``` json\n{\n    \"Token\": \"\"\n}\n\n ```"
+					},
+					"response": []
+				},
+				{
+					"name": "GetAllUsers",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "",
+								"value": "",
+								"type": "text",
+								"disabled": true
+							}
+						],
+						"url": {
+							"raw": "{{endpoint}}/api/User/GetAll?code={{azure_accesscode}}",
+							"host": [
+								"{{endpoint}}"
+							],
+							"path": [
+								"api",
+								"User",
+								"GetAll"
+							],
+							"query": [
+								{
+									"key": "code",
+									"value": "{{azure_accesscode}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetUserSalt",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{endpoint}}/api/User/GetUserSalt?code={{azure_accesscode}}&identifier=yo13@yo.com",
+							"host": [
+								"{{endpoint}}"
+							],
+							"path": [
+								"api",
+								"User",
+								"GetUserSalt"
+							],
+							"query": [
+								{
+									"key": "code",
+									"value": "{{azure_accesscode}}"
+								},
+								{
+									"key": "identifier",
+									"value": "yo13@yo.com"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetUserByEmail",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{endpoint}}/api/User/GetByEmail?code={{azure_accesscode}}&email=1111111@isep.ipp.pt",
+							"host": [
+								"{{endpoint}}"
+							],
+							"path": [
+								"api",
+								"User",
+								"GetByEmail"
+							],
+							"query": [
+								{
+									"key": "code",
+									"value": "{{azure_accesscode}}"
+								},
+								{
+									"key": "email",
+									"value": "1111111@isep.ipp.pt"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetUserById",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{endpoint}}/api/User/Get/117?code={{azure_accesscode}}",
+							"host": [
+								"{{endpoint}}"
+							],
+							"path": [
+								"api",
+								"User",
+								"Get",
+								"117"
+							],
+							"query": [
+								{
+									"key": "code",
+									"value": "{{azure_accesscode}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DeleteUserById",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{endpoint}}/api/User/Delete/10?code={{azure_accesscode}}",
+							"host": [
+								"{{endpoint}}"
+							],
+							"path": [
+								"api",
+								"User",
+								"Delete",
+								"10"
+							],
+							"query": [
+								{
+									"key": "code",
+									"value": "{{azure_accesscode}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "UpdateUserById",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n\t\"Name\": \"Joãoo\",\r\n\t\"Tel\": \"2\",\r\n\t\"Photo\": \"2\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{endpoint}}/api/User/UpdateById/110?code={{azure_accesscode}}",
+							"host": [
+								"{{endpoint}}"
+							],
+							"path": [
+								"api",
+								"User",
+								"UpdateById",
+								"110"
+							],
+							"query": [
+								{
+									"key": "code",
+									"value": "{{azure_accesscode}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "UpdateUserByEmail",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n\t\"Name\": \"Joãooo\",\r\n\t\"Tel\": \"999999999\",\r\n\t\"Photo\": \"3\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{endpoint}}/api/User/Update/1240369@isep.ipp.pt?code={{azure_accesscode}}",
+							"host": [
+								"{{endpoint}}"
+							],
+							"path": [
+								"api",
+								"User",
+								"Update",
+								"1240369@isep.ipp.pt"
+							],
+							"query": [
+								{
+									"key": "code",
+									"value": "{{azure_accesscode}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "UpdateUserGroup",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n\t\"group\": \"Admin\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{endpoint}}/api/User/changegroup/110?code={{azure_accesscode}}",
+							"host": [
+								"{{endpoint}}"
+							],
+							"path": [
+								"api",
+								"User",
+								"changegroup",
+								"110"
+							],
+							"query": [
+								{
+									"key": "code",
+									"value": "{{azure_accesscode}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "UpdateUserRole",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n\t\"role\": \"Sales Director\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{endpoint}}/api/user/changerole/110?code={{azure_accesscode}}",
+							"host": [
+								"{{endpoint}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"changerole",
+								"110"
+							],
+							"query": [
+								{
+									"key": "code",
+									"value": "{{azure_accesscode}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CheckToken",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{endpoint}}/api/User/CheckToken?code={{azure_accesscode}}",
+							"host": [
+								"{{endpoint}}"
+							],
+							"path": [
+								"api",
+								"User",
+								"CheckToken"
+							],
+							"query": [
+								{
+									"key": "code",
+									"value": "{{azure_accesscode}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "PasswordResetRequest",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"email\": \"o@o.com\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{endpoint}}/api/User/RequestPasswordReset?code={{azure_accesscode}}",
+							"host": [
+								"{{endpoint}}"
+							],
+							"path": [
+								"api",
+								"User",
+								"RequestPasswordReset"
+							],
+							"query": [
+								{
+									"key": "code",
+									"value": "{{azure_accesscode}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "SetNewPasswordWithResetCode",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"code\": \"v6sTYnWDnESKrvfZ1xqg\",\r\n  \"password\": \"hashGerado\",\r\n  \"salt\": \"saltGerado\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{endpoint}}/api/User/SetPasswordByResetCode?code={{azure_accesscode}}",
+							"host": [
+								"{{endpoint}}"
+							],
+							"path": [
+								"api",
+								"User",
+								"SetPasswordByResetCode"
+							],
+							"query": [
+								{
+									"key": "code",
+									"value": "{{azure_accesscode}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "ChangePassword",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"identifier\": \"usuario@dominio.com\",\r\n  \"currentPasswordHash\": \"HASH_ATUAL\",\r\n  \"newPasswordHash\": \"NOVO_HASH\",\r\n  \"newSalt\": \"NOVO_SALT\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{endpoint}}/api/User/ChangePassword?code={{azure_endpoint}}",
+							"host": [
+								"{{endpoint}}"
+							],
+							"path": [
+								"api",
+								"User",
+								"ChangePassword"
+							],
+							"query": [
+								{
+									"key": "code",
+									"value": "{{azure_endpoint}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "UserVerificationRequest",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"Email\": \"jota1662003@gmail.com\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{endpoint}}/api/User/RequestUserVerification?code={{azure_accesscode}}",
+							"host": [
+								"{{endpoint}}"
+							],
+							"path": [
+								"api",
+								"User",
+								"RequestUserVerification"
+							],
+							"query": [
+								{
+									"key": "code",
+									"value": "{{azure_accesscode}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "VerifyUserWithCode",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"verificationCode\": \"V5ucIpxeQUWEZMxQ6e7uMg\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{endpoint}}/api/User/VerifyUser?code={{azure_accesscode}}",
+							"host": [
+								"{{endpoint}}"
+							],
+							"path": [
+								"api",
+								"User",
+								"VerifyUser"
+							],
+							"query": [
+								{
+									"key": "code",
+									"value": "{{azure_accesscode}}"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Company",
+			"item": [
+				{
+					"name": "Departments",
+					"item": [
+						{
+							"name": "GetDepartmentKPIs",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{endpoint}}/api/departments/1/kpis?code={{azure_accesscode}}",
+									"host": [
+										"{{endpoint}}"
+									],
+									"path": [
+										"api",
+										"departments",
+										"1",
+										"kpis"
+									],
+									"query": [
+										{
+											"key": "code",
+											"value": "{{azure_accesscode}}"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "GetDepartmentWithKPIs",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{endpoint}}/api/departmentandkpis/1/?code={{azure_accesscode}}",
+									"host": [
+										"{{endpoint}}"
+									],
+									"path": [
+										"api",
+										"departmentandkpis",
+										"1",
+										""
+									],
+									"query": [
+										{
+											"key": "code",
+											"value": "{{azure_accesscode}}"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "CreateDepartment",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"name\": \"Marketing\",\r\n  \"description\": \"Responsible for company marketing activities\",\r\n  \"managerId\": 1\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{endpoint}}/api/departments?code={{azure_accesscode}}",
+									"host": [
+										"{{endpoint}}"
+									],
+									"path": [
+										"api",
+										"departments"
+									],
+									"query": [
+										{
+											"key": "code",
+											"value": "{{azure_accesscode}}"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "UpdateDepartment",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"name\": \"Executive\",\r\n  \"description\": \"Executive\",\r\n  \"managerId\": 1\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{endpoint}}/api/departments/1?code={{azure_accesscode}}",
+									"host": [
+										"{{endpoint}}"
+									],
+									"path": [
+										"api",
+										"departments",
+										"1"
+									],
+									"query": [
+										{
+											"key": "code",
+											"value": "{{azure_accesscode}}"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "DeleteDepartment",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{endpoint}}/api/departments/69?code={{azure_accesscode}}",
+									"host": [
+										"{{endpoint}}"
+									],
+									"path": [
+										"api",
+										"departments",
+										"69"
+									],
+									"query": [
+										{
+											"key": "code",
+											"value": "{{azure_accesscode}}"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "AddKPIFromDepartment",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "{{endpoint}}/api/departments/1/kpis/2?code={{azure_accesscode}}",
+									"host": [
+										"{{endpoint}}"
+									],
+									"path": [
+										"api",
+										"departments",
+										"1",
+										"kpis",
+										"2"
+									],
+									"query": [
+										{
+											"key": "code",
+											"value": "{{azure_accesscode}}"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "RemoveKPIFromDepartment",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{endpoint}}/api/departments/1/kpis/2?code={{azure_accesscode}}",
+									"host": [
+										"{{endpoint}}"
+									],
+									"path": [
+										"api",
+										"departments",
+										"1",
+										"kpis",
+										"2"
+									],
+									"query": [
+										{
+											"key": "code",
+											"value": "{{azure_accesscode}}"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "GetAllDepartments",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{endpoint}}/api/departments?code={{azure_accesscode}}",
+									"host": [
+										"{{endpoint}}"
+									],
+									"path": [
+										"api",
+										"departments"
+									],
+									"query": [
+										{
+											"key": "code",
+											"value": "{{azure_accesscode}}"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "UpdatePermissions",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"canRead\": true,\r\n  \"canWrite\": false\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{endpoint}}/api/roles/1/departments/2/permissions?code={{azure_accesscode}}",
+									"host": [
+										"{{endpoint}}"
+									],
+									"path": [
+										"api",
+										"roles",
+										"1",
+										"departments",
+										"2",
+										"permissions"
+									],
+									"query": [
+										{
+											"key": "code",
+											"value": "{{azure_accesscode}}"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "GetDepartmentById",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [
+									{
+										"key": "",
+										"value": "",
+										"type": "text",
+										"disabled": true
+									}
+								],
+								"url": {
+									"raw": "{{endpoint}}/api/departments/1?code={{azure_accesscode}}",
+									"host": [
+										"{{endpoint}}"
+									],
+									"path": [
+										"api",
+										"departments",
+										"1"
+									],
+									"query": [
+										{
+											"key": "code",
+											"value": "{{azure_accesscode}}"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "KPIs",
+					"item": [
+						{
+							"name": "GetKPIById",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{endpoint}}/api/kpis/2?code={{azure_accesscode}}",
+									"host": [
+										"{{endpoint}}"
+									],
+									"path": [
+										"api",
+										"kpis",
+										"2"
+									],
+									"query": [
+										{
+											"key": "code",
+											"value": "{{azure_accesscode}}"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "GetAllKPIs",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{endpoint}}/api/kpis?code={{azure_accesscode}}",
+									"host": [
+										"{{endpoint}}"
+									],
+									"path": [
+										"api",
+										"kpis"
+									],
+									"query": [
+										{
+											"key": "code",
+											"value": "{{azure_accesscode}}"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "CreateKPI",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"name\": \"Customer Satisfaction\",\r\n  \"description\": \"Measures customer satisfaction level\",\r\n  \"target\": 90.0,\r\n  \"unit\": \"%\",\r\n  \"frequency\": \"Monthly\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{endpoint}}/api/kpis?code={{azure_accesscode}}",
+									"host": [
+										"{{endpoint}}"
+									],
+									"path": [
+										"api",
+										"kpis"
+									],
+									"query": [
+										{
+											"key": "code",
+											"value": "{{azure_accesscode}}"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "UpdateKPI",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n   // \"Id\": 3,\r\n   // \"Name\": \"Customer Satisfaction\",\r\n   // \"Description\": \"Measures customer satisfaction level\",\r\n   // \"Unit\": \"%\",\r\n    \"Value_1\": \"95.0\",\r\n    \"Value_2\": null//,\r\n   // \"ByProduct\": false,\r\n   // \"AvailableInDepartments\": [\r\n   //     \"Executive\",\r\n   //     \"Technology\",\r\n   //     \"Marketing\"\r\n   // ]\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{endpoint}}/api/kpis/3?code={{azure_accesscode}}",
+									"host": [
+										"{{endpoint}}"
+									],
+									"path": [
+										"api",
+										"kpis",
+										"3"
+									],
+									"query": [
+										{
+											"key": "code",
+											"value": "{{azure_accesscode}}"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "DeleteKPI",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{endpoint}}/api/kpis/1?code={{azure_accesscode}}",
+									"host": [
+										"{{endpoint}}"
+									],
+									"path": [
+										"api",
+										"kpis",
+										"1"
+									],
+									"query": [
+										{
+											"key": "code",
+											"value": "{{azure_accesscode}}"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "GetKPIValueHistory",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{endpoint}}/api/kpis/valuehistory?code={{azure_accesscode}}",
+									"host": [
+										"{{endpoint}}"
+									],
+									"path": [
+										"api",
+										"kpis",
+										"valuehistory"
+									],
+									"query": [
+										{
+											"key": "code",
+											"value": "{{azure_accesscode}}"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "GetUserValueHistoryChanges",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{endpoint}}/api/kpis/valuehistory?kpiId=3&code={{azure_accesscode}}",
+									"host": [
+										"{{endpoint}}"
+									],
+									"path": [
+										"api",
+										"kpis",
+										"valuehistory"
+									],
+									"query": [
+										{
+											"key": "kpiId",
+											"value": "3"
+										},
+										{
+											"key": "code",
+											"value": "{{azure_accesscode}}"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "ChangeKPIAvailableDepartments",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"availableInDepartments\": [\"Finance\", \"Human Resources\"]\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{endpoint}}/api/kpis/41/departments",
+									"host": [
+										"{{endpoint}}"
+									],
+									"path": [
+										"api",
+										"kpis",
+										"41",
+										"departments"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "CreateKPIWithDepartments",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"kpi\": {\r\n    \"name\": \"Taxa de Retenção\",\r\n    \"description\": \"Percentagem de retenção de clientes\",\r\n    \"unit\": \"%\",\r\n    \"value_1\": \"90\",\r\n    \"value_2\": \"95\",\r\n    \"byProduct\": false\r\n  },\r\n  \"availableInDepartments\": [\"Executive\", \"Finance\"]\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{endpoint}}/api/kpis/withdepartments",
+									"host": [
+										"{{endpoint}}"
+									],
+									"path": [
+										"api",
+										"kpis",
+										"withdepartments"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Roles",
+					"item": [
+						{
+							"name": "GetAllRoles",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{endpoint}}/api/roles?code={{azure_accesscode}}",
+									"host": [
+										"{{endpoint}}"
+									],
+									"path": [
+										"api",
+										"roles"
+									],
+									"query": [
+										{
+											"key": "code",
+											"value": "{{azure_accesscode}}"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "GetRoleById",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{endpoint}}/api/roles/1?code={{azure_accesscode}}",
+									"host": [
+										"{{endpoint}}"
+									],
+									"path": [
+										"api",
+										"roles",
+										"1"
+									],
+									"query": [
+										{
+											"key": "code",
+											"value": "{{azure_accesscode}}"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "CreateRole",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"name\": \"Manager\",\r\n  \"description\": \"Department manager role with full access\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{endpoint}}/api/roles?code={{azure_accesscode}}",
+									"host": [
+										"{{endpoint}}"
+									],
+									"path": [
+										"api",
+										"roles"
+									],
+									"query": [
+										{
+											"key": "code",
+											"value": "{{azure_accesscode}}"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "UpdateRole",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"name\": \"Senior Manager\",\r\n  \"description\": \"Senior department manager role with full access\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{endpoint}}/api/roles/1?code={{azure_accesscode}}",
+									"host": [
+										"{{endpoint}}"
+									],
+									"path": [
+										"api",
+										"roles",
+										"1"
+									],
+									"query": [
+										{
+											"key": "code",
+											"value": "{{azure_accesscode}}"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "DeleteRole",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{endpoint}}/api/roles/23?code={{azure_accesscode}}",
+									"host": [
+										"{{endpoint}}"
+									],
+									"path": [
+										"api",
+										"roles",
+										"23"
+									],
+									"query": [
+										{
+											"key": "code",
+											"value": "{{azure_accesscode}}"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "GetRoleDepartments",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{endpoint}}/api/roles/1/departments?code={{azure_accesscode}}",
+									"host": [
+										"{{endpoint}}"
+									],
+									"path": [
+										"api",
+										"roles",
+										"1",
+										"departments"
+									],
+									"query": [
+										{
+											"key": "code",
+											"value": "{{azure_accesscode}}"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "GetRoleKPIs",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{endpoint}}/api/roles/1/kpis?code={{azure_accesscode}}",
+									"host": [
+										"{{endpoint}}"
+									],
+									"path": [
+										"api",
+										"roles",
+										"1",
+										"kpis"
+									],
+									"query": [
+										{
+											"key": "code",
+											"value": "{{azure_accesscode}}"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Rooms",
+					"item": [
+						{
+							"name": "GetRoomById",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{endpoint}}/api/Room/Get/ABCDE?code={{azure_accesscode}}",
+									"host": [
+										"{{endpoint}}"
+									],
+									"path": [
+										"api",
+										"Room",
+										"Get",
+										"ABCDE"
+									],
+									"query": [
+										{
+											"key": "code",
+											"value": "{{azure_accesscode}}"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "AddRoom",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"Id\": \"A1234\",\r\n  \"JsonData\": \"{\\\"name\\\":\\\"Sala de Reunião\\\",\\\"capacidade\\\":10}\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{endpoint}}/api/Room/Add?code={{azure_accesscode}}",
+									"host": [
+										"{{endpoint}}"
+									],
+									"path": [
+										"api",
+										"Room",
+										"Add"
+									],
+									"query": [
+										{
+											"key": "code",
+											"value": "{{azure_accesscode}}"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "CheckAPI",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{endpoint}}/api/CheckAPI?code={{azure_accesscode}}",
+					"host": [
+						"{{endpoint}}"
+					],
+					"path": [
+						"api",
+						"CheckAPI"
+					],
+					"query": [
+						{
+							"key": "code",
+							"value": "{{azure_accesscode}}"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
