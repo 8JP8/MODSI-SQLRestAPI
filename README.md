@@ -69,8 +69,6 @@ This repository contains an Azure Functions REST API designed to interact with a
 
 ## Endpoints
 
----
-
 ### User Management
 
 -   **`POST` /api/User/Login**
@@ -89,7 +87,7 @@ This repository contains an Azure Functions REST API designed to interact with a
 
 ### Company Management
 
-#### Departments
+#### Departments:
 -   **`POST` /api/departments**
     -   Body: `{"name": "", "description": "", "managerId": ""}`
 -   **`GET` /api/departments**
@@ -100,7 +98,7 @@ This repository contains an Azure Functions REST API designed to interact with a
 -   **`POST` /api/departments/{departmentId}/kpis/{kpiId}**
 -   **`DELETE` /api/departments/{departmentId}/kpis/{kpiId}**
 
-#### KPIs
+#### KPIs:
 -   **`POST` /api/kpis**
     -   Body: `{"name": "", "description": "", "target": "", "unit": "", "frequency": ""}`
 -   **`GET` /api/kpis**
@@ -109,7 +107,7 @@ This repository contains an Azure Functions REST API designed to interact with a
     -   Body: `{"Value_1": "", "Value_2": ""}`
 -   **`DELETE` /api/kpis/{id}**
 
-#### Roles & Permissions
+#### Roles & Permissions:
 -   **`POST` /api/roles**
     -   Body: `{"name": "", "description": ""}`
 -   **`GET` /api/roles**
@@ -127,12 +125,6 @@ This repository contains an Azure Functions REST API designed to interact with a
 -   **`POST` /api/Room/Add**
     -   Body: `{"Id": "", "JsonData": ""}`
 -   **`GET` /api/Room/Get/{id}**
-
----
-
-### API Health Check
-
--   **`GET` /api/CheckAPI**
 
 ---
 
