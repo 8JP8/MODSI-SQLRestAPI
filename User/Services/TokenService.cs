@@ -28,6 +28,7 @@ namespace MODSI_SQLRestAPI.UserAuth.Services
                 new Claim("role", user.Role ?? "user"),
                 new Claim("group", user.Group ?? "USER"),
                 new Claim("id", user.Id.ToString()),
+                new Claim("email", user.Email.ToString()),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 
@@ -54,19 +55,19 @@ namespace MODSI_SQLRestAPI.UserAuth.Services
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKey = new SymmetricSecurityKey(key),
                     ValidateIssuer = true, // Valida o emissor
-                    ValidIssuer = Issuer, // Substitua pelo emissor válido
-                    ValidateAudience = false, // Valida a audiência
-                    //ValidAudience = "YourAudience", // Substitua pela audiência válida
-                    ValidateLifetime = true, // Valida a expiração do token
-                    ClockSkew = TimeSpan.Zero // Sem tolerância para diferenças de tempo
+                    ValidIssuer = Issuer, // Substitua pelo emissor vÃ¡lido
+                    ValidateAudience = false, // Valida a audiÃªncia
+                    //ValidAudience = "YourAudience", // Substitua pela audiÃªncia vÃ¡lida
+                    ValidateLifetime = true, // Valida a expiraÃ§Ã£o do token
+                    ClockSkew = TimeSpan.Zero // Sem tolerÃ¢ncia para diferenÃ§as de tempo
                 }, out var validatedToken);
 
-                // Verifica se o token é um JWT
+                // Verifica se o token Ã© um JWT
                 if (validatedToken is JwtSecurityToken jwtToken)
                 {
                     // Valida o algoritmo de assinatura
                     if (!jwtToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
-                        throw new SecurityTokenException("Token inválido.");
+                        throw new SecurityTokenException("Token invÃ¡lido.");
                 }
 
                 return principal;
