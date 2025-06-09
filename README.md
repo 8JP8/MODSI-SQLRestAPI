@@ -68,7 +68,7 @@ This repository contains an Azure Functions REST API designed to interact with a
    ```
 
 ## Endpoints
-
+For more details, please refer to the [API_Tests.json](API_Tests.json) file.
 ### User Management
 
 -   **`POST` /api/User/Login**
@@ -121,8 +121,6 @@ This repository contains an Azure Functions REST API designed to interact with a
 -   **`POST` /api/Room/Add**
     -   Body: `{"Id": "", "JsonData": ""}`
 -   **`GET` /api/Room/Get/{id}**
-
-For more details, please refer to the [API_Tests.json](API_Tests.json) file.
 
 ## License
 This project is licensed under the MIT License. See the `LICENSE` file for details.
